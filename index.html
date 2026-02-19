@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAE Workshop Inventory Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://alcdn.msauth.net"></script>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>MAE Workshop Inventory Management System</h2>
+        <ul id="menu">
+            <li onclick="switchSheet('Dashboard')">Master Dashboard</li>
+            <li onclick="switchSheet('ResellInventory')">Resell Inventory</li>
+            <li onclick="switchSheet('Machinery')">Shop Machinery</li>
+            <li onclick="switchSheet('Tools')">Shop Tools</li>
+            <li onclick="switchSheet('Consumables')">Consumables</li>
+            <li onclick="switchSheet('Overhead')">Overhead</li>
+            <li onclick="switchSheet('Maintenance')">Maintenance Log</li>
+            <li onclick="switchSheet('Suppliers')">Suppliers</li>
+        </ul>
+        <button id="auth-btn">Connect Office 365</button>
+    </nav>
+
+    <main id="app-content">
+        <h1 id="current-view-title">Master Dashboard</h1>
+        <div id="table-container">
+            <!-- Data for the active worksheet loads here -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

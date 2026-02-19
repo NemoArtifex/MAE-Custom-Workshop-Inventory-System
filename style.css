@@ -1,0 +1,10 @@
+:root { --primary: #333; --accent: #d35400; --text: #fff; }
+body { display: flex; margin: 0; background: #eee; font-family: sans-serif; }
+.sidebar { width: 250px; height: 100vh; background: var(--primary); color: var(--text); padding: 20px; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar li { padding: 15px; cursor: pointer; border-bottom: 1px solid #444; }
+.sidebar li:hover { background: var(--accent); }
+main { flex-grow: 1; padding: 30px; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th { background: #444; color: white; padding: 12px; }
+td { padding: 10px; border-bottom: 1px solid #ccc; }
