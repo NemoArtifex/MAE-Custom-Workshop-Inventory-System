@@ -6,13 +6,19 @@ const config = {
     }
 };
 
-const msalInstance = new msal.PublicClientApplication(config);
+//const msalInstance = new msal.PublicClientApplication(config);
+
 let account = null;
 let activeSheet = null;
 const fileName = "MAE_Master_Inventory_Template.xlsx"
 
+let msalInstance;
+async function initializeMsal() {
+    msalInstance = new msal.PublicClientApplication(config);
+    await msalInstance.initialize();
+
 // Required for Redirect flows, good practice to run on every load
-msalInstance.handleRedirectPromise().then(response => {
+    msalInstance.handleRedirectPromise().then(response => {
     if (response) {
         account = response.account;
         updateUI();
@@ -23,7 +29,7 @@ msalInstance.handleRedirectPromise().then(response => {
             updateUI();
         }
     }
-});
+    });
 
 async function signIn() {
     const loginRequest = {
@@ -61,7 +67,7 @@ async function loadDynamicMenu() {
 
     // 1. Ask Graph for ALL tables in the workbook
     // Use backticks (`) for the URL to allow the ${variable} syntax
-    const url = `https://graph.microsoft.com/v1.0/me/drive/root/:${fileName}:/workbook/tables`;
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
 
     
     const response = await fetch(url, {
