@@ -1,68 +1,93 @@
-const config = {
+
+// =============CONFIGURATION: The "Blueprint"  ======================
+const msalConfig = {
     auth: {
         clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
         authority: "https://login.microsoftonline.com/common",
         redirectUri: "http://localhost:5500" // Critical for GitHub Pages
+    },
+    cache: {
+        cacheLocation: "sessionStorage",// use sessionStorage to avoid issues with multiple tabs/GitHub Pages
+        storeAuthStateInCookie: false,
     }
 };
+// ===========END CONFIGURATION =============
 
-//const msalInstance = new msal.PublicClientApplication(config);
-
+// =========== STARTUP LOGIC ============
+// Global instance variable
+let myMSALObj;
 let account = null;
+
+// Startup Function: runs on page load =
+async function startup(){
+    try {
+// Instantiate and Initialize (the v3 way)
+        myMSALObj = new msal.PublicClientApplication(msalConfig);
+        await myMSALObj.initialize();
+// Handle returning from a redirect (ifnot using Popups)
+        const response = await myMSALObj.handleRedirectPromise();
+// UI Setup
+        const authButton = document.getElementById("auth-btn");
+        authButton.disabled = false; // Enable the button now that MSAL is ready
+// Check if user is already signed in (handles page refresh)
+        const accounts = myMSALObj.getAllAccounts();
+        if (accounts.length > 0) {
+            myMSALObj.setActiveAccount(accounts[0]); // Set the first account as active
+            updateUIForLoggedInUser(accounts[0]);
+        }
+// Attach the click event
+        authButton.addEventListener("click", signIn);
+    } catch (error) {
+        console.error("Error during MSAL initialization:", error);
+    }
+}
+
+//==========END STARTUP LOGIC ===========
+
 let activeSheet = null;
 const fileName = "MAE_Master_Inventory_Template.xlsx"
 
-let msalInstance;
-async function initializeMsal() {
-    msalInstance = new msal.PublicClientApplication(config);
-    await msalInstance.initialize();
-
-// Required for Redirect flows, good practice to run on every load
-    msalInstance.handleRedirectPromise().then(response => {
-    if (response) {
-        account = response.account;
-        updateUI();
-    } else {
-        const currentAccounts = msalInstance.getAllAccounts();
-        if (currentAccounts.length > 0) {
-            account = currentAccounts[0];
-            updateUI();
-        }
-    }
-    });
-
+//===========SIGN-IN FUNCTION ==========
 async function signIn() {
     const loginRequest = {
-        scopes: ["User.Read", "Files.ReadWrite.All"] // Request permissions for Excel
+// Scopes configured in Azure
+        scopes: ["User.Read", "Files.ReadWrite"] // Request permissions for Excel
     };
 
     try {
-        const loginResponse = await msalInstance.loginPopup(loginRequest);
-        account = loginResponse.account;
-        updateUI();
+// Standard Pop Login
+        const loginResponse = await myMSALObj.loginPopup(loginRequest);
+        console.log("Login Successful:", loginResponse);
+        myMSALObj.setActiveAccount(loginResponse.account); // Set the active account
+        updateUIForLoggedInUser(loginResponse.account);
     } catch (error) {
         console.error("Login failed:", error);
     }
 }
 
-function updateUI() {
-    const authBtn = document.getElementById('auth-btn');
-    if (account) {
-        authBtn.innerText = `Connected: ${account.username}`;
-        authBtn.style.background = "#27ae60";
-        
-        // NEW: Scan the Excel file to see what features this client has
-        loadDynamicMenu(); 
-    }
+//=========END SIGN-IN FUNCTION ===========
+
+// ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
+function updateUIForLoggedInUser(userAccount) {
+    account = userAccount; // Store the account info globally
+    const authButton = document.getElementById("auth-btn");
+    authButton.innerText = `Connected: ${account.username}`;
+    authButton.style.background = "#27ae60"; // Change color to indicate success
+
+    // Load the dynamic menu based on the user's Excel file
+    console.log("Loading dynamic menu for user:", account.username);
+    loadDynamicMenu();
 }
 
+//===========END UI UPDATE FUNCTION ===========
 
 // Attach the event listener to your existing button
 document.getElementById('auth-btn').addEventListener('click', signIn);
 
+//======= FUNCTION Load Dynamic Menu ================
 async function loadDynamicMenu() {
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-        scopes: ["Files.ReadWrite.All"]
+    const tokenResponse = await myMSALObj.acquireTokenSilent({
+        scopes: ["Files.ReadWrite"]
     });
 
     // 1. Ask Graph for ALL tables in the workbook
@@ -82,13 +107,21 @@ async function loadDynamicMenu() {
     data.value.forEach(table => {
         const li = document.createElement('li');
         // Clean up the name for the button (e.g., "Shop_Machinery_Table" -> "Shop Machinery")
-        li.innerText = table.name.replace(/_/g, ' ').replace('Table', '');
-        li.onclick = () => fetchTableData(table.name);
+        const displayName = table.name.replace(/_/g, ' ').replace('Table', '');
+        li.innerText = displayName;
+
+        li.onclick = () => {
+            document.getElementById('current-view-title').innerText = displayName;
+            fetchTableData(table.name);// Functon to get actual Excel rows
+        };
         menu.appendChild(li);
     });
 }
 
+//=============END DYNAMIC MENU FUNCTION ==============
 
+//======= FUNCTION SWITCH SHEET ===============
+// ======  TO DO ==============
 async function switchSheet(sheetName) {
     activeSheet = sheetName;
     document.getElementById('current-view-title').innerText = sheetName;
@@ -103,9 +136,15 @@ async function switchSheet(sheetName) {
     fetchTableData(sheetMap[sheetName]);
 }
 
+// ============END SWITCH SHEET FUNCTION ==============
+
+//======= FUNCTION TO FETCH TABLE DATA ==============
 async function fetchTableData(tableName) {
     const url = `https://graph.microsoft.com/v1.0/me/drive/root/:${fileName}:/workbook/tables/${tableName}/rows`;
 
     // ... same fetch logic as previous example ...
 }
+
+// ============END FETCH TABLE DATA FUNCTION ==============
+
 

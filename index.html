@@ -5,33 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAE Workshop Inventory Management</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.0.0/dist/msal-browser.min.js"></script>
+    <!-- UPDATED: Using MSAL Browser v3 to support .initialize() -->
+    <script src="https://alcdn.msauth.net"></script>
 </head>
 <body>
     <nav class="sidebar">
         <h2>MAE Workshop Inventory Management System</h2>
+        <!-- UPDATED: Empty list. app.js will fill this with Excel Table names -->
         <ul id="menu">
-            <li onclick="switchSheet('Dashboard')">Master Dashboard</li>
-            <li onclick="switchSheet('ResellInventory')">Resell Inventory</li>
-            <li onclick="switchSheet('Machinery')">Shop Machinery</li>
-            <li onclick="switchSheet('Tools')">Shop Tools</li>
-            <li onclick="switchSheet('Consumables')">Consumables</li>
-            <li onclick="switchSheet('Overhead')">Overhead</li>
-            <li onclick="switchSheet('Maintenance')">Maintenance Log</li>
-            <li onclick="switchSheet('Suppliers')">Suppliers</li>
+            <li style="color: #aaa; padding: 10px;">Connect to load menu...</li>
         </ul>
-        <button id="auth-btn">Connect Office 365</button>
+        <button id="auth-btn" disabled>Connect Office 365</button>
     </nav>
 
     <main id="app-content">
-        <h1 id="current-view-title">Master Dashboard</h1>
+        <h1 id="current-view-title">Welcome</h1>
         <div id="table-container">
+            <p>Please log in to view and manage your inventory data.</p>
             <!-- Data for the active worksheet loads here -->
         </div>
     </main>
 
-
-
+    <!-- Ensure app.js is at the bottom so the DOM is ready -->
     <script src="app.js"></script>
 </body>
 </html>
+
