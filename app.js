@@ -4,7 +4,7 @@ const msalConfig = {
         clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
         authority: "https://login.microsoftonline.com/common",
         redirectUri: "http://localhost:5500" ,
-        redirectUri: "https://NemoArtifex.github.io/MAE-Custom-Workshop-Inventory-System/"
+        redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/"
     },
     cache: {
         cacheLocation: "sessionStorage", // Simple and effective for workshop environments
