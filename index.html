@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; 
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://alcdn.msauth.net; 
+               connect-src 'self' https://login.microsoftonline.com https://graph.microsoft.com https://alcdn.msauth.net; 
+               style-src 'self' 'unsafe-inline';">
     <title>MAE Workshop Inventory Management</title>
+    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
+    <script src="msal-browser.min.js"></script>
+    <script src="app.js" defer></script>
     <link rel="stylesheet" href="style.css">
-    <!-- UPDATED: Using MSAL Browser v3 to support .initialize() -->
-    <script src="https://alcdn.msauth.net"></script>
 </head>
 <body>
     <nav class="sidebar">
@@ -25,9 +31,6 @@
             <!-- Data for the active worksheet loads here -->
         </div>
     </main>
-
-    <!-- Ensure app.js is at the bottom so the DOM is ready -->
-    <script src="app.js"></script>
 </body>
 </html>
 
