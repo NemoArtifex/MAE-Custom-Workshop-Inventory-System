@@ -17,7 +17,7 @@ let myMSALObj;
 let account = null;
 const fileName = "MAE_Master_Inventory_Template.xlsx";
 
-function startup() {
+async function startup() {
     console.log("Checking for msal...", window.msal);
 
     if (typeof msal === 'undefined') {
@@ -31,6 +31,15 @@ function startup() {
         //Intialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
         myMSALObj = new msal.PublicClientApplication(msalConfig);
+
+        // This is the "Net" that catches the login result after the page reloads
+    const response = await myMSALObj.handleRedirectPromise();
+    
+    if (response) {
+        console.log("Caught user login!", response.account);
+        account = response.account;
+        updateUIForLoggedInUser(account);
+    } 
 
         const authButton = document.getElementById("auth-btn");
         authButton.disabled = false; 
@@ -156,4 +165,5 @@ async function fetchTableData(tableName) {
 
 //===TRIGGER that starts the whole engine ==========
 console.log("App.js execution reaching the end...triggering startup()");
+
 startup();

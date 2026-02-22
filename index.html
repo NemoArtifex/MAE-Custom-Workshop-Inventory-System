@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; 
-               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://alcdn.msauth.net; 
-               connect-src 'self' https://login.microsoftonline.com https://graph.microsoft.com https://alcdn.msauth.net; 
-               style-src 'self' 'unsafe-inline';">
+      content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; 
+               script-src * 'self' 'unsafe-inline' 'unsafe-eval'; 
+               connect-src * 'self' https://login.microsoftonline.com https://graph.microsoft.com; 
+               style-src * 'self' 'unsafe-inline';">
     <title>MAE Workshop Inventory Management</title>
     <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
     <script src="msal-browser.min.js"></script>
