@@ -226,7 +226,6 @@ async function loadDynamicMenu() {
 //==========END FUNCTION Load Dynamic Menu ================
 
 //======= FUNCTION TO FETCH TABLE DATA ==============
-//======= FUNCTION TO FETCH TABLE DATA ==============
 async function fetchTableData(tableName) {
     try {
         const tokenResponse = await myMSALObj.acquireTokenSilent({
@@ -241,43 +240,43 @@ async function fetchTableData(tableName) {
         });
         const data = await response.json();
         
-        console.log(`Data for ${tableName}:`, data);
+        console.log(`Raw Data for ${tableName}:`, data);
         
         const container = document.getElementById('table-container');
 
-        // DEFENSIVE CHECK 1: Did Graph return an error?
+        // Check if Graph returned an error
         if (data.error) {
             container.innerHTML = `<p style="color:red;">Error: ${data.error.message}</p>`;
             return;
         }
 
-        // DEFENSIVE CHECK 2: Is the value array missing or empty?
+        // Check if data.value exists and has items
         if (!data.value || data.value.length === 0) {
-            container.innerHTML = "<p>No data found in this table. Ensure the table has rows.</p>";
+            container.innerHTML = "<p>No data found. Ensure the Excel Table has rows.</p>";
             return;
         }
 
-        // Build the Table
+        // Build Table
         let tableHtml = `<table><thead><tr>`;
 
-        // 1. HEADERS: We use the first row's 'values' property to create headers
-        // Graph rows return: { index: 0, values: [["Cell1", "Cell2"]] }
-        const firstRowCells = data.value[0].values[0]; 
+        // 1. HEADERS: We take the 'values' from the VERY FIRST row object
+        // Note: Graph returns row.values as an array-of-arrays: [[col1, col2]]
+        const headerRowData = data.value[0].values[0]; 
         
-        firstRowCells.forEach(cell => {
-            tableHtml += `<th>${cell || ""}</th>`;
+        headerRowData.forEach(cell => {
+            tableHtml += `<th>${cell !== null ? cell : ""}</th>`;
         });
         tableHtml += `</tr></thead><tbody>`;
 
-        // 2. DATA ROWS: Loop through all rows
+        // 2. DATA: Loop through all row objects
         data.value.forEach((rowObject, index) => {
-            // Skip the first row if you are using it as a header
+            // Skip the first row if it's being used as your header
             if (index === 0) return;
 
             tableHtml += `<tr>`;
-            // Extract the inner array of values
-            const cells = rowObject.values[0]; 
-            cells.forEach(cell => {
+            // Access the inner array of the 'values' property
+            const rowCells = rowObject.values[0]; 
+            rowCells.forEach(cell => {
                 tableHtml += `<td>${cell !== null ? cell : ""}</td>`;
             });
             tableHtml += `</tr>`;
@@ -288,10 +287,9 @@ async function fetchTableData(tableName) {
         
     } catch (error) {
         console.error("Error fetching table data:", error);
-        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table rows.</p>";
+        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table. Check console for details.</p>";
     }
 }
-
 // ==========END FUNCTION TO FETCH TABLE DATA ==============
 
 //===TRIGGER that starts the whole engine ==========
