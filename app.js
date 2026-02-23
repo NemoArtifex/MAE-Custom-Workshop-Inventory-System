@@ -235,7 +235,8 @@ async function fetchTableData(tableName) {
         });
 
         // FIXED URL STRING: Ensuring no stray characters or brackets exist
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
+        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
 
 
         const response = await fetch(url, {
