@@ -254,10 +254,9 @@ async function fetchTableData(tableName) {
         // CRITICAL CHANGE: 
         // The /range endpoint returns "values" as a 2D array (Array of Arrays)
         // safely capture the grid
-        const grid = data?.values || []; // Default to empty array if "values" is missing
+        const grid = data.values || []; // Default to empty array if "values" is missing
 
         if (grid.length === 0) {
-            console.warn("Grid is empty.");
             container.innerHTML = "<p>No data found in the table range.</p>";
             return;
         }
@@ -282,12 +281,9 @@ async function fetchTableData(tableName) {
         // 2. DATA: All arrays after the first one
         for (let i = 1; i < grid.length; i++) {
             tableHtml += `<tr>`;
-             // Ensure grid[i] is an array before looping
-            if (Array.isArray(grid[i])) {
-                grid[i].forEach(cell => {
-                    tableHtml += `<td style="padding: 8px; border: 1px solid #ccc;">${cell !== null ? cell : ""}</td>`;
-                });
-            }
+            grid[i].forEach(cell => {
+                tableHtml += `<td style="padding: 8px; border: 1px solid #ccc;">${cell !== null ? cell : ""}</td>`;
+            });
             tableHtml += `</tr>`;
         }
 
