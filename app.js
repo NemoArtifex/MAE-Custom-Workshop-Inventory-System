@@ -233,10 +233,8 @@ async function fetchTableData(tableName) {
             account: account
         });
 
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
-        // =====from load dynamic menu ============
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
-        // ================================
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/range`;
+  
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
@@ -252,46 +250,42 @@ async function fetchTableData(tableName) {
             return;
         }
 
-        // Check if data.value exists and has items
-        if (!data.value || data.value.length === 0) {
-            container.innerHTML = "<p>No data found. Ensure the Excel Table has rows.</p>";
+//============================ 
+        // CRITICAL CHANGE: 
+        // The /range endpoint returns "values" as a 2D array (Array of Arrays)
+        const grid = data.values; 
+
+        if (!grid || grid.length === 0) {
+            container.innerHTML = "<p>No data found.</p>";
             return;
         }
-
-        // Build Table
+        // Build table
         let tableHtml = `<table><thead><tr>`;
 
-        // 1. HEADERS: We take the 'values' from the VERY FIRST row object
-        // Note: Graph returns row.values as an array-of-arrays: [[col1, col2]]
-        const headerRowData = data.value[0].values[0]; 
-        
-        headerRowData.forEach(cell => {
-            tableHtml += `<th>${cell !== null ? cell : ""}</th>`;
+         // 1. HEADERS: The first array in the grid
+        const headers = grid[0]; 
+        headers.forEach(cell => {
+            tableHtml += `<th style="background: #f2f2f2; padding: 8px;">${cell !== null ? cell : ""}</th>`;
         });
         tableHtml += `</tr></thead><tbody>`;
 
-        // 2. DATA: Loop through all row objects
-        data.value.forEach((rowObject, index) => {
-            // Skip the first row if it's being used as your header
-            if (index === 0) return;
-
+        // 2. DATA: All arrays after the first one
+        for (let i = 1; i < grid.length; i++) {
             tableHtml += `<tr>`;
-            // Access the inner array of the 'values' property
-            const rowCells = rowObject.values[0]; 
-            rowCells.forEach(cell => {
-                tableHtml += `<td>${cell !== null ? cell : ""}</td>`;
+            grid[i].forEach(cell => {
+                tableHtml += `<td style="padding: 8px;">${cell !== null ? cell : ""}</td>`;
             });
             tableHtml += `</tr>`;
-        });
+        }
 
         tableHtml += `</tbody></table>`;
         container.innerHTML = tableHtml;
         
     } catch (error) {
         console.error("Error fetching table data:", error);
-        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table. Check console for details.</p>";
+        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table.</p>";
     }
-}
+}       
 // ==========END FUNCTION TO FETCH TABLE DATA ==============
 
 //===TRIGGER that starts the whole engine ==========
