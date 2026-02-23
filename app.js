@@ -135,16 +135,30 @@ async function signOut() {
 //======END  SIGN-OUT FUNCTION ===========
 
 //========FUNCTION TO RESET UI AFTER SIGN-OUT =============
+// Removes signout event listener, reverts button to "login" , Clears UI   
 function resetUI() {
     const authButton = document.getElementById("auth-btn");
     authButton.innerText = "Connect to Microsoft";
     authButton.style.background = ""; // Resets to original CSS color
-    authButton.onclick = null; 
+    authButton.style.color = ""; // Resets to original CSS color
+    //authButton.onclick = null; 
+    // Clear event listeners correctly  
+    authButton.removeEventListener("click", signOut); // Remove sign-out listener
     authButton.addEventListener("click", signIn);
     
-    // Hide your inventory menu again
-    const menu = document.getElementById("dynamic-menu");
-    if (menu) menu.style.display = "none";
+    // Clear actual Data/UI elements; clear innerHTML so list items literally disappear  
+    const menu = document.getElementById("menu");
+    if (menu) menu.innerHTML = "";
+
+    const container = document.getElementById("table-container");
+    if (container) container.innerHTML = "";
+
+    const title = document.getElementById("current-view-title");
+    if (title) title.innerText = "Please connect to view inventory data.";
+
+    console.log("UI Reset: Inventory Data Cleared.");   
+
+
 }
 
 //========END FUNCTION TO RESET UI AFTER SIGN-OUT =============
