@@ -96,6 +96,7 @@ async function signIn() {
 // changes text on button and triggers loadDynamicMenu() function  
 function updateUIForLoggedInUser(userAccount) {
     const authButton = document.getElementById("auth-btn");
+    authButton.onclick = null;  //CLEAR: wipe any old "onclick" or "inline" handlers firs  
     console.log("Enabling the Connect button now...");
     authButton.disabled = false;
     authButton.innerText = `Sign Out: ${userAccount.username}`;
@@ -113,13 +114,21 @@ function updateUIForLoggedInUser(userAccount) {
 async function signOut() {
     console.log("Starting sign-out process...");
 
+     // Safeguard: if the account object is missing, just reset the UI locally
+    if (!account) {
+        console.warn("No account found to sign out. Resetting UI only.");
+        resetUI();
+        return;
+    }
+
+
     try {
         const logoutRequest = {
             account: myMSALObj.getAccountByUsername(account.username),
             // Where the popup should go after it finishes
             postLogoutRedirectUri: window.location.origin 
         };
-
+     // triggers popup   
         await myMSALObj.logoutPopup(logoutRequest);
         
         console.log("User signed out.");
@@ -128,8 +137,15 @@ async function signOut() {
         account = null;
         resetUI(); 
     } catch (error) {
+         // If an interaction is already happening, we force a local reset
+        if (error.errorMessage && error.errorMessage.indexOf("interaction_in_progress") !== -1) {
+            console.warn("Interaction in progress error caught. Clearing local session.");
+            account = null;
+            resetUI();
+        } else { 
         console.error("Sign-out failed:", error);
     }
+ }
 }
 
 //======END  SIGN-OUT FUNCTION ===========
@@ -141,7 +157,7 @@ function resetUI() {
     authButton.innerText = "Connect to Microsoft";
     authButton.style.background = ""; // Resets to original CSS color
     authButton.style.color = ""; // Resets to original CSS color
-    //authButton.onclick = null; 
+    authButton.onclick = null; 
     // Clear event listeners correctly  
     authButton.removeEventListener("click", signOut); // Remove sign-out listener
     authButton.addEventListener("click", signIn);
