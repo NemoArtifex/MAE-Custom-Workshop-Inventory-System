@@ -1,11 +1,16 @@
 // =============CONFIGURATION: The "Blueprint"  ======================
+// Defines the configuration object for the Microsoft Authentication Libray (MSAL)
+// Used to integrate Microsoft's identity and sign-in features into web apps
 const msalConfig = {
     auth: {
         clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
         authority: "https://login.microsoftonline.com/common",
-        redirectUri: "http://localhost:5500" ,
+        //redirectUri: "http://localhost:5500" ,
         redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/"
     },
+    // Defines how and where the app stores security tokens after received
+    // Tokens stored for duration of browser's tab life 
+    // "false": tells MSAL NOT to store the auth state in browser cookies  
     cache: {
         cacheLocation: "sessionStorage", // Simple and effective for workshop environments
         storeAuthStateInCookie: false,
@@ -14,6 +19,10 @@ const msalConfig = {
 // ===========END CONFIGURATION =============
 
 // =========== STARTUP LOGIC ============
+//Initializes the authentication flow for app. Handles the moment page
+//first loads, specifically checking if user is returning from a login 
+//attempt or has an existing session (ie, clicked refresh)  
+
 let myMSALObj;
 let account = null;
 const fileName = "MAE_Master_Inventory_Template.xlsx";
@@ -54,16 +63,17 @@ async function startup() {
         } else {
             console.log("No existing session found. Waiting for user to click Connect.");
         }
-
+//Endpoint of this function is to make the authButton active allow sign-in when clicked
         authButton.addEventListener("click", signIn);
     } catch (error) {
         console.error("Error during MSAL startup:", error);
     }
 }
-
+//========END STARTUP LOGIC ===========
 
 
 //===========SIGN-IN FUNCTION ==========
+//Initiated after pushing the authButton after made active at the end of the Startup function
 async function signIn() {
     const loginRequest = {
         scopes: ["User.Read", "Files.ReadWrite"]
@@ -79,19 +89,65 @@ async function signIn() {
         console.error("Login failed:", error);
     }
 }
+//===========END SIGN-IN FUNCTION ==========
 
 // ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
+// the signIn function calls updateUIForLoggedInUser() if successful 'login'
+// changes text on button and triggers loadDynamicMenu() function  
 function updateUIForLoggedInUser(userAccount) {
     const authButton = document.getElementById("auth-btn");
     console.log("Enabling the Connect button now...");
     authButton.disabled = false;
-    authButton.innerText = `Connected: ${userAccount.username}`;
-    authButton.style.background = "#27ae60"; 
+    authButton.innerText = `Sign Out: ${userAccount.username}`;
+    authButton.style.background = "#c0392b"; // Change to red for "Sign Out"
     authButton.style.color = "white";
-
+    authButton.removeEventListener("click", signIn); // Remove sign-in listener to prevent multiple logins
+    authButton.addEventListener("click", signOut); // Add sign-out functionality for better UX
     console.log("Loading dynamic menu for user:", userAccount.username);
     loadDynamicMenu();
 }
+
+//=====END UPDATE UI BASED ON LOGIN STATUS ========
+
+//========SIGN-OUT FUNCTION ===========
+async function signOut() {
+    console.log("Starting sign-out process...");
+
+    try {
+        const logoutRequest = {
+            account: myMSALObj.getAccountByUsername(account.username),
+            // Where the popup should go after it finishes
+            postLogoutRedirectUri: window.location.origin 
+        };
+
+        await myMSALObj.logoutPopup(logoutRequest);
+        
+        console.log("User signed out.");
+        
+        // Reset the app state
+        account = null;
+        resetUI(); 
+    } catch (error) {
+        console.error("Sign-out failed:", error);
+    }
+}
+
+//======END  SIGN-OUT FUNCTION ===========
+
+//========FUNCTION TO RESET UI AFTER SIGN-OUT =============
+function resetUI() {
+    const authButton = document.getElementById("auth-btn");
+    authButton.innerText = "Connect to Microsoft";
+    authButton.style.background = ""; // Resets to original CSS color
+    authButton.onclick = null; 
+    authButton.addEventListener("click", signIn);
+    
+    // Hide your inventory menu again
+    const menu = document.getElementById("dynamic-menu");
+    if (menu) menu.style.display = "none";
+}
+
+//========END FUNCTION TO RESET UI AFTER SIGN-OUT =============
 
 //======= FUNCTION Load Dynamic Menu ================
 async function loadDynamicMenu() {
