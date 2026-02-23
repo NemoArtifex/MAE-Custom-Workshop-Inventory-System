@@ -6,7 +6,9 @@ const msalConfig = {
         clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
         authority: "https://login.microsoftonline.com/common",
         //redirectUri: "http://localhost:5500" ,
-        redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/"
+        redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
+        // This helps the popup find the parent window in production
+        navigateToLoginRequestUrl: false 
     },
     // Defines how and where the app stores security tokens after received
     // Tokens stored for duration of browser's tab life 
@@ -14,6 +16,10 @@ const msalConfig = {
     cache: {
         cacheLocation: "sessionStorage", // Simple and effective for workshop environments
         storeAuthStateInCookie: false,
+    },
+    system: {
+        // increases reliability for popup communication  
+        allowRedirectInIframe: true,
     }
 };
 // ===========END CONFIGURATION =============
@@ -113,14 +119,8 @@ function updateUIForLoggedInUser(userAccount) {
 //========SIGN-OUT FUNCTION ===========
 async function signOut() {
     console.log("Starting sign-out process...");
-
      // Safeguard: if the account object is missing, just reset the UI locally
-    if (!account) {
-        console.warn("No account found to sign out. Resetting UI only.");
-        resetUI();
-        return;
-    }
-
+    if (!account) return resetUI();
 
     try {
         const logoutRequest = {
@@ -131,20 +131,19 @@ async function signOut() {
      // triggers popup   
         await myMSALObj.logoutPopup(logoutRequest);
         
-        console.log("User signed out.");
-        
-        // Reset the app state
-        account = null;
-        resetUI(); 
     } catch (error) {
-         // If an interaction is already happening, we force a local reset
-        if (error.errorMessage && error.errorMessage.indexOf("interaction_in_progress") !== -1) {
-            console.warn("Interaction in progress error caught. Clearing local session.");
-            account = null;
-            resetUI();
+        // If an interaction is already happening, MSAL is "locked." 
+        // We catch that error and force a local cleanup anyway.
+        if (error.errorMessage && error.errorMessage.includes("interaction_in_progress")) {
+            console.warn("Interaction locked. Forcing local logout.");
         } else { 
         console.error("Sign-out failed:", error);
     }
+ } finally {
+    // This 'finally' block ensures your UI resets NO MATTER WHAT
+        account = null;
+        sessionStorage.clear(); // Rugged move: wipe the cache manually
+        resetUI(); 
  }
 }
 
