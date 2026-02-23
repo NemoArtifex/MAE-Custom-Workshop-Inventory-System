@@ -233,8 +233,10 @@ async function fetchTableData(tableName) {
             account: account
         });
 
-        const url = `https://graph.microsoft.com{fileName}:/workbook/tables/${tableName}/rows`;
-
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
+        // from load dynamic menu ============
+        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
+        // ================================
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
