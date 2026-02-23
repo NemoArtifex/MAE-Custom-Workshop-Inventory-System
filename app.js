@@ -223,6 +223,8 @@ async function loadDynamicMenu() {
     }
 }
 
+//==========END FUNCTION Load Dynamic Menu ================
+
 //======= FUNCTION TO FETCH TABLE DATA ==============
 async function fetchTableData(tableName) {
     try {
@@ -231,23 +233,50 @@ async function fetchTableData(tableName) {
             account: account
         });
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
+        const url = `https://graph.microsoft.com{fileName}:/workbook/tables/${tableName}/rows`;
 
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
         const data = await response.json();
         
-        console.log(`Data for ${tableName}:`, data.value);
-        
-        // Next step: render this data into the table-container
         const container = document.getElementById('table-container');
-        container.innerHTML = `<pre>${JSON.stringify(data.value, null, 2)}</pre>`;
-        
+
+        if (!data.value || data.value.length === 0) {
+            container.innerHTML = "<p>No data found in this table.</p>";
+            return;
+        }
+
+        // Build the Table using your existing CSS tags (table, th, td)
+        let tableHtml = `<table><thead><tr>`;
+
+        // 1. Get Headers (The first row of data in the Excel table)
+        const firstRowCells = data.value[0].values[0]; 
+        firstRowCells.forEach(cell => {
+            tableHtml += `<th>${cell || ""}</th>`;
+        });
+        tableHtml += `</tr></thead><tbody>`;
+
+        // 2. Get Data Rows (Loop through the rest)
+        data.value.slice(1).forEach(rowObject => {
+            tableHtml += `<tr>`;
+            const rowCells = rowObject.values[0]; // Access the inner array of values
+            rowCells.forEach(cell => {
+                tableHtml += `<td>${cell !== null ? cell : ""}</td>`;
+            });
+            tableHtml += `</tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        container.innerHTML = tableHtml;
+
     } catch (error) {
         console.error("Error fetching table data:", error);
+        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Error loading inventory data.</p>";
     }
 }
+
+// ==========END FUNCTION TO FETCH TABLE DATA ==============
 
 //===TRIGGER that starts the whole engine ==========
 console.log("App.js execution reaching the end...triggering startup()");
