@@ -233,19 +233,19 @@ async function fetchTableData(tableName) {
             account: account
         });
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/range`;
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
   
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
         const data = await response.json();
         
-        console.log(`Raw Data for ${tableName}:`, data);
         
         const container = document.getElementById('table-container');
 
         // Check if Graph returned an error
         if (data.error) {
+            console.error("Graph API Error Object:", data.error);
             container.innerHTML = `<p style="color:red;">Error: ${data.error.message}</p>`;
             return;
         }
@@ -253,12 +253,18 @@ async function fetchTableData(tableName) {
 //============================ 
         // CRITICAL CHANGE: 
         // The /range endpoint returns "values" as a 2D array (Array of Arrays)
+        // safely capture the grid
         const grid = data.values; 
 
-        if (!grid || grid.length === 0) {
-            container.innerHTML = "<p>No data found.</p>";
+       // 3. Robust Check: Is grid actually an array with at least one row?
+        if (!Array.isArray(grid) || grid.length === 0) {
+            console.warn("Grid is missing or empty. Full response:", data);
+            container.innerHTML = "<p>No data found in the table range.</p>";
             return;
         }
+
+
+
         // Build table
         let tableHtml = `<table><thead><tr>`;
 
