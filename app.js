@@ -234,10 +234,7 @@ async function fetchTableData(tableName) {
             account: account
         });
 
-        // FIXED URL STRING: Ensuring no stray characters or brackets exist
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${tableName}/rows`;
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
-
+        const url = `https://graph.microsoft.com{fileName}:/workbook/tables/${tableName}/rows`;
 
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
@@ -248,35 +245,37 @@ async function fetchTableData(tableName) {
         
         const container = document.getElementById('table-container');
 
-        // Check if Graph returned an error (like 404 or 401)
+        // DEFENSIVE CHECK 1: Did Graph return an error?
         if (data.error) {
-            container.innerHTML = `<p style="color:red;">Microsoft Graph Error: ${data.error.message}</p>`;
+            container.innerHTML = `<p style="color:red;">Error: ${data.error.message}</p>`;
             return;
         }
 
+        // DEFENSIVE CHECK 2: Is the value array missing or empty?
         if (!data.value || data.value.length === 0) {
-            container.innerHTML = "<p>No data found in this table.</p>";
+            container.innerHTML = "<p>No data found in this table. Ensure the table has rows.</p>";
             return;
         }
 
-        // Build Table
+        // Build the Table
         let tableHtml = `<table><thead><tr>`;
 
-        // 1. HEADERS: Graph Excel API /rows returns data rows. 
-        // We use the first row's values to create the header.
-        const firstRowValues = data.value[0].values[0]; 
-        firstRowValues.forEach(cell => {
+        // 1. HEADERS: We use the first row's 'values' property to create headers
+        // Graph rows return: { index: 0, values: [["Cell1", "Cell2"]] }
+        const firstRowCells = data.value[0].values[0]; 
+        
+        firstRowCells.forEach(cell => {
             tableHtml += `<th>${cell || ""}</th>`;
         });
         tableHtml += `</tr></thead><tbody>`;
 
-        // 2. DATA: Loop through all rows
+        // 2. DATA ROWS: Loop through all rows
         data.value.forEach((rowObject, index) => {
-            // Skip the first row if it was used as your header
+            // Skip the first row if you are using it as a header
             if (index === 0) return;
 
             tableHtml += `<tr>`;
-            // MS Graph stores the array of cells inside rowObject.values[0]
+            // Extract the inner array of values
             const cells = rowObject.values[0]; 
             cells.forEach(cell => {
                 tableHtml += `<td>${cell !== null ? cell : ""}</td>`;
@@ -289,7 +288,7 @@ async function fetchTableData(tableName) {
         
     } catch (error) {
         console.error("Error fetching table data:", error);
-        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Network Error: Could not reach Microsoft Graph.</p>";
+        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table rows.</p>";
     }
 }
 
