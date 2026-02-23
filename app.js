@@ -240,12 +240,12 @@ async function fetchTableData(tableName) {
         });
         const data = await response.json();
         
-        
+        console.log("Full API Response:", data); // Log the entire response for debugging
+
         const container = document.getElementById('table-container');
 
         // Check if Graph returned an error
         if (data.error) {
-            console.error("Graph API Error Object:", data.error);
             container.innerHTML = `<p style="color:red;">Error: ${data.error.message}</p>`;
             return;
         }
@@ -254,16 +254,20 @@ async function fetchTableData(tableName) {
         // CRITICAL CHANGE: 
         // The /range endpoint returns "values" as a 2D array (Array of Arrays)
         // safely capture the grid
-        const grid = data.values; 
+        const grid = data?.values || []; // Default to empty array if "values" is missing
 
-       // 3. Robust Check: Is grid actually an array with at least one row?
-        if (!Array.isArray(grid) || grid.length === 0) {
-            console.warn("Grid is missing or empty. Full response:", data);
+        if (grid.length === 0) {
+            console.warn("Grid is empty.");
             container.innerHTML = "<p>No data found in the table range.</p>";
             return;
         }
-
-
+       
+         // Verify grid[0] exists before accessing
+        if (!grid[0]) {
+            container.innerHTML = "<p>Table structure is invalid.</p>";
+            return;
+        }
+       
 
         // Build table
         let tableHtml = `<table><thead><tr>`;
@@ -278,9 +282,12 @@ async function fetchTableData(tableName) {
         // 2. DATA: All arrays after the first one
         for (let i = 1; i < grid.length; i++) {
             tableHtml += `<tr>`;
-            grid[i].forEach(cell => {
-                tableHtml += `<td style="padding: 8px;">${cell !== null ? cell : ""}</td>`;
-            });
+             // Ensure grid[i] is an array before looping
+            if (Array.isArray(grid[i])) {
+                grid[i].forEach(cell => {
+                    tableHtml += `<td style="padding: 8px; border: 1px solid #ccc;">${cell !== null ? cell : ""}</td>`;
+                });
+            }
             tableHtml += `</tr>`;
         }
 
