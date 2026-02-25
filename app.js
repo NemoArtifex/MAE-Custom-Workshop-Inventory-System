@@ -301,79 +301,7 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
 
 //==========END FUNCTION Load Dynamic Menu ================
 
-//======= FUNCTION TO FETCH TABLE DATA ==============
-async function fetchTableData(tableName) {
-    try {
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
-  
-        const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
-        });
-        const data = await response.json();
-        
-        console.log("Full API Response:", data); // Log the entire response for debugging
 
-        const container = document.getElementById('table-container');
-
-        // Check if Graph returned an error
-        if (data.error) {
-            container.innerHTML = `<p style="color:red;">Error: ${data.error.message}</p>`;
-            return;
-        }
-
-//============================ 
-        // CRITICAL CHANGE: 
-        // The /range endpoint returns "values" as a 2D array (Array of Arrays)
-        // safely capture the grid
-        const grid = data.values || []; // Default to empty array if "values" is missing
-
-        if (grid.length === 0) {
-            container.innerHTML = "<p>No data found in the table range.</p>";
-            return;
-        }
-       
-         // Verify grid[0] exists before accessing
-        if (!grid[0]) {
-            container.innerHTML = "<p>Table structure is invalid.</p>";
-            return;
-        }
-       
-
-        // Build table
-        let tableHtml = `<table><thead><tr>`;
-
-         // 1. HEADERS: The first array in the grid
-        const headers = grid[0]; 
-        headers.forEach(cell => {
-            tableHtml += `<th style="background: #f2f2f2; padding: 8px;">${cell !== null ? cell : ""}</th>`;
-        });
-        tableHtml += `</tr></thead><tbody>`;
-
-        // 2. DATA: All arrays after the first one
-        for (let i = 1; i < grid.length; i++) {
-            tableHtml += `<tr>`;
-            grid[i].forEach(cell => {
-                tableHtml += `<td style="padding: 8px; border: 1px solid #ccc;">${cell !== null ? cell : ""}</td>`;
-            });
-            tableHtml += `</tr>`;
-        }
-
-        tableHtml += `</tbody></table>`;
-        container.innerHTML = tableHtml;
-        
-    } catch (error) {
-        console.error("Error fetching table data:", error);
-        document.getElementById('table-container').innerHTML = "<p style='color:red;'>Failed to load table.</p>";
-    }
-}       
-// ==========END FUNCTION TO FETCH TABLE DATA ==============
-
-//===TRIGGER that starts the whole engine ==========
-console.log("App.js execution reaching the end...triggering startup()");
 
 
