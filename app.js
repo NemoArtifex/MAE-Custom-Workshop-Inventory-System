@@ -38,7 +38,9 @@ async function startup() {
     try {
         //Intialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
-        myMSALObj = new msal.PublicClientApplication(msalConfig);
+        //myMSALObj = new WebTransportBidirectionalStream.msal.PublicClientApplication(msalConfig);
+        myMSALObj = new window.msal.PublicClientApplication(msalConfig);
+
         const response = await myMSALObj.handleRedirectPromise();
     
         if (response) {
@@ -195,7 +197,7 @@ async function verifySpreadsheetExists(){
 
     const fileName = maeSystemConfig.spreadsheetName;
     // Check if file exists in the root of OneDrive
-    const url = `https://graph.microsoft.com{fileName}`;
+    const url = `https://graph.microsoft.com{maeSystemConfig.spreadsheetName}`;
 
     try {
         const response = await fetch(url, {
