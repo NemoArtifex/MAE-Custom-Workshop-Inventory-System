@@ -10,7 +10,6 @@
                style-src * 'self' 'unsafe-inline';">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <title>MAE Workshop Inventory Management</title>
-    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
     <script src="msal-browser.min.js"></script>
     <script src="app.js" defer></script>
     <link rel="stylesheet" href="style.css">
@@ -24,6 +23,9 @@
         </ul>
         <button id="auth-btn" disabled>Connect Office 365</button>
     </nav>
+
+    <div id="app"></div>
+        <script type="module" src="app.js"></script>
 
     <main id="app-content">
         <h1 id="current-view-title">Welcome</h1>

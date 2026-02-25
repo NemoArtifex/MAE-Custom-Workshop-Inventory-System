@@ -1,3 +1,4 @@
+import { maeSystemConfig } from './config.js'
 // =============CONFIGURATION: The "Blueprint"  ======================
 // Defines the configuration object for the Microsoft Authentication Libray (MSAL)
 // Used to integrate Microsoft's identity and sign-in features into web apps
@@ -31,52 +32,35 @@ const msalConfig = {
 
 let myMSALObj;
 let account = null;
-const fileName = "MAE_Master_Inventory_Template.xlsx";
 
 async function startup() {
-    console.log("Checking for msal...", window.msal);
-
-    if (typeof msal === 'undefined') {
-        console.error("MSAL library not found. Check if msal-browser.min.js is in your project folder.");
-        return;
-    }
-
-    console.log("MSAL started locally:", msal);
 
     try {
         //Intialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
         myMSALObj = new msal.PublicClientApplication(msalConfig);
-
-        // This is the "Net" that catches the login result after the page reloads
-    const response = await myMSALObj.handleRedirectPromise();
+        const response = await myMSALObj.handleRedirectPromise();
     
-    if (response) {
-        console.log("Caught user login!", response.account);
+        if (response) {
         account = response.account;
-        updateUIForLoggedInUser(account);
-    } 
-
-        const authButton = document.getElementById("auth-btn");
-        authButton.disabled = false; 
-
-        // Check for existing session
-        const accounts = myMSALObj.getAllAccounts();
-        if (accounts.length > 0) {
-            account = accounts[0];
-            console.log("Found existing account:", account.username);
-            updateUIForLoggedInUser(account);
         } else {
-            console.log("No existing session found. Waiting for user to click Connect.");
+            const accounts = myMSALObj.getAllAccounts();
+            if (accounts.length > 0) account = accounts[0];
         }
-//Endpoint of this function is to make the authButton active allow sign-in when clicked
-        authButton.addEventListener("click", signIn);
+
+        if (account) {
+           updateUIForLoggedInUser(account); 
+        } else {
+            const authButton = document.getElementById("auth-btn");
+            authButton.addEventListener("click", signIn);
+        }
+
     } catch (error) {
         console.error("Error during MSAL startup:", error);
     }
 }
 //========END STARTUP LOGIC ===========
-
+startup();
 
 //===========SIGN-IN FUNCTION ==========
 //Initiated after pushing the authButton after made active at the end of the Startup function
@@ -146,7 +130,6 @@ async function signOut() {
         resetUI(); 
  }
 }
-
 //======END  SIGN-OUT FUNCTION ===========
 
 //========FUNCTION TO RESET UI AFTER SIGN-OUT =============
@@ -175,52 +158,145 @@ function resetUI() {
 
 
 }
-
 //========END FUNCTION TO RESET UI AFTER SIGN-OUT =============
 
 //======= FUNCTION Load Dynamic Menu ================
 async function loadDynamicMenu() {
+   const menu = document.getElementById("menu");
+    menu.innerHTML = ""; // Clear any existing menu items
+    
+    console.log("Building dynamic menu from config...");
+    // We iterate through the CONFIG, not the Excel file. 
+    // This ensures the App stays "Locked" to the business agreement.
+    maeSystemConfig.worksheets.forEach(sheet => {
+        const btn = document.createElement("button");
+        btn.innerText = sheet.tabName;
+        btn.className = "menu-btn";
+        btn.onclick = () => loadTableData(sheet.tableName);
+
+        const listItem = document.createElement("li");
+        listItem.appendChild(btn);
+        menu.appendChild(listItem);
+    });
+
+    // Check if the actual Excel file exists on OneDrive
+    verifySpreadsheetExists();
+    
+}
+
+async function verifySpreadsheetExists(){
+    // Logic here to check if maeSystemConfig.spreadsheetName exists
+    // If 404: Call a function to CREATE the workbook using the config
+    // If 200: All good, ready to work.
+    const tokenResponse = await myMSALObj.acquireTokenSilent({
+        scopes: ["Files.ReadWrite"],
+        account: account
+    });
+
+    const fileName = maeSystemConfig.spreadsheetName;
+    // Check if file exists in the root of OneDrive
+    const url = `https://graph.microsoft.com{fileName}`;
+
     try {
-        // Silent token acquisition is standard for rugged apps to avoid constant popups
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables`;
-
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
-        
-        const data = await response.json();
 
-        if (data.error) {
-            console.error("Graph API Error:", data.error.message);
-            return;
+        if (response.status === 404) {
+            console.warn("File not found. MAE System: Initializing new workbook...");
+            await createInitialWorkbook(tokenResponse.accessToken);
+        } else {
+            console.log("MAE System: Workbook verified and ready.");
         }
-
-        const menu = document.getElementById('menu');
-        menu.innerHTML = ""; 
-
-        data.value.forEach(table => {
-            const li = document.createElement('li');
-            li.style.cursor = "pointer";
-            li.style.padding = "10px";
-            
-            const displayName = table.name.replace(/_/g, ' ').replace('Table', '');
-            li.innerText = displayName;
-
-            li.onclick = () => {
-                document.getElementById('current-view-title').innerText = displayName;
-                fetchTableData(table.name);
-            };
-            menu.appendChild(li);
-        });
     } catch (error) {
-        console.error("Error loading menu:", error);
-        // If silent fails, user might need to click sign-in again
+        console.error("Verification Error:", error);
     }
+}
+
+/**
+ * Step 2: Create the .xlsx file and build the Tables/Headers
+ * from the maeSystemConfig.
+ */
+async function createInitialWorkbook(accessToken) {
+    const fileName = maeSystemConfig.spreadsheetName;
+    const baseUrl = `https://graph.microsoft.com`;
+
+    // 1. Create the empty Excel file
+    const createRes = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+            "name": fileName,
+            "file": {},
+            "@microsoft.graph.conflictBehavior": "fail"
+        })
+    });
+
+    if (!createRes.ok) throw new Error("Failed to create file");
+    
+    // 2. Loop through config to add Worksheets and Tables
+    // Note: Excel creates "Sheet1" by default, so we use that for the first config item
+    for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
+        const sheet = maeSystemConfig.worksheets[i];
+        await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
+    }
+    
+    alert("Workshop System Initialized Successfully!");
+}
+
+/**
+ * Step 3: Helper to add a sheet, add a table, and set headers.
+ */
+async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
+    const workbookUrl = `https://graph.microsoft.com{fileName}:/workbook`;
+    
+    // A. Add Worksheet (Skip if it's the first sheet "Sheet1")
+    if (!isFirstSheet) {
+        await fetch(`${workbookUrl}/worksheets`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: sheetConfig.tabName })
+        });
+    } else {
+        // Rename default Sheet1 to our first tabName
+        await fetch(`${workbookUrl}/worksheets/Sheet1`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: sheetConfig.tabName })
+        });
+    }
+
+    // B. Create the Table
+    // We assume a standard starting range (A1 to [Column Count]1)
+    const lastColLetter = String.fromCharCode(64 + sheetConfig.columns.length);
+    const tableRange = `${sheetConfig.tabName}!A1:${lastColLetter}1`;
+
+    const tableRes = await fetch(`${workbookUrl}/worksheets/${sheetConfig.tabName}/tables/add`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: tableRange, hasHeaders: true })
+    });
+    
+    const tableData = await tableRes.json();
+    const tableId = tableData.id;
+
+    // C. Rename Table to our tableName (The "Rugged" ID)
+    await fetch(`${workbookUrl}/tables/${tableId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: sheetConfig.tableName })
+    });
+
+    // D. Set Header Names
+    const headers = sheetConfig.columns.map(col => col.header);
+    await fetch(`${workbookUrl}/tables/${sheetConfig.tableName}/headerRowRange`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [headers] })
+    });
 }
 
 //==========END FUNCTION Load Dynamic Menu ================
@@ -300,4 +376,4 @@ async function fetchTableData(tableName) {
 //===TRIGGER that starts the whole engine ==========
 console.log("App.js execution reaching the end...triggering startup()");
 
-startup();
+
