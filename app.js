@@ -197,7 +197,11 @@ async function verifySpreadsheetExists(){
 
     const fileName = maeSystemConfig.spreadsheetName;
     // Check if file exists in the root of OneDrive
-    const url = `https://graph.microsoft.com{maeSystemConfig.spreadsheetName}`;
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${maeSystemConfig.spreadsheetName}`;
+
+//====== from "abandoned" version:==================
+//      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
+// ==================================================
 
     try {
         const response = await fetch(url, {
