@@ -38,7 +38,7 @@ async function startup() {
     try {
         //Intialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
-        //myMSALObj = new WebTransportBidirectionalStream.msal.PublicClientApplication(msalConfig);
+        
         myMSALObj = new window.msal.PublicClientApplication(msalConfig);
 
         const response = await myMSALObj.handleRedirectPromise();
