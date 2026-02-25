@@ -185,7 +185,9 @@ async function loadDynamicMenu() {
     verifySpreadsheetExists();
     
 }
+//=======END FUNCTION Load Dynamic Menu ================
 
+// ======= FUNCTION verifySpreadSheetExists =============
 async function verifySpreadsheetExists(){
     // Logic here to check if maeSystemConfig.spreadsheetName exists
     // If 404: Call a function to CREATE the workbook using the config
@@ -197,7 +199,7 @@ async function verifySpreadsheetExists(){
 
     const fileName = maeSystemConfig.spreadsheetName;
     // Check if file exists in the root of OneDrive
-    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${maeSystemConfig.spreadsheetName}`;
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}`;
 
 //====== from "abandoned" version:==================
 //      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
@@ -218,7 +220,9 @@ async function verifySpreadsheetExists(){
         console.error("Verification Error:", error);
     }
 }
+//======END FUNCTION verifySpreadSheetExists =============
 
+//=========FUNCTION createInitialWorkbook =============
 /**
  * Step 2: Create the .xlsx file and build the Tables/Headers
  * from the maeSystemConfig.
@@ -253,6 +257,9 @@ async function createInitialWorkbook(accessToken) {
     alert("Workshop System Initialized Successfully!");
 }
 
+//=========END FUNCTION createInitialWorkbook =============
+
+//=========FUNCTION initializeSheetAndTable =============
 /**
  * Step 3: Helper to add a sheet, add a table, and set headers.
  */
@@ -305,7 +312,9 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     });
 }
 
-//==========END FUNCTION Load Dynamic Menu ================
+//=========END FUNCTION initializeSheetAndTable =============
+
+
 
 
 
