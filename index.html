@@ -11,26 +11,21 @@
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <title>MAE Workshop Inventory Management</title>
     <script src="msal-browser.min.js"></script>
-    <script src="app.js" defer></script>
+    <script type="module" src="app.js" defer></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <nav class="sidebar">
         <h2>MAE Workshop Inventory Management System</h2>
         <!-- UPDATED: Empty list. app.js will fill this with Excel Table names -->
-        <ul id="menu">
-            <li style="color: #aaa; padding: 10px;">Connect to load menu...</li>
-        </ul>
-        <button id="auth-btn" disabled>Connect Office 365</button>
+        <ul id="menu"></ul>ul>
+        <button id="auth-btn" >Connect Microsoft Office 365</button>
     </nav>
 
-    <div id="app"></div>
-        <script type="module" src="app.js"></script>
-
     <main id="app-content">
-        <h1 id="current-view-title">Welcome</h1>
+        <h1 id="current-view-title">Workshop Inventory Dashboard </h1>
         <div id="table-container">
-            <p>Please log in to view and manage your inventory data.</p>
+            <p style="padding: 20px;">Please connect to Office 365 to load your workshop data.</p>
             <!-- Data for the active worksheet loads here -->
         </div>
     </main>

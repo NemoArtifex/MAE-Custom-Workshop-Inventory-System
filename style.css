@@ -1,10 +1,82 @@
-:root { --primary: #333; --accent: #d35400; --text: #fff; }
-body { display: flex; margin: 0; background: #eee; font-family: sans-serif; }
-.sidebar { width: 250px; height: 100vh; background: var(--primary); color: var(--text); padding: 20px; }
-.sidebar ul { list-style: none; padding: 0; }
-.sidebar li { padding: 15px; cursor: pointer; border-bottom: 1px solid #444; }
-.sidebar li:hover { background: var(--accent); }
-main { flex-grow: 1; padding: 30px; }
-table { width: 100%; border-collapse: collapse; background: #fff; }
-th { background: #444; color: white; padding: 12px; }
-td { padding: 10px; border-bottom: 1px solid #ccc; }
+:root { 
+    --primary: #2c3e50;  /* Deep Navy */
+    --accent: #d35400;   /* Safety Orange */
+    --text: #ffffff; 
+    --bg: #f4f4f4;
+    --border: #bdc3c7;
+}
+
+body { 
+    display: flex; 
+    margin: 0; 
+    background: var(--bg); 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    height: 100vh;
+    overflow: hidden; /* Keeps sidebar and main content separate */
+}
+
+/* Sidebar - Rugged & Fixed */
+.sidebar { 
+    width: 280px; 
+    background: var(--primary); 
+    color: var(--text); 
+    padding: 20px; 
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+
+/* Menu Buttons (The "MAE" Style) */
+#menu { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
+.menu-btn { 
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #34495e;
+    color: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.menu-btn:hover { background: var(--accent); }
+.menu-btn.active { border-left: 5px solid var(--accent); background: #1a252f; }
+
+/* Auth Button */
+#auth-btn { 
+    padding: 15px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    border: none; 
+    border-radius: 4px;
+    background: #27ae60; /* Green for Connect */
+    color: white;
+}
+
+/* Main Content Area */
+main { 
+    flex-grow: 1; 
+    padding: 30px; 
+    overflow-y: auto; /* Allows table to scroll vertically */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Rugged Data Table */
+#table-container { 
+    background: white; 
+    padding: 1px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    overflow-x: auto; /* Essential for many columns */
+}
+
+table { width: 100%; border-collapse: collapse; min-width: 800px; }
+th { background: var(--primary); color: white; padding: 15px; text-align: left; position: sticky; top: 0; }
+td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+tr:nth-child(even) { background: #f9f9f9; }
+tr:hover { background: #f1f1f1; }
+
