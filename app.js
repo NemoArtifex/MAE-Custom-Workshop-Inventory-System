@@ -227,21 +227,27 @@ async function verifySpreadsheetExists(){
  * so we create a minimal Excel file in-memory.
  * 
  */
-// A minimal, valid Base64 string for an empty .xlsx file
-const base64BlankExcel = "UEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAHAAAAX3JlbHMvLnJlbHOtkt1KAzEQRe+D7xDmbmZ7IaKybS9K6Uf0ASp9gEnbaZpMZpIofXvHrqAtpYIgepEhc+acc7Inm4vXatYpE3uXUFTVChid3XatSvi6vX/6AWIu6Iyd8yR8mYOnfXu7P9pInid0GZunmPsh9SPhSogY8uYpEq6mGAsG/yY04GvVzVzOnwZitFp7m8I504XQ01n12vX84/iYQ6fD8iGfDqO2KCOY8K0hNq9995I5xT/lM4p+FhVn2m2k9KAn8Yv6V1LzNn+Nivz4eD0E/G8+7uSvyf73fQ0UEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAHAAAAdXJsLnJlbHNz909SCS4tL0nNVXDOz9MvS80r0U/OSSwuVvBKTU7OyczPY/BNSfXxd/EP8Q3x9fX0DQpS8PP39A0KUtB3yc9TMNQvKC1KT83Lz0u15VBLAwQUAAAAAAC/eVpWAAAAAAAAAAAAAAAACAAAAHhsL3dvcmtib29rLnhtbG9Xy0rDQAzeB98hzN3MdhCisO0uSmn/oA9Q6QOsst00SZZZkvTtuHVV9CJ6kcGZfMmc7E5m07pU67SMvevFmG7WwOisNulS8XF9f/cLxFzQGTvmSfgmD572ze3u6KJ5ntBnbJ5i7ofUj4QrIWK4mKdImE4xFgz+SWjA5mXbeZk/DcRolfYuhXOnC6GnseqVzbnT38WHzp0Pyod8OozSko9gwoeG2Dx77yVzin/Kp7T9f1X9An0UfGg+Kof0uK0L6p9RkD8fr66A/5uPOfkrsv+HjwFUEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAJAAAAeGwvX3JlbHMvd29ya2Jvb2sueG1sLnJlbHNz909SCS4tL0nNVXDOz9MvS80r0U/OSSwuVvBKTU7OyczPY/BNSfXxd/EP8Q3x9fX0DQpS8PP39A0KUtB3yc9TMNQvKC1KT83Lz0u15VBLAwQUAAAAAAC/eVpWAAAAAAAAAAAAAAAAEQAAAHhsL3NoZWV0cy9zaGVldDEueG1sbVfLToNAEN0bvwOZO8y29iNEVNo9Kam90AfY9AFG2U6TyU6S6I93LNoYjE/0IsM5XGaGm5k83Vz1U6tG56VvT6E2S6CRVr1Iu1C/v7w8fAKfS7YRR9/YUKvTCH+v7+9eP2XPI7YatitY74M0TISbICVvKqESpqscC9qfRErcrGzfXP66iNE6092VsVq7EGrV61G7hT39W7/p3vmobKgnw9A6pBUM7fGgO6e+e5Q9yT9lpWp/FpVmWs3U/tYp+Wf8m6/i6eP1I+N/9mFDfyf1t/81UEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAAAF9yZWxzLy5yZWxzUEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAALAAAAHVybC5yZWxzUEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAYQAAAHhsL3dvcmtib29rLnhtbFBLAQIUABQAAAAAAL95WlYAAAAAAAAAAAAAAAAJAAAAAAAAAAAAAAAAAL0AAAB4bC9fcmVscy93b3JrYm9vay54bWwucmVsc1BLAQIUABQAAAAAAL95WlYAAAAAAAAAAAAAAAARAAAAAAAAAAAAAAAAAPEAAAB4bC9zaGVldHMvc2hlZXQxLnhtbFBLBQYAAAAAAQABAFoAAAA1AQAAAAA=";
 
-// 1. Convert Base64 to a Binary ArrayBuffer
-function base64ToBuffer(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
+// This generates a valid, minimal blank Excel file directly from bytes.
+// No atob() or base64 string required.
+function getBlankExcelBuffer() {
+    const bytes = new Uint8Array([
+        0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x5B, 0x43,
+        0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x5F, 0x54, 0x79, 0x70, 0x65, 0x73, 0x5D, 0x2E, 0x78, 0x6D,
+        0x6C, 0xAD, 0x4D, 0xCB, 0x0E, 0xC2, 0x30, 0x10, 0xBC, 0xF7, 0x22, 0xBE, 0x31, 0xAD, 0x2D, 0x2D,
+        0x20, 0xD2, 0x02, 0x11, 0x91, 0x82, 0x14, 0x52, 0x41, 0x4C, 0x23, 0x31, 0x70, 0x19, 0xC1, 0xFE,
+        0x7B, 0xD1, 0x36, 0x93, 0x92, 0x2B, 0xAE, 0x2F, 0xDF, 0x7C, 0x1F, 0x1F, 0x0B, 0xAE, 0xB2, 0x12,
+        0x52, 0x01, 0x35, 0x5D, 0x1B, 0x45, 0x0E, 0x52, 0x79, 0x02, 0xD4, 0x71, 0x35, 0xB5, 0x22, 0xB2,
+        0x01, 0x21, 0x83, 0x2B, 0xD4, 0x54, 0xD6, 0x72, 0x51, 0xD6, 0x7E, 0x32, 0xE5, 0x2A, 0x23, 0x1C,
+        0x3B, 0x0F, 0x5C, 0x4C, 0x63, 0x0F, 0x00, 0x00, 0xFF, 0xFF, 0x50, 0x4B, 0x05, 0x06, 0x00, 0x00,
+        0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x36, 0x00, 0x00, 0x00, 0x9D, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]);
     return bytes.buffer;
 }
+
 async function createInitialWorkbook(accessToken) {
-    const excelBinaryData = base64ToBuffer(base64BlankExcel);
+    const excelBinaryData = getBlankExcelBuffer(); 
     const fileName = maeSystemConfig.spreadsheetName;
     const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
     
