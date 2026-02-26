@@ -101,33 +101,30 @@ function updateUIForLoggedInUser(userAccount) {
 
 //========SIGN-OUT FUNCTION ===========
 async function signOut() {
-    console.log("Starting sign-out process...");
-     // Safeguard: if the account object is missing, just reset the UI locally
-    if (!account) return resetUI();
+    console.log("Starting sign-out process via redirect...");
+    
+    if (!account) {
+        resetUI();
+        return;
+    }
+
+    const logoutRequest = {
+        account: myMSALObj.getAccountByUsername(account.username),
+        // After Microsoft logs you out, it will send the browser back here
+        postLogoutRedirectUri: window.location.origin + window.location.pathname
+    };
 
     try {
-        const logoutRequest = {
-            account: myMSALObj.getAccountByUsername(account.username),
-            // Where the popup should go after it finishes
-            postLogoutRedirectUri: window.location.origin 
-        };
-     // triggers popup   
-        await myMSALObj.logoutPopup(logoutRequest);
-        
+        // This clears the session storage and redirects the whole tab
+        // to the Microsoft logout page.
+        await myMSALObj.logoutRedirect(logoutRequest);
     } catch (error) {
-        // If an interaction is already happening, MSAL is "locked." 
-        // We catch that error and force a local cleanup anyway.
-        if (error.errorMessage && error.errorMessage.includes("interaction_in_progress")) {
-            console.warn("Interaction locked. Forcing local logout.");
-        } else { 
-        console.error("Sign-out failed:", error);
-    }
- } finally {
-    // This 'finally' block ensures your UI resets NO MATTER WHAT
+        console.error("Sign-out redirect failed:", error);
+        // Fallback: If the redirect fails, at least clean up the local UI
         account = null;
-        sessionStorage.clear(); // Rugged move: wipe the cache manually
-        resetUI(); 
- }
+        sessionStorage.clear();
+        resetUI();
+    }
 }
 //======END  SIGN-OUT FUNCTION ===========
 
