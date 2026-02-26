@@ -73,11 +73,7 @@ async function signIn() {
     };
 
     try {
-        // v2 supports the simple loginPopup method
-        const loginResponse = await myMSALObj.loginPopup(loginRequest);
-        console.log("Login Successful:", loginResponse);
-        account = loginResponse.account;
-        updateUIForLoggedInUser(account);
+        await myMSALObj.loginRedirect(loginRequest);
     } catch (error) {
         console.error("Login failed:", error);
     }
