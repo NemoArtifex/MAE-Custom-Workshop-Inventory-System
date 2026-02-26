@@ -1,4 +1,5 @@
 import { maeSystemConfig } from './config.js'
+const fileName = maeSystemConfig.spreadsheetName;
 // =============CONFIGURATION: The "Blueprint"  ======================
 // Defines the configuration object for the Microsoft Authentication Libray (MSAL)
 // Used to integrate Microsoft's identity and sign-in features into web apps
@@ -197,7 +198,7 @@ async function verifySpreadsheetExists(){
         account: account
     });
 
-    const fileName = maeSystemConfig.spreadsheetName;
+    //const fileName = maeSystemConfig.spreadsheetName;
     // Check if file exists in the root of OneDrive
     const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
@@ -247,7 +248,7 @@ function getBlankExcelBuffer() {
 }
 
 async function createInitialWorkbook(accessToken) {
-    const fileName = maeSystemConfig.spreadsheetName;
+    //const fileName = maeSystemConfig.spreadsheetName;
     const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
     
     // 1. Create the empty Excel file
