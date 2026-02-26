@@ -201,10 +201,6 @@ async function verifySpreadsheetExists(){
     // Check if file exists in the root of OneDrive
     const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
-//====== from "abandoned" version:==================
-//      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
-// ==================================================
-
     try {
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
@@ -226,23 +222,37 @@ async function verifySpreadsheetExists(){
 /**
  * Step 2: Create the .xlsx file and build the Tables/Headers
  * from the maeSystemConfig.
+ * 
+ *  Prep work to create an empty .xlsx file. The Graph API requires a binary upload, 
+ * so we create a minimal Excel file in-memory.
+ * 
  */
-async function createInitialWorkbook(accessToken) {
-    const fileName = maeSystemConfig.spreadsheetName;
-    const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
+// A minimal, valid Base64 string for an empty .xlsx file
+const base64BlankExcel = "UEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAHAAAAX3JlbHMvLnJlbHOtkt1KAzEQRe+D7xDmbmZ7IaKybS9K6Uf0ASp9gEnbaZpMZpIofXvHrqAtpYIgepEhc+acc7Inm4vXatYpE3uXUFTVChid3XatSvi6vX/6AWIu6Iyd8yR8mYOnfXu7P9pInid0GZunmPsh9SPhSogY8uYpEq6mGAsG/yY04GvVzVzOnwZitFp7m8I504XQ01n12vX84/iYQ6fD8iGfDqO2KCOY8K0hNq9995I5xT/lM4p+FhVn2m2k9KAn8Yv6V1LzNn+Nivz4eD0E/G8+7uSvyf73fQ0UEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAHAAAAdXJsLnJlbHNz909SCS4tL0nNVXDOz9MvS80r0U/OSSwuVvBKTU7OyczPY/BNSfXxd/EP8Q3x9fX0DQpS8PP39A0KUtB3yc9TMNQvKC1KT83Lz0u15VBLAwQUAAAAAAC/eVpWAAAAAAAAAAAAAAAACAAAAHhsL3dvcmtib29rLnhtbG9Xy0rDQAzeB98hzN3MdhCisO0uSmn/oA9Q6QOsst00SZZZkvTtuHVV9CJ6kcGZfMmc7E5m07pU67SMvevFmG7WwOisNulS8XF9f/cLxFzQGTvmSfgmD572ze3u6KJ5ntBnbJ5i7ofUj4QrIWK4mKdImE4xFgz+SWjA5mXbeZk/DcRolfYuhXOnC6GnseqVzbnT38WHzp0Pyod8OozSko9gwoeG2Dx77yVzin/Kp7T9f1X9An0UfGg+Kof0uK0L6p9RkD8fr66A/5uPOfkrsv+HjwFUEsDBBQAAAAAAL95WlYAAAAAAAAAAAAAAAAJAAAAeGwvX3JlbHMvd29ya2Jvb2sueG1sLnJlbHNz909SCS4tL0nNVXDOz9MvS80r0U/OSSwuVvBKTU7OyczPY/BNSfXxd/EP8Q3x9fX0DQpS8PP39A0KUtB3yc9TMNQvKC1KT83Lz0u15VBLAwQUAAAAAAC/eVpWAAAAAAAAAAAAAAAAEQAAAHhsL3NoZWV0cy9zaGVldDEueG1sbVfLToNAEN0bvwOZO8y29iNEVNo9Kam90AfY9AFG2U6TyU6S6I93LNoYjE/0IsM5XGaGm5k83Vz1U6tG56VvT6E2S6CRVr1Iu1C/v7w8fAKfS7YRR9/YUKvTCH+v7+9eP2XPI7YatitY74M0TISbICVvKqESpqscC9qfRErcrGzfXP66iNE6092VsVq7EGrV61G7hT39W7/p3vmobKgnw9A6pBUM7fGgO6e+e5Q9yT9lpWp/FpVmWs3U/tYp+Wf8m6/i6eP1I+N/9mFDfyf1t/81UEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAAAF9yZWxzLy5yZWxzUEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAALAAAAHVybC5yZWxzUEsBAhQAFAAAAAAAv3laVgAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAYQAAAHhsL3dvcmtib29rLnhtbFBLAQIUABQAAAAAAL95WlYAAAAAAAAAAAAAAAAJAAAAAAAAAAAAAAAAAL0AAAB4bC9fcmVscy93b3JrYm9vay54bWwucmVsc1BLAQIUABQAAAAAAL95WlYAAAAAAAAAAAAAAAARAAAAAAAAAAAAAAAAAPEAAAB4bC9zaGVldHMvc2hlZXQxLnhtbFBLBQYAAAAAAQABAFoAAAA1AQAAAAA=";
 
+// 1. Convert Base64 to a Binary ArrayBuffer
+function base64ToBuffer(base64) {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+async function createInitialWorkbook(accessToken) {
+    const excelBinaryData = base64ToBuffer(base64BlankExcel);
+    const fileName = maeSystemConfig.spreadsheetName;
+    const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
+    
     // 1. Create the empty Excel file
     const createRes = await fetch(baseUrl, {
-        method: 'POST',
+        method: 'PUT',
         headers: { 
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json' 
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'  
         },
-        body: JSON.stringify({
-            "name": fileName,
-            "file": {},
-            "@microsoft.graph.conflictBehavior": "fail"
-        })
+        body: excelBinaryData
     });
 
     if (!createRes.ok) throw new Error("Failed to create file");
