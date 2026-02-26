@@ -279,9 +279,10 @@ async function createInitialWorkbook(accessToken) {
  * Step 3: Helper to add a sheet, add a table, and set headers.
  */
 async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
-    const workbookUrl = `https://graph.microsoft.com{fileName}:/workbook`;
+    const fileName = maeSystemConfig.spreadsheetName;
+    const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
     
-    // A. Add Worksheet (Skip if it's the first sheet "Sheet1")
+    // A. Add (Skip if it's the first sheet "Sheet1")
     if (!isFirstSheet) {
         await fetch(`${workbookUrl}/worksheets`, {
             method: 'POST',
