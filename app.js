@@ -247,7 +247,6 @@ function getBlankExcelBuffer() {
 }
 
 async function createInitialWorkbook(accessToken) {
-    const excelBinaryData = getBlankExcelBuffer(); 
     const fileName = maeSystemConfig.spreadsheetName;
     const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
     
@@ -258,7 +257,7 @@ async function createInitialWorkbook(accessToken) {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'  
         },
-        body: excelBinaryData
+        body: getBlankExcelBuffer() // Directly use the ArrayBuffer for the blank Excel file    
     });
 
     if (!createRes.ok) throw new Error("Failed to create file");
@@ -329,6 +328,16 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
 }
 
 //=========END FUNCTION initializeSheetAndTable =============
+
+//========== Placeholder for loadTableData function =============
+async function loadTableData(tableName) {
+    console.log(`Loading data for table: ${tableName}`);
+    const container = document.getElementById("table-container");
+    container.innerHTML = `<p>Loading data for ${tableName}...</p>`;
+    
+    // Logic to fetch rows from Graph API will go here later
+}
+//========== End of Placeholder for loadTableData function =============
 
 
 
