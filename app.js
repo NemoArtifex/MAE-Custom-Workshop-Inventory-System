@@ -199,7 +199,7 @@ async function verifySpreadsheetExists(){
 
     const fileName = maeSystemConfig.spreadsheetName;
     // Check if file exists in the root of OneDrive
-    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}`;
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
 //====== from "abandoned" version:==================
 //      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/workbook/tables/${encodeURIComponent(tableName)}/range`;
@@ -229,7 +229,7 @@ async function verifySpreadsheetExists(){
  */
 async function createInitialWorkbook(accessToken) {
     const fileName = maeSystemConfig.spreadsheetName;
-    const baseUrl = `https://graph.microsoft.com`;
+    const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
     // 1. Create the empty Excel file
     const createRes = await fetch(baseUrl, {
