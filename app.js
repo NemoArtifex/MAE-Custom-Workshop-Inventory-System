@@ -18,11 +18,8 @@ const msalConfig = {
     cache: {
         cacheLocation: "sessionStorage", // Simple and effective for workshop environments
         storeAuthStateInCookie: false,
-    },
-    system: {
-        // increases reliability for popup communication  
-        allowRedirectInIframe: true,
     }
+    
 };
 // ===========END CONFIGURATION =============
 
@@ -35,17 +32,16 @@ let myMSALObj;
 let account = null;
 
 async function startup() {
-
     try {
         //Intialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
-        
         myMSALObj = new window.msal.PublicClientApplication(msalConfig);
 
         const response = await myMSALObj.handleRedirectPromise();
     
         if (response) {
         account = response.account;
+        console.log("Login successful via redirect. Account:", account.username);
         } else {
             const accounts = myMSALObj.getAllAccounts();
             if (accounts.length > 0) account = accounts[0];
@@ -69,10 +65,12 @@ startup();
 //Initiated after pushing the authButton after made active at the end of the Startup function
 async function signIn() {
     const loginRequest = {
-        scopes: ["User.Read", "Files.ReadWrite"]
+        scopes: ["User.Read", "Files.ReadWrite"],
+        prompt: "select_account" // Always prompt user to select account on sign-in
     };
 
     try {
+        console.log("Redirecting for a fresh login...");
         await myMSALObj.loginRedirect(loginRequest);
     } catch (error) {
         console.error("Login failed:", error);
