@@ -215,26 +215,7 @@ async function verifySpreadsheetExists(){
  * 
  *  Prep work to create an empty .xlsx file. The Graph API requires a binary upload, 
  * so we create a minimal Excel file in-memory.
- * 
  */
-
-// This generates a valid, minimal blank Excel file directly from bytes.
-// No atob() or base64 string required.
-//function getBlankExcelBuffer() {
-//    const bytes = new Uint8Array([
-//        0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x5B, 0x43,
-//       0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x5F, 0x54, 0x79, 0x70, 0x65, 0x73, 0x5D, 0x2E, 0x78, 0x6D,
-//        0x6C, 0xAD, 0x4D, 0xCB, 0x0E, 0xC2, 0x30, 0x10, 0xBC, 0xF7, 0x22, 0xBE, 0x31, 0xAD, 0x2D, 0x2D,
-//        0x20, 0xD2, 0x02, 0x11, 0x91, 0x82, 0x14, 0x52, 0x41, 0x4C, 0x23, 0x31, 0x70, 0x19, 0xC1, 0xFE,
-//        0x7B, 0xD1, 0x36, 0x93, 0x92, 0x2B, 0xAE, 0x2F, 0xDF, 0x7C, 0x1F, 0x1F, 0x0B, 0xAE, 0xB2, 0x12,
-//        0x52, 0x01, 0x35, 0x5D, 0x1B, 0x45, 0x0E, 0x52, 0x79, 0x02, 0xD4, 0x71, 0x35, 0xB5, 0x22, 0xB2,
-//        0x01, 0x21, 0x83, 0x2B, 0xD4, 0x54, 0xD6, 0x72, 0x51, 0xD6, 0x7E, 0x32, 0xE5, 0x2A, 0x23, 0x1C,
-//        0x3B, 0x0F, 0x5C, 0x4C, 0x63, 0x0F, 0x00, 0x00, 0xFF, 0xFF, 0x50, 0x4B, 0x05, 0x06, 0x00, 0x00,
-//        0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x36, 0x00, 0x00, 0x00, 0x9D, 0x00, 0x00, 0x00, 0x00, 0x00
-//    ]);
-//    return bytes.buffer;
-//}
 
 // This is a Base64 string for a 100% valid, blank Excel workbook.  
 function getBlankExcelBuffer() {
@@ -253,26 +234,42 @@ function getBlankExcelBuffer() {
 
 async function createInitialWorkbook(accessToken) {
 
-    const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
+   // const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
     
-    // 1. Create the empty Excel file
-    const createRes = await fetch(baseUrl, {
-        method: 'PUT',
-        headers: { 
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'  
-        },
-        body: getBlankExcelBuffer() // Directly use the ArrayBuffer for the blank Excel file    
-    });
+    const base64 = "UEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAAGAAAAX3JlbHMvUEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAALAAAAX3JlbHMvLnJlbHOEzwEOwiAMBNC7E99B9m4GNozYm3AByU0S6vXvYmIDV+v6m5S2TofpLpM7v9ArNidI2YpUq88LpL2H8u2G9XyD0U6qGZ9Iq9WRE9pBy0W0fLpB9XmE0uIsX3C+pInoB9eXWvL6B62T3y6vUEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAALAAAAeGwvcmVscy8ucmVsc1BLAwQUAAAAAADOkClWAAAAAAAAAAAAAAAAEAAAAHhsL3dvcmtib29rLnhtbFBLAwQUAAAAAADOkClWAAAAAAAAAAAAAAAAFAAAAHhsL3NoZWV0cy9zaGVldDEueG1sUEsBAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfcmVscy9QSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfcmVscy8ucmVsc1BLAQICFAAUAAAAAADOkClW8ulb0wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHhsL3JlbHMvLnJlbHNQSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4bC93b3JrYm9vay54bWxQSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4bC9zaGVldHMvc2hlZXQxLnhtbFBLBQYAAAAABQAFAAsBAAB6AAAAAAA=";
 
-    if (!createRes.ok) throw new Error("Failed to create file");
+    const binaryString = window.atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = `https://graph.microsoft.com{encodeURIComponent(fileName)}:/content`;
+    
+    // 1. Create the empty Excel file 
+    try {
+        const createRes = await fetch(url, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            body: blob
+        });
+
+        if (!createRes.ok) throw new Error("Failed to create file");
+
+        // IMPORTANT: Wait for OneDrive to index the new file before adding tables
+        await new Promise(resolve => setTimeout(resolve, 3000));
+       
     
     // 2. Loop through config to add Worksheets and Tables
     // Note: Excel creates "Sheet1" by default, so we use that for the first config item
- //   for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
- //       const sheet = maeSystemConfig.worksheets[i];
- //       await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
- //   }
+        for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
+            const sheet = maeSystemConfig.worksheets[i];
+            await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
+    }
     
     alert("Workshop System Initialized Successfully!");
 }
@@ -284,7 +281,7 @@ async function createInitialWorkbook(accessToken) {
  * Step 3: Helper to add a sheet, add a table, and set headers.
  */
 
-/*
+
 async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
     //const fileName = maeSystemConfig.spreadsheetName;
     const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
@@ -335,7 +332,6 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     });
 }
 
-*/
 
 //=========END FUNCTION initializeSheetAndTable =============
 
