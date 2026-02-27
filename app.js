@@ -261,24 +261,24 @@ async function createInitialWorkbook(accessToken) {
 /**
  * Step 3: Helper to add a sheet, add a table, and set headers.
  */
-
-
 async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
-    //const fileName = maeSystemConfig.spreadsheetName;
+
     const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
-    
-    // A. Add (Skip if it's the first sheet "Sheet1")
-    if (!isFirstSheet) {
-        await fetch(`${workbookUrl}/worksheets`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    const authHeader = {
+        'Authorization': 'Bearer ${accessToken}',
+        'Content-Type': 'application/json'
+    }
+    // A. Handle worksheet (Rename index 0)
+    if (isFirstSheet){
+        await fetch(`${workbookUrl}/worksheets/itemAt(index=0)`, {
+            method: 'PATCH',
+            headers: authHeader,
             body: JSON.stringify({ name: sheetConfig.tabName })
         });
     } else {
-        // Rename default Sheet1 to our first tabName
-        await fetch(`${workbookUrl}/worksheets/Sheet1`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        await fetch(`${workbookUrl}/worksheets/add`, {
+            method: 'POST',
+            headers: authHeader,
             body: JSON.stringify({ name: sheetConfig.tabName })
         });
     }
@@ -288,11 +288,23 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     const lastColLetter = String.fromCharCode(64 + sheetConfig.columns.length);
     const tableRange = `${sheetConfig.tabName}!A1:${lastColLetter}1`;
 
-    const tableRes = await fetch(`${workbookUrl}/worksheets/${sheetConfig.tabName}/tables/add`, {
+    console.log(`Creating table: ${sheetConfig.tableName} at ${tableRange}`);
+    //const tableRes = await fetch(`${workbookUrl}/worksheets/${sheetConfig.tabName}/tables/add`, {
+    const tableRes = await fetch(`${workbookUrl}/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/add`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: tableRange, hasHeaders: true })
-    });
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify({
+            address: tableRange,
+            hasHeaders: true 
+        })
+   });
+
+   if (!tableRes.ok){
+    const errorDetails = await tableRes.json();
+    console.error(`Table creation failed at ${sheetConfig.tabName}:`, errorDetails);
+    return; //STOOP if this step fails to prevent cascade errors
+   }
     
     const tableData = await tableRes.json();
     const tableId = tableData.id;
@@ -300,15 +312,15 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     // C. Rename Table to our tableName (The "Rugged" ID)
     await fetch(`${workbookUrl}/tables/${tableId}`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        headers: authHeader,
         body: JSON.stringify({ name: sheetConfig.tableName })
     });
 
     // D. Set Header Names
     const headers = sheetConfig.columns.map(col => col.header);
-    await fetch(`${workbookUrl}/tables/${sheetConfig.tableName}/headerRowRange`, {
+    await fetch(`${workbookUrl}/tables/${tableId}/headerRowRange`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        headers: authHeader,
         body: JSON.stringify({ values: [headers] })
     });
 }
