@@ -218,11 +218,9 @@ async function verifySpreadsheetExists(){
  */
 
 async function createInitialWorkbook(accessToken) {
-
-   // const baseUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
+   
 // This is a Base64 string for a 100% valid, blank Excel workbook.  
     const base64 = "UEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAAGAAAAX3JlbHMvUEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAALAAAAX3JlbHMvLnJlbHOEzwEOwiAMBNC7E99B9m4GNozYm3AByU0S6vXvYmIDV+v6m5S2TofpLpM7v9ArNidI2YpUq88LpL2H8u2G9XyD0U6qGZ9Iq9WRE9pBy0W0fLpB9XmE0uIsX3C+pInoB9eXWvL6B62T3y6vUEsDBBQAAAAAAM6QKVYAAAAAAAAAAAAAAAALAAAAeGwvcmVscy8ucmVsc1BLAwQUAAAAAADOkClWAAAAAAAAAAAAAAAAEAAAAHhsL3dvcmtib29rLnhtbFBLAwQUAAAAAADOkClWAAAAAAAAAAAAAAAAFAAAAHhsL3NoZWV0cy9zaGVldDEueG1sUEsBAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfcmVscy9QSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfcmVscy8ucmVsc1BLAQICFAAUAAAAAADOkClW8ulb0wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHhsL3JlbHMvLnJlbHNQSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4bC93b3JrYm9vay54bWxQSwECAhQAFAAAAAAAzpApVvLpW9MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4bC9zaGVldHMvc2hlZXQxLnhtbFBLBQYAAAAABQAFAAsBAAB6AAAAAAA=";
-
 
     try {
         const binaryString = window.atob(base64);
@@ -231,51 +229,44 @@ async function createInitialWorkbook(accessToken) {
             bytes[i] = binaryString.charCodeAt(i);
         }
 
-       // const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content`;
     
-        console.log("Pushing binary stream to OneDrive");
         const createRes = await fetch(url, {
             method: 'PUT',
             headers: { 
                 'Authorization': `Bearer ${accessToken}`,
-                //'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 'Content-Type': 'application/octet-stream'
-            },
-            //body: blob
+            }
         });
 
-        if (createRes.ok){
-            console.log("SUCCESS: Blank file created. GO TO ONEDRIVE NOW AND TRY TO OPEN IT");
-            alert("Blank file created! Check OneDrive before we try to add tables. ");  
-       
-/*
+       // if (createRes.ok){
+        //    console.log("SUCCESS: Blank file created. GO TO ONEDRIVE NOW AND TRY TO OPEN IT");
+
         // IMPORTANT: Wait for OneDrive to index the new file before adding tables
         await new Promise(resolve => setTimeout(resolve, 3000));
-       
-    
+           
     // 2. Loop through config to add Worksheets and Tables
     // Note: Excel creates "Sheet1" by default, so we use that for the first config item
         for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
             const sheet = maeSystemConfig.worksheets[i];
             await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
        }
-       alert("Workshop System Initialized Successfully!");
+       //alert("Workshop System Initialized Successfully!");
 
     } catch (error) {
         console.error("Error creating initial workbook:", error);
         alert("Failed to initialize system. check console for details.");
     }
 }
-*/
-         } else {
-            const errorData = await createRes.json();
-            console.error("OneDrive Rejected Upload:", errorData);
-        }
-     } catch (err) {
+//================
+   //      } else {
+   //         const errorData = await createRes.json();
+    //        console.error("OneDrive Rejected Upload:", errorData);
+    //    }
+   //  } catch (err) {
         console.error("Binary Upload:", err);
-    }
-}
+   // }
+//}
 
 
 
