@@ -231,17 +231,18 @@ async function createInitialWorkbook(accessToken) {
             bytes[i] = binaryString.charCodeAt(i);
         }
 
-        const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content?@microsoft.graph.conflictBehavior=fail`;
+       // const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content`;
     
-        console.log("Attempting to create file.....");
+        console.log("Pushing binary stream to OneDrive");
         const createRes = await fetch(url, {
             method: 'PUT',
             headers: { 
                 'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                //'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                'Content-Type': 'application/octet-stream'
             },
-            body: blob
+            //body: blob
         });
 
         if (createRes.ok){
@@ -269,10 +270,10 @@ async function createInitialWorkbook(accessToken) {
 */
          } else {
             const errorData = await createRes.json();
-            console.error("Graph API Error:", errorData);
+            console.error("OneDrive Rejected Upload:", errorData);
         }
      } catch (err) {
-        console.error("System Error:", err);
+        console.error("Binary Upload:", err);
     }
 }
 
