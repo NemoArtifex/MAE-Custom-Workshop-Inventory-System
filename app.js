@@ -269,6 +269,9 @@ async function createInitialWorkbook(accessToken) {
         for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
             const sheet = maeSystemConfig.worksheets[i];
             await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
+       }
+    } catch (error) {
+        console.error("Error creating initial workbook:", error);
     }
     
     alert("Workshop System Initialized Successfully!");
