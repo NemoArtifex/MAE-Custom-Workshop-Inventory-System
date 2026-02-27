@@ -239,10 +239,7 @@ async function createInitialWorkbook(accessToken) {
             }
         });
 
-       // if (createRes.ok){
-        //    console.log("SUCCESS: Blank file created. GO TO ONEDRIVE NOW AND TRY TO OPEN IT");
-
-        // IMPORTANT: Wait for OneDrive to index the new file before adding tables
+    // IMPORTANT: Wait for OneDrive to index the new file before adding tables
         await new Promise(resolve => setTimeout(resolve, 3000));
            
     // 2. Loop through config to add Worksheets and Tables
@@ -251,29 +248,12 @@ async function createInitialWorkbook(accessToken) {
             const sheet = maeSystemConfig.worksheets[i];
             await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
        }
-       //alert("Workshop System Initialized Successfully!");
 
     } catch (error) {
         console.error("Error creating initial workbook:", error);
         alert("Failed to initialize system. check console for details.");
     }
 }
-//================
-   //      } else {
-   //         const errorData = await createRes.json();
-    //        console.error("OneDrive Rejected Upload:", errorData);
-    //    }
-   //  } catch (err) {
-        console.error("Binary Upload:", err);
-   // }
-//}
-
-
-
-
-
-
-
 
 //=========END FUNCTION createInitialWorkbook =============
 
