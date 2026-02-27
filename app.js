@@ -269,10 +269,10 @@ async function createInitialWorkbook(accessToken) {
     
     // 2. Loop through config to add Worksheets and Tables
     // Note: Excel creates "Sheet1" by default, so we use that for the first config item
-    for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
-        const sheet = maeSystemConfig.worksheets[i];
-        await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
-    }
+ //   for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
+ //       const sheet = maeSystemConfig.worksheets[i];
+ //       await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
+ //   }
     
     alert("Workshop System Initialized Successfully!");
 }
@@ -283,6 +283,8 @@ async function createInitialWorkbook(accessToken) {
 /**
  * Step 3: Helper to add a sheet, add a table, and set headers.
  */
+
+/*
 async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
     //const fileName = maeSystemConfig.spreadsheetName;
     const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
@@ -332,6 +334,8 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
         body: JSON.stringify({ values: [headers] })
     });
 }
+
+*/
 
 //=========END FUNCTION initializeSheetAndTable =============
 
