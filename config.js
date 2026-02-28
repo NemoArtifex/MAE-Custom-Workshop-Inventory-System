@@ -1,20 +1,18 @@
 /**
  * MAE Custom Digital Solutions - Master System Manifest
  * Philosophy: Practical, Functional, Simple, Rugged.
- * 
- * Target: Small Workshop Inventory Management
- * Storage: Customer-owned OneDrive via MSAL/Graph API
  */
 
 export const maeSystemConfig = {
-    spreadsheetName: "MAE_Workshop_Inventory.xlsx",
-    version: "1.1.0",
+    spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
+    version: "1.2.0",
     
     worksheets: [
         {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
             columns: [
+                { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Total Inventory Value", type: "number", format: "$#,##0.00", locked: true },
                 { header: "Low Stock Alerts", type: "string", locked: true },
                 { header: "Upcoming Maintenance", type: "string", locked: true },
@@ -26,12 +24,13 @@ export const maeSystemConfig = {
             tabName: "Resell Inventory",
             tableName: "Resell_Inventory",
             columns: [
-                { header: "Asset ID", type: "string" },
-                { header: "Item Name", type: "string" },
-                { header: "Category", type: "string" },
-                { header: "Acquisition Date", type: "date", format: "mm/dd/yyyy" },
-                { header: "Purchase Price", type: "number", format: "$#,##0.00" },
-                { header: "Restoration Cost", type: "number", format: "$#,##0.00" },
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Asset ID", type: "string", locked: true },
+                { header: "Item Name", type: "string", locked: true },
+                { header: "Category", type: "string", locked: true },
+                { header: "Acquisition Date", type: "date", format: "mm/dd/yyyy", locked: true },
+                { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Restoration Cost", type: "number", format: "$#,##0.00", locked: true },
                 { 
                     header: "Total Investment", 
                     type: "formula", 
@@ -39,99 +38,105 @@ export const maeSystemConfig = {
                     format: "$#,##0.00",
                     locked: true 
                 },
-                { header: "Current Status", type: "string" },
-                { header: "Target Sale Price", type: "number", format: "$#,##0.00" },
-                { header: "Actual Sale Price", type: "number", format: "$#,##0.00" },
-                { header: "Location", type: "string" }
+                { header: "Current Status", type: "string", locked: true },
+                { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Location", type: "string", locked: true }
             ]
         },
         {
             tabName: "Shop Machinery",
             tableName: "Shop_Machinery",
             columns: [
-                { header: "Asset ID", type: "string" },
-                { header: "Machine Name/Model", type: "string" },
-                { header: "Manufacturer/Brand", type: "string" },
-                { header: "Serial Number", type: "string" },
-                { header: "Purchase Date", type: "date", format: "mm/dd/yyyy" },
-                { header: "Purchase Cost", type: "number", format: "$#,##0.00" },
-                { header: "Location", type: "string" },
-                { header: "Status", type: "string" },
-                { header: "Manual Link", type: "string" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Asset ID", type: "string", locked: true },
+                { header: "Machine Name/Model", type: "string", locked: true },
+                { header: "Manufacturer/Brand", type: "string", locked: true },
+                { header: "Serial Number", type: "string", locked: true },
+                { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: true },
+                { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Location", type: "string", locked: true },
+                { header: "Status", type: "string", locked: true },
+                { header: "Manual Link", type: "string", locked: true }
             ]
         },
         {
             tabName: "Maintenance Log",
             tableName: "Maintenance_Log",
             columns: [
-                { header: "Log ID", type: "string" },
-                { header: "Asset ID", type: "string" },
-                { header: "Service Date", type: "date", format: "mm/dd/yyyy" },
-                { header: "Service Type", type: "string" },
-                { header: "Performed By", type: "string" },
-                { header: "Cost", type: "number", format: "$#,##0.00" },
-                { header: "Next Service Date", type: "date", format: "mm/dd/yyyy" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Log ID", type: "string", locked: true },
+                { header: "Asset ID", type: "string", locked: true },
+                { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: true },
+                { header: "Service Type", type: "string", locked: true },
+                { header: "Performed By", type: "string", locked: true },
+                { header: "Cost", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Next Service Date", type: "date", format: "mm/dd/yyyy", locked: true }
             ]
         },
         {
             tabName: "Shop Power Tools",
             tableName: "Shop_Power_Tools",
             columns: [
-                { header: "Tool ID", type: "string" },
-                { header: "Tool Name/Model", type: "string" },
-                { header: "Category", type: "string" },
-                { header: "Condition", type: "string" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Tool ID", type: "string", locked: true },
+                { header: "Tool Name/Model", type: "string", locked: true },
+                { header: "Category", type: "string", locked: true },
+                { header: "Condition", type: "string", locked: true }
             ]
         },
         {
             tabName: "Shop Hand Tools",
             tableName: "Shop_Hand_Tools",
             columns: [
-                { header: "Tool ID", type: "string" },
-                { header: "Tool Name/Model", type: "string" },
-                { header: "Category", type: "string" },
-                { header: "Quantity", type: "number", format: "0" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Tool ID", type: "string", locked: true },
+                { header: "Tool Name/Model", type: "string", locked: true },
+                { header: "Category", type: "string", locked: true },
+                { header: "Quantity", type: "number", format: "0", locked: true }
             ]
         },
         {
             tabName: "Shop Consumables",
             tableName: "Shop_Consumables",
             columns: [
-                { header: "Item Name", type: "string" },
-                { header: "SKU/Item ID", type: "string" },
-                { header: "Unit of Measure", type: "string" },
-                { header: "Current Stock", type: "number", format: "0" },
-                { header: "Reorder Point", type: "number", format: "0" },
-                { header: "Unit Cost", type: "number", format: "$#,##0.00" },
-                { header: "Preferred Supplier", type: "string" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Item Name", type: "string", locked: true },
+                { header: "SKU/Item ID", type: "string", locked: true },
+                { header: "Unit of Measure", type: "string", locked: true },
+                { header: "Current Stock", type: "number", format: "0", locked: true },
+                { header: "Reorder Point", type: "number", format: "0", locked: true },
+                { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Preferred Supplier", type: "string", locked: true }
             ]
         },
         {
             tabName: "Shop Overhead",
             tableName: "Shop_Overhead",
             columns: [
-                { header: "Expense Category", type: "string" },
-                { header: "Description", type: "string" },
-                { header: "Payment Frequency", type: "string" },
-                { header: "Due Date", type: "string" },
-                { header: "Amount", type: "number", format: "$#,##0.00" },
-                { header: "Auto-Pay?", type: "string" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Expense Category", type: "string", locked: true },
+                { header: "Description", type: "string", locked: true },
+                { header: "Payment Frequency", type: "string", locked: true },
+                { header: "Due Date", type: "string", locked: true },
+                { header: "Amount", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Auto-Pay?", type: "string", locked: true }
             ]
         },
         {
             tabName: "Supplier Contacts",
             tableName: "Supplier_Contacts",
             columns: [
-                { header: "Supplier Contact Name", type: "string" },
-                { header: "Category", type: "string" },
-                { header: "Account Number", type: "string" },
-                { header: "Primary Contact", type: "string" },
-                { header: "Email", type: "string" },
-                { header: "Phone", type: "string" },
-                { header: "Lead Time", type: "string" },
-                { header: "Website Link", type: "string" }
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Supplier Contact Name", type: "string", locked: true },
+                { header: "Category", type: "string", locked: true },
+                { header: "Account Number", type: "string", locked: true },
+                { header: "Primary Contact", type: "string", locked: true },
+                { header: "Email", type: "string", locked: true },
+                { header: "Phone", type: "string", locked: true },
+                { header: "Lead Time", type: "string", locked: true },
+                { header: "Website Link", type: "string", locked: true }
             ]
         }
     ]
 };
-

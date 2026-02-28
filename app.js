@@ -78,7 +78,7 @@ async function signIn() {
 //===========END SIGN-IN FUNCTION ==========
 
 // ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
-// the signIn function calls updateUIForLoggedInUser() if successful 'login'
+// the startup() function calls updateUIForLoggedInUser() if successful 'login'
 // changes text on button and triggers loadDynamicMenu() function  
 function updateUIForLoggedInUser(userAccount) {
     const authButton = document.getElementById("auth-btn");
@@ -201,6 +201,8 @@ async function verifySpreadsheetExists(){
             await createInitialWorkbook(tokenResponse.accessToken);
         } else {
             console.log("MAE System: Workbook verified and ready.");
+         //  Run health check even if file exists to ensure customer didn't break it
+            await initializeSheetAndTable(tokenResponse.accessToken);
         }
     } catch (error) {
         console.error("Verification Error:", error);
@@ -209,13 +211,59 @@ async function verifySpreadsheetExists(){
 //======END FUNCTION verifySpreadSheetExists =============
 
 //=========FUNCTION createInitialWorkbook =============
-/**
+// Practical: Instead of building via API (brittle), we upload your Master Template.
+async function createInitialWorkbook(accessToken) {
+    const statusTitle = document.getElementById("current-view-title");
+    statusTitle.innerText = "Initializing your custom workshop system... please wait.";
+
+    // 1. Path to your Master Template in your GitHub Repo
+    // Assumes the .xlsx is in the root of your project directory
+    const MASTER_TEMPLATE_URL = `./${maeSystemConfig.spreadsheetName}`;
+
+    try {
+        // 2. Fetch the physical file from your GitHub server
+        const response = await fetch(MASTER_TEMPLATE_URL);
+        if (!response.ok) throw new Error("Could not find the Master Template on the server.");
+        const fileBlob = await response.blob();
+
+        // 3. Upload to Customer's OneDrive Root
+        const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/content`;
+        
+        const uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            body: fileBlob
+        });
+
+        if (uploadResponse.ok) {
+            console.log("MAE System: Master Workbook uploaded successfully.");
+            statusTitle.innerText = "System Initialized! Selecting a module to begin.";
+            // Now that the file exists, we perform a quick verification check
+            await initializeSheetAndTable(accessToken);
+        } else {
+            const errorData = await uploadResponse.json();
+            throw new Error(`Upload failed: ${errorData.error.message}`);
+        }
+
+    } catch (error) {
+        console.error("Critical Error during initialization:", error);
+        statusTitle.innerText = "Setup Error: Please contact MAE Support.";
+    }
+}
+
+//=======END FUNCTION createInitialWorkbook ==============
+
+ /*
+ * =====OLD==== FUNCTION createInitialWorkbook ===============
  * Step 2: Create the .xlsx file and build the Tables/Headers
  * from the maeSystemConfig.
  * 
  *  Prep work to create an empty .xlsx file. The Graph API requires a binary upload, 
  * so we create a minimal Excel file in-memory.
- */
+
 
 async function createInitialWorkbook(accessToken) {
    
@@ -291,12 +339,50 @@ async function createInitialWorkbook(accessToken) {
     }
 }
 
-//=========END FUNCTION createInitialWorkbook =============
+//=========OLD=====END FUNCTION createInitialWorkbook =============
+*/
+
 
 //=========FUNCTION initializeSheetAndTable =============
-/**
- * Step 3: Helper to add a sheet, add a table, and set headers.
- */
+async function initializeSheetAndTable(accessToken) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+
+    console.log("MAE System: Running Health Check...");
+    
+    // Check the first table in config to see if the file is "healthy"
+    const firstTableName = maeSystemConfig.worksheets[0].tableName;
+    const checkUrl = `https://graph.microsoft.com{encodeURIComponent(fileName)}:/workbook/tables/${firstTableName}`;
+
+    try {
+        const response = await fetch(checkUrl, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (response.ok) {
+            title.innerText = "System Ready: Select a Category";
+            container.innerHTML = `<p style="padding:20px;">Workbook verified. Use the sidebar to manage your ${maeSystemConfig.worksheets.length} workshop modules.</p>`;
+        } else {
+            // Error handling for the "Bowing Out" strategy
+            title.innerText = "System Integrity Alert";
+            container.innerHTML = `
+                <div style="padding:20px; color: #c0392b;">
+                    <p><strong>Warning:</strong> The spreadsheet structure has been modified outside the app.</p>
+                    <p>Please ensure the table <b>${firstTableName}</b> has not been renamed or deleted in Excel.</p>
+                    <hr>
+                    <p>To reset, you may delete the file from OneDrive and refresh this page to re-deploy the master template.</p>
+                </div>`;
+        }
+    } catch (error) {
+        console.error("Health check error:", error);
+    }
+}
+
+
+//========END FUNCTION initializeSheetAndTable===========
+
+/* ========OLD VERSION USING CONFIG.JS TO CREATE ================
+//===========FUNCTION initializeSheetAndTable ==============
 async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFirstSheet) {
 
     const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
@@ -374,8 +460,8 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     }
 }
 
-//=========END FUNCTION initializeSheetAndTable =============
-
+//=========OLD VERSION:===END FUNCTION initializeSheetAndTable =============
+*/
 //========== Placeholder for loadTableData function =============
 async function loadTableData(tableName) {
     console.log(`Loading data for table: ${tableName}`);
