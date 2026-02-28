@@ -240,13 +240,24 @@ async function createInitialWorkbook(accessToken) {
         });
 
     // IMPORTANT: Wait for OneDrive to index the new file before adding tables
+    if (response.ok){
+        console.log("Shell created. Waiting for sync...");
         await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // RUGGED MOVE: Get a fresh token right before the loop 
+        // to prevent 401 Unauthorized errors during the long loop
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+        const freshToken = tokenResponse.accessToken;
            
     // 2. Loop through config to add Worksheets and Tables
     // Note: Excel creates "Sheet1" by default, so we use that for the first config item
         for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
             const sheet = maeSystemConfig.worksheets[i];
-            await initializeSheetAndTable(accessToken, fileName, sheet, i === 0);
+            // Use the FRESH token here
+            await initializeSheetAndTable(fresthToken, fileName, sheet, i === 0);
        }
 
     } catch (error) {
