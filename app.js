@@ -241,25 +241,26 @@ async function createInitialWorkbook(accessToken) {
             body: bytes
         });
 
-        if (!createRes.ok) throw new Error(`File creation failed: ${createRes.statusText}`);
+        if (!createRes.ok) throw new Error("Could not create file shell");
 
         console.log("Shell created. Waking up Excel engine...");
 
         //  RUGGED WARM-UP: Poll the workbook until it stops returning 501
         let isReady = false;
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 10; attempt++) {
             const check = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (check.ok) {
                 isReady = true;
+                console.log("Excel ening is LIVE.");
                 break;
             }
-            console.log(`Excel engine warm-up (attempt ${attempt + 1})...`);
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            console.log(`Excel engine warm-up (attempt ${attempt + 1})`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        if (!isReady) throw new Error("Excel engine failed to initialize. Please refresh.");
+        if (!isReady) throw new Error("Excel engine timed-out");
 
         //  Refresh token for the construction loop
         const tokenResponse = await myMSALObj.acquireTokenSilent({
@@ -275,6 +276,8 @@ async function createInitialWorkbook(accessToken) {
             // Use the FRESH token here
             await initializeSheetAndTable(freshToken, fileName, sheet, i === 0);
        } 
+
+       console.log("MAE System Initialized Successfully");
 
     } catch (error) {
         console.error("Error creating initial workbook:", error);
