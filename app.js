@@ -285,13 +285,17 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
 
     // B. Create the Table
     // We assume a standard starting range (A1 to [Column Count]1)
+    // IMPORTANT: Sheet names with spaces MUST be wrapped in single quotes in the address
     const lastColLetter = String.fromCharCode(64 + sheetConfig.columns.length);
-    const tableRange = `${sheetConfig.tabName}!A1:${lastColLetter}1`;
+    const tableRange = `'${sheetConfig.tabName}'!A1:${lastColLetter}1`;
 
     console.log(`Creating table: ${sheetConfig.tableName} at ${tableRange}`);
-    //const tableRes = await fetch(`${workbookUrl}/worksheets/${sheetConfig.tabName}/tables/add`, {
-    const tableRes = await fetch(`${workbookUrl}/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/add`, {
-        method: 'POST',
+    //const tableAddUrl = `${workbookUrl}/worksheets/${encodeURIComponent(sheet)}`
+    const tableAddUrl = `${workbookUrl}/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/add`;
+
+
+    //const tableRes = await fetch(`${workbookUrl}/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/add`, {
+    const tableRes = await fetch(tableAddUrl, {   
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify({
@@ -303,13 +307,15 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
    if (!tableRes.ok){
     const errorDetails = await tableRes.json();
     console.error(`Table creation failed at ${sheetConfig.tabName}:`, errorDetails);
-    return; //STOOP if this step fails to prevent cascade errors
+    return; //STOP if this step fails to prevent cascade errors
    }
     
     const tableData = await tableRes.json();
     const tableId = tableData.id;
 
     // C. Rename Table to our tableName (The "Rugged" ID)
+    console.log(`Updating headers for ${sheetConfig.tableName}...`);
+
     await fetch(`${workbookUrl}/tables/${tableId}`, {
         method: 'PATCH',
         headers: authHeader,
@@ -317,12 +323,18 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
     });
 
     // D. Set Header Names
-    const headers = sheetConfig.columns.map(col => col.header);
-    await fetch(`${workbookUrl}/tables/${tableId}/headerRowRange`, {
+    const headerValues = [sheetConfig.columns.map(col => col.header)];
+    const headerRes = await fetch(`${workbookUrl}/tables/${tableInfo.id}/headerRowRange`, {
         method: 'PATCH',
         headers: authHeader,
-        body: JSON.stringify({ values: [headers] })
+        body: JSON.stringify({ values: headerValues })
     });
+
+    if (headerRes.ok) {
+        console.log(`Successfully initialized ${sheetConfig.tabName}`);
+    } else {
+        console.error(`Header Update Failed for ${sheetConfig.tabName}`);
+    }
 }
 
 
