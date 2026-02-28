@@ -278,7 +278,7 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
 
     const workbookUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook`;
     const authHeader = {
-        'Authorization': 'Bearer ${accessToken}',
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
     }
     // A. Handle worksheet (Rename index 0)
@@ -337,7 +337,7 @@ async function initializeSheetAndTable(accessToken, fileName, sheetConfig, isFir
 
     // D. Set Header Names
     const headerValues = [sheetConfig.columns.map(col => col.header)];
-    const headerRes = await fetch(`${workbookUrl}/tables/${tableInfo.id}/headerRowRange`, {
+    const headerRes = await fetch(`${workbookUrl}/tables/${tableData.id}/headerRowRange`, {
         method: 'PATCH',
         headers: authHeader,
         body: JSON.stringify({ values: headerValues })
