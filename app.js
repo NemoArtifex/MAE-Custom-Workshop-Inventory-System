@@ -260,9 +260,7 @@ async function createInitialWorkbook(accessToken) {
             const sheet = maeSystemConfig.worksheets[i];
             // Use the FRESH token here
             await initializeSheetAndTable(freshToken, fileName, sheet, i === 0);
-       } else {
-          throw new Error(`Upload failed with status: ${createRes.status}`);
-       }
+       } 
 
     } catch (error) {
         console.error("Error creating initial workbook:", error);
