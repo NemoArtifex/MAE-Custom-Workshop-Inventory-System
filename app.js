@@ -250,6 +250,7 @@ async function createInitialWorkbook(accessToken) {
             scopes: ["Files.ReadWrite"],
             account: account
         });
+    }
         const freshToken = tokenResponse.accessToken;
            
     // 2. Loop through config to add Worksheets and Tables
