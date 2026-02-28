@@ -236,8 +236,8 @@ async function createInitialWorkbook(accessToken) {
             headers: { 
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/octet-stream'
-            },
-            body: bytes
+            }
+            //body: bytes
         });
 
     // IMPORTANT: Wait for OneDrive to index the new file before adding tables
