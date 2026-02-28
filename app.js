@@ -236,11 +236,12 @@ async function createInitialWorkbook(accessToken) {
             headers: { 
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/octet-stream'
-            }
+            },
+            body: bytes
         });
 
     // IMPORTANT: Wait for OneDrive to index the new file before adding tables
-    if (response.ok){
+    if (createRes.ok){
         console.log("Shell created. Waiting for sync...");
         await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -258,7 +259,9 @@ async function createInitialWorkbook(accessToken) {
         for (let i = 0; i < maeSystemConfig.worksheets.length; i++) {
             const sheet = maeSystemConfig.worksheets[i];
             // Use the FRESH token here
-            await initializeSheetAndTable(fresthToken, fileName, sheet, i === 0);
+            await initializeSheetAndTable(freshToken, fileName, sheet, i === 0);
+       } else {
+          throw new Error(`Upload failed with status: ${createRes.status}`);
        }
 
     } catch (error) {
