@@ -235,8 +235,8 @@ async function createInitialWorkbook(accessToken) {
             method: 'PUT',
             headers: { 
                 'Authorization': `Bearer ${accessToken}`,
-                //'Content-Type': 'application/octet-stream'
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                'Content-Type': 'application/octet-stream'
+                //'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             },
             body: bytes
         });
