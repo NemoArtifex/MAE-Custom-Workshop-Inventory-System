@@ -246,21 +246,27 @@ async function createInitialWorkbook(accessToken) {
         console.log("Shell created. Waking up Excel engine...");
 
         //  RUGGED WARM-UP: Poll the workbook until it stops returning 501
-        let isReady = false;
-        for (let attempt = 0; attempt < 10; attempt++) {
+        let engineReady = false;
+        for (let attempt = 0; attempt < 12; attempt++) {
             const check = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ persistChanges: true})
             });
+
             if (check.ok) {
-                isReady = true;
-                console.log("Excel ening is LIVE.");
+                engineReady = true;
+                console.log("Excel engine is LIVE and responding.");
                 break;
             }
-            console.log(`Excel engine warm-up (attempt ${attempt + 1})`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            console.log(`Excel engine not ready (501). Retrying in 3s... (attempt ${attempt + 1}/12)`);
+            await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
-        if (!isReady) throw new Error("Excel engine timed-out");
+        if (!engineReady) throw new Error("Excel engine timed-out");
 
         //  Refresh token for the construction loop
         const tokenResponse = await myMSALObj.acquireTokenSilent({
