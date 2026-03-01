@@ -268,8 +268,10 @@ async function initializeSheetAndTable(accessToken) {
     
     // Check the first table in config to see if the file is "healthy"
     const firstTableName = maeSystemConfig.worksheets[0].tableName;
-    const checkUrl = `https://graph.microsoft.com{encodeURIComponent(fileName)}:/workbook/tables/${firstTableName}`;
-
+    const checkUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${firstTableName}`;
+//================
+ //   const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/content`;
+//==========================
     try {
         const response = await fetch(checkUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
