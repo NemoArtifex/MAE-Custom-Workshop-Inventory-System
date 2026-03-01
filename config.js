@@ -118,7 +118,7 @@ export const maeSystemConfig = {
                 { header: "Expense Category", type: "string", locked: true },
                 { header: "Description", type: "string", locked: true },
                 { header: "Payment Frequency", type: "string", locked: true },
-                { header: "Due Date", type: "string", locked: true },
+                { header: "Due Date", type: "date", format: "mm/dd/yyyy", locked: true },
                 { header: "Amount", type: "number", format: "$#,##0.00", locked: true },
                 { header: "Auto-Pay?", type: "string", locked: true }
             ]
