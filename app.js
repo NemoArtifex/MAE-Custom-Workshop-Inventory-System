@@ -355,65 +355,42 @@ async function loadTableData(tableName) {
 // Rugged: Handles both empty states and Microsoft Graph's nested array structure.
 function renderTableToUI(rows, tableName) {
     const container = document.getElementById("table-container");
-
-    // 1. Find the specific config for this table
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    if (!sheetConfig) {
-        container.innerHTML = `<p style="color:orange; padding:20px;">Config Error: Table "${tableName}" not found.</p>`;
-        return;
-    }
+    if (!sheetConfig) return;
 
-    // 2. Map Visible Columns
-    // We only store the indices of columns NOT marked 'hidden: true'
+    // 1. Identify which column indices are NOT hidden
     const visibleIndices = [];
     let html = `<table class="inventory-table"><thead><tr>`;
     
     sheetConfig.columns.forEach((col, index) => {
-        if (!col.hidden) {
+        if (col.hidden !== true) { // <--- RUGGED CHECK: Explicitly skip if true
             html += `<th>${col.header}</th>`;
             visibleIndices.push(index);
         }
     });
     html += `</tr></thead><tbody>`;
 
-    // 3. Add rows ONLY if they exist and contain data
+    // 2. Render Rows using ONLY those visible indices
     if (rows && rows.length > 0) {
-        rows.forEach((row, rowIndex) => {
+        rows.forEach((row) => {
             html += `<tr>`;
-            
-            /**
-             * RUGGED ACCESS: Graph API /rows returns values as [ [cell1, cell2, ...] ]
-             * We target the inner array at index [0].
-             */
-            const allCellValues = (row.values && row.values[0]) ? row.values[0] : null;
+            // Graph API /rows returns values as [ [cell0, cell1, cell2...] ]
+            const allCells = row.values[0]; 
 
-            if (allCellValues) {
-                // Only loop through the indices we identified as "visible"
-                visibleIndices.forEach(colIndex => {
-                    const cellValue = allCellValues[colIndex];
-                    html += `<td>${cellValue !== null ? cellValue : ''}</td>`;
-                });
-            } else {
-                // Safety Fallback: fill with empty cells if row data is missing
-                visibleIndices.forEach(() => html += `<td>--</td>`);
-                console.warn(`MAE System: Row ${rowIndex} in ${tableName} returned no values.`);
-            }
+            visibleIndices.forEach(idx => {
+                const value = allCells[idx];
+                html += `<td>${value !== null ? value : ''}</td>`;
+            });
             html += `</tr>`;
         });
     } else {
-        // Simple & Functional: Friendly empty state across the visible span
-        html += `<tr><td colspan="${visibleIndices.length}" style="text-align:center; padding:30px; color:#666;">
-            No records found in ${sheetConfig.tabName}.
-        </td></tr>`;
+        html += `<tr><td colspan="${visibleIndices.length}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
     }
 
     html += `</tbody></table>`;
     container.innerHTML = html;
-    
-    console.log(`MAE System: Rendered ${rows ? rows.length : 0} rows for ${tableName}`);
 }
-
 
 //========== End  loadTableData function =============
 
