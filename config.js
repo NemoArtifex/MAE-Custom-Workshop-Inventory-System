@@ -1,16 +1,18 @@
 /**
  * MAE Custom Digital Solutions - Master System Manifest
  * Philosophy: Practical, Functional, Simple, Rugged.
+ * Version 1.2.1: added active:true to json file
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.0",
+    version: "1.2.1",
     
     worksheets: [
         {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Total Inventory Value", type: "number", format: "$#,##0.00", locked: true },
@@ -23,6 +25,7 @@ export const maeSystemConfig = {
         {
             tabName: "Resell Inventory",
             tableName: "Resell_Inventory",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset ID", type: "string", locked: true },
@@ -47,6 +50,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Machinery",
             tableName: "Shop_Machinery",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset ID", type: "string", locked: true },
@@ -63,6 +67,7 @@ export const maeSystemConfig = {
         {
             tabName: "Maintenance Log",
             tableName: "Maintenance_Log",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Log ID", type: "string", locked: true },
@@ -77,6 +82,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Power Tools",
             tableName: "Shop_Power_Tools",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tool ID", type: "string", locked: true },
@@ -88,6 +94,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Hand Tools",
             tableName: "Shop_Hand_Tools",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tool ID", type: "string", locked: true },
@@ -99,6 +106,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Consumables",
             tableName: "Shop_Consumables",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Item Name", type: "string", locked: true },
@@ -113,6 +121,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Overhead",
             tableName: "Shop_Overhead",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Expense Category", type: "string", locked: true },
@@ -126,6 +135,7 @@ export const maeSystemConfig = {
         {
             tabName: "Supplier Contacts",
             tableName: "Supplier_Contacts",
+            active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Supplier Contact Name", type: "string", locked: true },

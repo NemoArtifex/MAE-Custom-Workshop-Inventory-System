@@ -161,7 +161,12 @@ async function loadDynamicMenu() {
     console.log("Building dynamic menu from config...");
     // We iterate through the CONFIG, not the Excel file. 
     // This ensures the App stays "Locked" to the business agreement.
-    maeSystemConfig.worksheets.forEach(sheet => {
+
+    //FILTER: only show worksheets with active:true
+    const activeWorksheets = maeSystemConfig.worksheets.filter(sheet => sheet.active !==false);
+
+
+    activeWorksheets.forEach(sheet => {
         const btn = document.createElement("button");
         btn.innerText = sheet.tabName;
         btn.className = "menu-btn";
@@ -345,6 +350,9 @@ async function loadTableData(tableName) {
 }
 
 // Helper FUNCTION to build the HTML structure
+// ======= FUNCTION renderTableToUI ================
+// Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
+// Rugged: Handles both empty states and Microsoft Graph's nested array structure.
 function renderTableToUI(rows, tableName) {
     const container = document.getElementById("table-container");
 
@@ -352,52 +360,60 @@ function renderTableToUI(rows, tableName) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
     if (!sheetConfig) {
-        container.innerHTML = `<p style="color:orange;">Config Error: Table "${tableName}" not found.</p>`;
+        container.innerHTML = `<p style="color:orange; padding:20px;">Config Error: Table "${tableName}" not found.</p>`;
         return;
     }
 
-    // 2. Start building the Table Shell
+    // 2. Map Visible Columns
+    // We only store the indices of columns NOT marked 'hidden: true'
+    const visibleIndices = [];
     let html = `<table class="inventory-table"><thead><tr>`;
     
-    // RUGGED FIX: Use .columns to get the header names from your config.js
-    if (sheetConfig.columns) {
-        sheetConfig.columns.forEach(col => {
+    sheetConfig.columns.forEach((col, index) => {
+        if (!col.hidden) {
             html += `<th>${col.header}</th>`;
-        });
-    }
+            visibleIndices.push(index);
+        }
+    });
     html += `</tr></thead><tbody>`;
 
-    // 3. Add rows ONLY if they exist
+    // 3. Add rows ONLY if they exist and contain data
     if (rows && rows.length > 0) {
-        rows.forEach((row) => {
+        rows.forEach((row, rowIndex) => {
             html += `<tr>`;
             
-            // Graph API /rows returns: values: [ [cell1, cell2] ]
-            const cellData = (row.values && row.values[0]) ? row.values[0] : null;
+            /**
+             * RUGGED ACCESS: Graph API /rows returns values as [ [cell1, cell2, ...] ]
+             * We target the inner array at index [0].
+             */
+            const allCellValues = (row.values && row.values[0]) ? row.values[0] : null;
 
-            if (cellData) {
-                cellData.forEach(cell => {
-                    html += `<td>${cell !== null ? cell : ''}</td>`;
+            if (allCellValues) {
+                // Only loop through the indices we identified as "visible"
+                visibleIndices.forEach(colIndex => {
+                    const cellValue = allCellValues[colIndex];
+                    html += `<td>${cellValue !== null ? cellValue : ''}</td>`;
                 });
             } else {
-                // Fill empty cells if row exists but data is missing
-                sheetConfig.columns.forEach(() => html += `<td></td>`);
+                // Safety Fallback: fill with empty cells if row data is missing
+                visibleIndices.forEach(() => html += `<td>--</td>`);
+                console.warn(`MAE System: Row ${rowIndex} in ${tableName} returned no values.`);
             }
             html += `</tr>`;
         });
     } else {
-        // Friendly empty state
-        const colCount = sheetConfig.columns ? sheetConfig.columns.length : 1;
-        html += `<tr><td colspan="${colCount}" style="text-align:center; padding:20px; color:#666;">
-            No records found in ${tableName}.
+        // Simple & Functional: Friendly empty state across the visible span
+        html += `<tr><td colspan="${visibleIndices.length}" style="text-align:center; padding:30px; color:#666;">
+            No records found in ${sheetConfig.tabName}.
         </td></tr>`;
     }
 
     html += `</tbody></table>`;
     container.innerHTML = html;
+    
+    console.log(`MAE System: Rendered ${rows ? rows.length : 0} rows for ${tableName}`);
 }
 
-     
 
 //========== End  loadTableData function =============
 
