@@ -357,26 +357,33 @@ function renderTableToUI(rows, tableName){
 
     //Find the specific config for this table to get Header Names
     const sheetConfig = maeSystemConfig.worksheets.find(s=> s.tableName ===tableName);
-
-    //Create Headers from config (maintains "ground truth")
-    sheetConfig.headers.forEach(header=> {
-        html += `<th>${header}</th>`;
-    });
+    if (sheetConfig && sheetConfig.headers) {
+        sheetConfig.headers.forEach(header => {
+            html += `<th>${header}</th>`;
+        });
+    }
+    html += `</tr><.thead></tbody>`;
 
     // Add rows
     rows.forEach(row=>{
         html += `<tr>`;
-        //Graph API returns cell values in a nested 'values" array
-        row.values[0].forEach(cell=> {
-            html += `<td>${cell !=null? cell: ''}</td>`;
-        });
+
+        //Safety Check: Ensure row.values 
+        // xists and has at lease one inner array
+        if (row.values && row.values[0]){
+            row.values[0].forEach(cell => {
+                //Handle nulls and convert to string for rugged display
+                html += `<td>${cell!==null ? cell : ''}</td>`;
+            });
+        }
+        
         html += `</tr>`;
     });
 
     html += `</tbody></table>`;
     container.innerHTML = html;
 }
-//========== End of Placeholder for loadTableData function =============
+//========== End  loadTableData function =============
 
 
 
