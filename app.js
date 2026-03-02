@@ -303,7 +303,7 @@ async function initializeSheetAndTable(accessToken) {
 //========== Placeholder for loadTableData function =============
 async function loadTableData(tableName) {
     console.log(`MAE System: Fetching data for table: ${tableName}`);
-    const container = document.getElementById("table-container");\
+    const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     container.innerHTML = `<div class="loader">Loading ${tableName} data...</div>`;
     title.innerText = `View: ${tableName}`;
