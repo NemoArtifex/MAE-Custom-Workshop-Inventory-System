@@ -345,58 +345,60 @@ async function loadTableData(tableName) {
 }
 
 // Helper FUNCTION to build the HTML structure
-function renderTableToUI(rows, tableName){
+function renderTableToUI(rows, tableName) {
     const container = document.getElementById("table-container");
 
-    //Find the specific config for this table to get Header Names
-    const sheetConfig = maeSystemConfig.worksheets.find(s=> s.tableName ===tableName);
+    // 1. Find the specific config for this table
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    //Safety Check: if tableName doesn't exist in config, stop here.
-    if (!sheetConfig){
-        container.innerHTML = `<p style="color:orange;">Config Error: Table "${tableName}" not found in maeSystemConfig.</p>`;
+    if (!sheetConfig) {
+        container.innerHTML = `<p style="color:orange;">Config Error: Table "${tableName}" not found.</p>`;
         return;
     }
-    
-    //Start building the table with headers form CONFIG
+
+    // 2. Start building the Table Shell
     let html = `<table class="inventory-table"><thead><tr>`;
-    sheetConfig.headers.forEach(header => {
-        html += `<th>${header}</th>`;
-    });
+    
+    // RUGGED FIX: Use .columns to get the header names from your config.js
+    if (sheetConfig.columns) {
+        sheetConfig.columns.forEach(col => {
+            html += `<th>${col.header}</th>`;
+        });
+    }
     html += `</tr></thead><tbody>`;
 
-    //Add rows ONLY if they exist
-    if (rows && rows.length > 0){
-        rows.forEach((row,index) => {
+    // 3. Add rows ONLY if they exist
+    if (rows && rows.length > 0) {
+        rows.forEach((row) => {
             html += `<tr>`;
-
-             /**
-             * RUGGED CHECK: Graph API /rows returns values as an array of arrays.
-             * We check row.values[0] because that's where the actual cell data lives.
-             */
             
-             const rowData = (row.values && row.values[0]) ? row.values[0] : null;
+            // Graph API /rows returns: values: [ [cell1, cell2] ]
+            const cellData = (row.values && row.values[0]) ? row.values[0] : null;
 
-             if (rowData) {
-                rowData.forEach(cell => {
-                    html += `<td>${cell !==null ? cell: ''}</td>`;
+            if (cellData) {
+                cellData.forEach(cell => {
+                    html += `<td>${cell !== null ? cell : ''}</td>`;
                 });
-             } else {
-                 // If a row object exists but has no data, fill with empty cells
-                sheetConfig.headers.forEach(() => html += `<td></td>`);
-             }
-             html += `</tr>`;
+            } else {
+                // Fill empty cells if row exists but data is missing
+                sheetConfig.columns.forEach(() => html += `<td></td>`);
+            }
+            html += `</tr>`;
         });
     } else {
-        // If the table is empty, show a friendly message across the whole row
-        html += `<tr><td colspan="${sheetConfig.headers.length}" style="text-align:center; padding:20px; color:#666;">
-            No data records found in ${tableName}.
+        // Friendly empty state
+        const colCount = sheetConfig.columns ? sheetConfig.columns.length : 1;
+        html += `<tr><td colspan="${colCount}" style="text-align:center; padding:20px; color:#666;">
+            No records found in ${tableName}.
         </td></tr>`;
     }
 
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-     
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 }
+
+     
+
 //========== End  loadTableData function =============
 
 
