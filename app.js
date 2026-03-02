@@ -359,29 +359,43 @@ function renderTableToUI(rows, tableName){
     
     //Start building the table with headers form CONFIG
     let html = `<table class="inventory-table"><thead><tr>`;
-    sheetConfig.headers.forEach(h => html += `<th>${h}</th>`);
+    sheetConfig.headers.forEach(header => {
+        html += `<th>${header}</th>`;
+    });
     html += `</tr></thead><tbody>`;
 
-    // Handle data rows
-    if(!rows || rows.length === 0){
-        //Render a single "No data" row that spans all columns
-        html += `<tr><td colspan="${sheetConfig.headers.length}" style="text-align: center; padding:20px;">
-        No data records found in this category.
-        </td></tr>`;
-    } else {
-        rows.forEach(row => {
+    //Add rows ONLY if they exist
+    if (rows && rows.length > 0){
+        rows.forEach((row,index) => {
             html += `<tr>`;
-            //check for row.values structure
-            const cells = Array.isArray(row.value[0]) ? row.values[0] : row.values;
-            cells.forEach(cell => {
-                html += `<td>${cell !== null ? cell : ''}</td>`;
-            });
+
+             /**
+             * RUGGED CHECK: Graph API /rows returns values as an array of arrays.
+             * We check row.values[0] because that's where the actual cell data lives.
+             */
+            
+             const rowData = (row.values && row.values[0]) ? row.values[0] : null;
+
+             if (rowData) {
+                rowData.forEach(cell => {
+                    html += `<td>${cell !==null ? cell: ''}</td>`;
+                });
+             } else {
+                 // If a row object exists but has no data, fill with empty cells
+                sheetConfig.headers.forEach(() => html += `<td></td>`);
+             }
+             html += `</tr>`;
+        });
+    } else {
+        // If the table is empty, show a friendly message across the whole row
+        html += `<tr><td colspan="${sheetConfig.headers.length}" style="text-align:center; padding:20px; color:#666;">
+            No data records found in ${tableName}.
+        </td></tr>`;
+    }
 
             html += `</tbody></table>`;
             container.innerHTML = html;
-
-        })
-    }
+     
 }
 //========== End  loadTableData function =============
 
