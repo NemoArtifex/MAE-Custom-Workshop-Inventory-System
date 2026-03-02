@@ -353,30 +353,45 @@ async function loadTableData(tableName) {
 function renderTableToUI(rows, tableName){
     const container = document.getElementById("table-container");
 
-    let html = `<table class="inventory-table"><thead><tr>`;
 
     //Find the specific config for this table to get Header Names
     const sheetConfig = maeSystemConfig.worksheets.find(s=> s.tableName ===tableName);
-    if (sheetConfig && sheetConfig.headers) {
+    
+    //Safety Check: if tableName doesn't exist in config, stop here.
+    if (!sheetConfig){
+        container.innerHTML = `<p style="color:orange;">Config Error: Table "${tableName}" not found in maeSystemConfig.</p>`;
+        return;
+    }
+    
+    let html = `<table class="inventory-table"><thead><tr>`;
+    
+    // Create Headers for config (maintains "ground truth")
+    if (sheetConfig.headers && Array.isArray(sheetConfig.headers)) {
         sheetConfig.headers.forEach(header => {
             html += `<th>${header}</th>`;
         });
     }
-    html += `</tr><.thead></tbody>`;
+    html += `</tr></thead><tbody>`;
 
     // Add rows
-    rows.forEach(row=>{
+    rows.forEach((row, index)=>{
         html += `<tr>`;
 
-        //Safety Check: Ensure row.values 
-        // xists and has at lease one inner array
+        /**
+         * IMPORTANT: Graph API /workbook/tables/{name}/rows returns:
+         * row.values = [ ["Cell1", "Cell2", "Cell3"] ] 
+         * It is an array INSIDE an array. We must target index [0].
+         */
+
         if (row.values && row.values[0]){
             row.values[0].forEach(cell => {
                 //Handle nulls and convert to string for rugged display
                 html += `<td>${cell!==null ? cell : ''}</td>`;
             });
+        } else {
+            console.warn(`Row ${index} has no data values.`);
         }
-        
+
         html += `</tr>`;
     });
 
