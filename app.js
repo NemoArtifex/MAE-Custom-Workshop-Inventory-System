@@ -333,11 +333,6 @@ async function loadTableData(tableName) {
         const data = await response.json();
         const rows = data.value;
 
-        if (rows.length === 0){
-            container.innerHTML = `<p style="padding:20px;">No data found in ${tableName}.</p>`;
-            return;
-        }
-
         //Render the data into an HTML table
         renderTableToUI(rows, tableName);
 
@@ -353,7 +348,6 @@ async function loadTableData(tableName) {
 function renderTableToUI(rows, tableName){
     const container = document.getElementById("table-container");
 
-
     //Find the specific config for this table to get Header Names
     const sheetConfig = maeSystemConfig.worksheets.find(s=> s.tableName ===tableName);
     
@@ -363,40 +357,31 @@ function renderTableToUI(rows, tableName){
         return;
     }
     
+    //Start building the table with headers form CONFIG
     let html = `<table class="inventory-table"><thead><tr>`;
-    
-    // Create Headers for config (maintains "ground truth")
-    if (sheetConfig.headers && Array.isArray(sheetConfig.headers)) {
-        sheetConfig.headers.forEach(header => {
-            html += `<th>${header}</th>`;
-        });
-    }
+    sheetConfig.headers.forEach(h => html += `<th>${h}</th>`);
     html += `</tr></thead><tbody>`;
 
-    // Add rows
-    rows.forEach((row, index)=>{
-        html += `<tr>`;
-
-        /**
-         * IMPORTANT: Graph API /workbook/tables/{name}/rows returns:
-         * row.values = [ ["Cell1", "Cell2", "Cell3"] ] 
-         * It is an array INSIDE an array. We must target index [0].
-         */
-
-        if (row.values && row.values[0]){
-            row.values[0].forEach(cell => {
-                //Handle nulls and convert to string for rugged display
-                html += `<td>${cell!==null ? cell : ''}</td>`;
+    // Handle data rows
+    if(!rows || rows.length === 0){
+        //Render a single "No data" row that spans all columns
+        html += `<tr><td colspan="${sheetConfig.headers.length}" style="text-align: center; padding:20px;">
+        No data records found in this category.
+        </td></tr>`;
+    } else {
+        rows.forEach(row => {
+            html += `<tr>`;
+            //check for row.values structure
+            const cells = Array.isArray(row.value[0]) ? row.values[0] : row.values;
+            cells.forEach(cell => {
+                html += `<td>${cell !== null ? cell : ''}</td>`;
             });
-        } else {
-            console.warn(`Row ${index} has no data values.`);
-        }
 
-        html += `</tr>`;
-    });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
+        })
+    }
 }
 //========== End  loadTableData function =============
 
