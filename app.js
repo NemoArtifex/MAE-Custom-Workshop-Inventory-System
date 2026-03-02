@@ -302,11 +302,79 @@ async function initializeSheetAndTable(accessToken) {
 
 //========== Placeholder for loadTableData function =============
 async function loadTableData(tableName) {
-    console.log(`Loading data for table: ${tableName}`);
-    const container = document.getElementById("table-container");
-    container.innerHTML = `<p>Loading data for ${tableName}...</p>`;
+    console.log(`MAE System: Fetching data for table: ${tableName}`);
+    const container = document.getElementById("table-container");\
+    const title = document.getElementById("current-view-title");
+    container.innerHTML = `<div class="loader">Loading ${tableName} data...</div>`;
+    title.innerText = `View: ${tableName}`;
+
+    try {
+        // Get fresh token
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        //Access the rows via the Workbook Table API
+        // Path: root:/filename:/workbook/tables/tablename/rows
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+
+        const response = await fetch(url, {
+            headers: 
+            {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`
+            }
+        });
+
+        if (!response.ok){
+            throw new Error(`Failed to fetch table data: ${response.statusText}`);
+        }
+
+        const data = await responst.json();
+        const rows = data.value;
+
+        if (rows.length === 0){
+            container.innerHTML = `<p style="padding:20px;">No data found in ${tableName}.</p>`;
+            return;
+        }
+
+        //Render the data into an HTML table
+        renderTableToUI(rows, tableName);
+
+    } catch (error) {
+        console.error("MAE System: Error loading table data:", error);
+        container.innerHTML = `<p style="color:red; padding:20px;">Error: Could not load data. Ensure spreadsheet is not open in another tab.</p> `;   
+    }
     
-    // Logic to fetch rows from Graph API will go here later
+
+}
+
+// Helper FUNCTION to build the HTML structure
+function renderTableToUI(rows, tableName){
+    const container = document.getElementById("table-container");
+
+    let html = `<table class="inventory-table"><thead><tr>`;
+
+    //Find the specific config for this table to get Header Names
+    const sheetConfig = maeSystemConfig.worksheets.find(s=> s.tableName ===tableName);
+
+    //Create Headers from config (maintains "ground truth")
+    sheetConfig.headers.forEach(header=> {
+        html += `<th>${header}</th>`;
+    });
+
+    // Add rows
+    rows.forEach(row=>{
+        html += `<tr>`;
+        //Graph API returns cell values in a nested 'values" array
+        row.values[0].forEach(cell=> {
+            html += `<td>${cell !=null? cell: ''}</td>`;
+        });
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 }
 //========== End of Placeholder for loadTableData function =============
 
