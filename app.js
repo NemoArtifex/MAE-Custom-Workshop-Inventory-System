@@ -330,7 +330,7 @@ async function loadTableData(tableName) {
             throw new Error(`Failed to fetch table data: ${response.statusText}`);
         }
 
-        const data = await responst.json();
+        const data = await response.json();
         const rows = data.value;
 
         if (rows.length === 0){
