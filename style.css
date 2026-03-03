@@ -59,10 +59,11 @@ body {
 /* Main Content Area */
 main { 
     flex-grow: 1; 
-    padding: 30px; 
-    overflow-y: auto; /* Allows table to scroll vertically */
     display: flex;
     flex-direction: column;
+    min-height: 100vh; /* Ensures it fills the screen */
+    padding: 30px; 
+    overflow-y: auto; /* Allows table to scroll vertically */   
 }
 
 /* Rugged Data Table */
@@ -95,6 +96,40 @@ main {
     padding: 10px 15px; 
     border-bottom: 1px solid var(--border); 
     color: #333;
+}
+
+/* The Placeholder Zone */
+#action-bar-zone {
+    margin-top: auto; /* Pushes the zone to the bottom of the main flex area */
+    width: 100%;
+}
+
+/* New Command Bar Styling */
+.command-bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 12px;
+    padding: 15 25px;
+    background: #ecf0f1; /* Light gray to separate from white table */
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Better visual "lift" */
+    z-index: 100; /* Ensures it stays above scrolling table rows */
+}
+
+/* Action Buttons */
+.action-btn {
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: var(--accent);
 }
 
 /* Rugged alternating rows for readability */
