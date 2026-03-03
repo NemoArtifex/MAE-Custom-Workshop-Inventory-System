@@ -273,8 +273,7 @@ async function initializeSheetAndTable(accessToken) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName) {
-   console.log(`MAE System: Fetching data for table: ${tableName}`);
-    currentTable = tableName;
+   currentTable = tableName;
    // Tell te UI to show a Loading State
    UI.showLoading(tableName);
 
