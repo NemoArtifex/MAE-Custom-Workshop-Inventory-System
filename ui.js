@@ -27,6 +27,7 @@ export const UI = {
         // Clear all data zones
         document.getElementById("menu").innerHTML = "";
         document.getElementById("table-container").innerHTML = "";
+        document.getElementById("action-bar-zone").innerHTML = ""; // Clear the buttons
         document.getElementById("current-view-title").innerText = "Please connect to view inventory data.";
     },
 
@@ -128,5 +129,26 @@ export const UI = {
                     <p>Please ensure the table <b>${firstTableName}</b> exists in Excel.</p>
                 </div>`;
         }
+    },
+
+    renderCommandBar(tableName) {
+        const container = document.getElementById("action-bar-zone");
+        
+        // Define buttons based on the current context
+        let buttons = `
+            <button class="action-btn" id="btn-print">Print Sheet</button>
+            <button class="action-btn" id="btn-manual-print">Print Manual Log</button>
+        `;
+
+        // Only show "Add" and "Edit" if it's not the Dashboard
+        if (tableName !== "Master_Dashboard") {
+            buttons += `
+                <button class="action-btn" id="btn-add">Add Item</button>
+                <button class="action-btn" id="btn-edit">Edit Table</button>
+                <button class="action-btn" id="btn-inventory-update">Quick Update</button>
+            `;
+        }
+
+        container.innerHTML = `<div class="command-bar">${buttons}</div>`;
     }
 };

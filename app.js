@@ -82,16 +82,7 @@ async function signIn() {
 // the startup() function calls updateUIForLoggedInUser() if successful 'login'
 // changes text on button and triggers loadDynamicMenu() function  
 function updateUIForLoggedInUser(userAccount) {
-    //const authButton = document.getElementById("auth-btn");
-    //authButton.onclick = null;  //CLEAR: wipe any old "onclick" or "inline" handlers firs  
-    //console.log("Enabling the Connect button now...");
-    //authButton.disabled = false;
-    //authButton.innerText = `Sign Out: ${userAccount.username}`;
-    //authButton.style.background = "#c0392b"; // Change to red for "Sign Out"
-    //authButton.style.color = "white";
-    //authButton.removeEventListener("click", signIn); // Remove sign-in listener to prevent multiple logins
-    //authButton.addEventListener("click", signOut); // Add sign-out functionality for better UX
-    //console.log("Loading dynamic menu for user:", userAccount.username);
+
     UI.setConnected(userAccount.username, signOut);
     loadDynamicMenu();
 }
@@ -133,28 +124,6 @@ function resetUI() {
     account = null;
     sessionStorage.clear();
     UI.setDisconnected(signIn);
-    //const authButton = document.getElementById("auth-btn");
-    //authButton.innerText = "Connect to Microsoft";
-    //authButton.style.background = ""; // Resets to original CSS color
-    //authButton.style.color = ""; // Resets to original CSS color
-   // authButton.onclick = null; 
-    // Clear event listeners correctly  
-    //authButton.removeEventListener("click", signOut); // Remove sign-out listener
-    //authButton.addEventListener("click", signIn);
-    
-    // Clear actual Data/UI elements; clear innerHTML so list items literally disappear  
-    //const menu = document.getElementById("menu");
-   // if (menu) menu.innerHTML = "";
-
-    //const container = document.getElementById("table-container");
-    //if (container) container.innerHTML = "";
-
-    //const title = document.getElementById("current-view-title");
-    //if (title) title.innerText = "Please connect to view inventory data.";
-
-    //console.log("UI Reset: Inventory Data Cleared.");   
-
-
 }
 //========END FUNCTION TO RESET UI AFTER SIGN-OUT =============
 
@@ -175,18 +144,7 @@ async function loadDynamicMenu() {
         loadTableData(tableName);
     });
 
-    //activeWorksheets.forEach(sheet => {
-    //    const btn = document.createElement("button");
-    //    btn.innerText = sheet.tabName;
-    //    btn.className = "menu-btn";
-    //    btn.onclick = () => loadTableData(sheet.tableName);
 
-    //    const listItem = document.createElement("li");
-    //    listItem.appendChild(btn);
-    //    menu.appendChild(listItem);
-    //});
-
-    // Check if the actual Excel file exists on OneDrive
     verifySpreadsheetExists();
     
 }
@@ -270,9 +228,6 @@ async function createInitialWorkbook(accessToken) {
 
 //=======END FUNCTION createInitialWorkbook ==============
 
- 
-
-
 //=========FUNCTION initializeSheetAndTable =============
 async function initializeSheetAndTable(accessToken) {
     const container = document.getElementById("table-container");
@@ -309,7 +264,6 @@ async function initializeSheetAndTable(accessToken) {
 }
 
 //========END FUNCTION initializeSheetAndTable===========
-
 
 //========== FUNCTION  loadTableData ==================
 /**
@@ -350,148 +304,16 @@ async function loadTableData(tableName) {
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
     UI.renderTable(data.value, tableName, sheetConfig);
 
+    // Draw command bar at the bottom
+    UI.renderCommandBar(tableName);
+
    } catch (error) {
     console.error("MAE System: Error loading table data:", error);
     UI.showError("Error: Could not load data.  Ensure spreadsheet is not open in another tab.");
    }
 } 
 
-
-
-
-
-
-
-
-
-
-
-
-   /*  
-    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-
-    // Render the empty shell immediately
-    UI.renderTableShell(tableName, sheetConfig);
-
-     try {
-        //  Get a fresh token and fetch row data
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-        const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
-        });
-
-        if (!response.ok) throw new Error("Fetch failed");
-
-        const data = await response.json();
-
-        // Step 3: Hand the raw Microsoft data to the UI to be rendered
-        // Microsoft Graph returns rows in a 'value' array
-        UI.renderTableRows(data.value, sheetConfig);
-    } catch {
-        console.error("Data load error:", error);
-        UI.showStatus("Error: Could not load data from OneDrive."); 
-    }
-     
-*/
-
-
-    //console.log(`MAE System: Fetching data for table: ${tableName}`);
-    //const container = document.getElementById("table-container");
-    //const title = document.getElementById("current-view-title");
-    //container.innerHTML = `<div class="loader">Loading ${tableName} data...</div>`;
-    //title.innerText = `View: ${tableName}`;
-
-    //try {
-        // Get fresh token
-     //   const tokenResponse = await myMSALObj.acquireTokenSilent({
-     //       scopes: ["Files.ReadWrite"],
-     //       account: account
-     //   });
-
-        //Access the rows via the Workbook Table API
-        // Path: root:/filename:/workbook/tables/tablename/rows
-     //   const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-
-     //   const response = await fetch(url, {
-     //       headers: 
-     //       {
-      //          'Authorization': `Bearer ${tokenResponse.accessToken}`
-     //       }
-     //   });
-
-     //   if (!response.ok){
-     //       throw new Error(`Failed to fetch table data: ${response.statusText}`);
-     //   }
-
-     //   const data = await response.json();
-     //   const rows = data.value;
-
-        //Render the data into an HTML table
-     ///   renderTableToUI(rows, tableName);
-
-    //} catch (error) {
-     //   console.error("MAE System: Error loading table data:", error);
-     //   container.innerHTML = `<p style="color:red; padding:20px;">Error: Could not load data. Ensure spreadsheet is not open in another tab.</p> `;   
-    //}
-    
-
-
-
-// Helper FUNCTION to build the HTML structure
-// ======= FUNCTION renderTableToUI ================
-// Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
-// Rugged: Handles both empty states and Microsoft Graph's nested array structure.
-
-/*
-function renderTableToUI(rows, tableName) {
-    const container = document.getElementById("table-container");
-    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    
-    if (!sheetConfig) return;
-
-    // 1. Identify which column indices are NOT hidden
-    const visibleIndices = [];
-    let html = `<table class="inventory-table"><thead><tr>`;
-    
-    sheetConfig.columns.forEach((col, index) => {
-        if (col.hidden !== true) { // <--- RUGGED CHECK: Explicitly skip if true
-            html += `<th>${col.header}</th>`;
-            visibleIndices.push(index);
-        }
-    });
-    html += `</tr></thead><tbody>`;
-
-    // 2. Render Rows using ONLY those visible indices
-    if (rows && rows.length > 0) {
-        rows.forEach((row) => {
-            html += `<tr>`;
-            // Graph API /rows returns values as [ [cell0, cell1, cell2...] ]
-            const allCells = row.values[0]; 
-
-            visibleIndices.forEach(idx => {
-                const value = allCells[idx];
-                html += `<td>${value !== null ? value : ''}</td>`;
-            });
-            html += `</tr>`;
-        });
-    } else {
-        html += `<tr><td colspan="${visibleIndices.length}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
-    }
-
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-}
-
-*/
-//========== End  loadTableData function =============
-
-
-
+//=========== END loadTableData ===================
 
 
 
