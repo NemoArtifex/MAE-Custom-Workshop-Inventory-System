@@ -320,9 +320,12 @@ async function loadTableData(tableName) {
 // This stays active even when buttons are deleted/recreated
 document.getElementById('action-bar-zone').addEventListener('click', (event) => {
     // We check the ID of what was actually clicked
-    const btnId = event.target.id;
+    const btn = event.target.closest('button');
+    if (!btn) return;// Exit if they clicked the bar but not the button
 
-    if (btnId === 'btn-add') {
+    console.log("Button clicked:", btn.id);
+
+    if (btn.id === 'btn-add') {
         // Trigger the Add Item flow
         handleAddClick(currentTable); 
     } 
