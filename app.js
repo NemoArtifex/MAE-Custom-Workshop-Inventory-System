@@ -315,6 +315,34 @@ async function loadTableData(tableName) {
 
 //=========== END loadTableData ===================
 
+//=========== GLOBAL CLICK LISTENER FUNCTION===========
+// 1. GLOBAL CLICK LISTENER (Event Delegation)
+// This stays active even when buttons are deleted/recreated
+document.getElementById('action-bar-zone').addEventListener('click', (event) => {
+    // We check the ID of what was actually clicked
+    const btnId = event.target.id;
+
+    if (btnId === 'btn-add') {
+        // Trigger the Add Item flow
+        handleAddClick(currentTable); 
+    } 
+    // You can add more 'else if' blocks here later for Edit/Print/Delete
+});
+
+// 2. THE HANDLER FUNCTION
+async function handleAddClick(tableName) {
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // Call the UI tool to draw the form
+    // We pass a 'callback' function so the UI knows what to do when 'Save' is clicked
+    UI.renderAddForm(tableName, sheetConfig, () => {
+        submitNewRow(tableName, sheetConfig);
+    });
+}
+
+
+//===========END GLOBAL CLICK LISTENER============
+
 
 
 
