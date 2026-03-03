@@ -1,7 +1,7 @@
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 const fileName = maeSystemConfig.spreadsheetName;
-let currentTable = "";
+window.currentTable = "";
 // =============CONFIGURATION: The "Blueprint"  ======================
 // Defines the configuration object for the Microsoft Authentication Libray (MSAL)
 // Used to integrate Microsoft's identity and sign-in features into web apps
@@ -273,8 +273,9 @@ async function initializeSheetAndTable(accessToken) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName) {
-   currentTable = tableName;
-   // Tell te UI to show a Loading State
+   window.currentTable = tableName;
+   
+   const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
    UI.showLoading(tableName);
 
    try {
@@ -327,7 +328,7 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
 
     if (btn.id === 'btn-add') {
         // Trigger the Add Item flow
-        handleAddClick(currentTable); 
+        handleAddClick(window.currentTable); 
     } 
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
