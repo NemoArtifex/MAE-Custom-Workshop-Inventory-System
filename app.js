@@ -1,6 +1,7 @@
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 const fileName = maeSystemConfig.spreadsheetName;
+let currentTable = "";
 // =============CONFIGURATION: The "Blueprint"  ======================
 // Defines the configuration object for the Microsoft Authentication Libray (MSAL)
 // Used to integrate Microsoft's identity and sign-in features into web apps
@@ -273,7 +274,7 @@ async function initializeSheetAndTable(accessToken) {
  */
 async function loadTableData(tableName) {
    console.log(`MAE System: Fetching data for table: ${tableName}`);
-
+    currentTable = tableName;
    // Tell te UI to show a Loading State
    UI.showLoading(tableName);
 
@@ -342,6 +343,81 @@ async function handleAddClick(tableName) {
         submitNewRow(tableName, sheetConfig);
     });
 }
+
+//===========FUNCTION submitNewRow====to send data to Microsoft========
+// app.js
+
+async function submitNewRow(tableName, sheetConfig) {
+    // 1. MAP DATA: Order matches config.js exactly
+    const rowData = sheetConfig.columns.map(col => {
+        // Handle Auto-ID
+        if (col.header === "mae_id") return `MAE-${Date.now()}`;
+        
+        // Handle Formulas (Excel must calculate these)
+        if (col.type === "formula") return null;
+
+        // Find the input field by its cleaned ID
+        const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+        const input = document.getElementById(fieldId);
+
+        // RUGGED: Handle Empty Inputs
+        // Sending null for empty numbers/dates keeps Excel calculations accurate
+        if (!input || input.value === "") {
+            return (col.type === "number" || col.type === "date") ? null : "";
+        }
+
+        // Handle Numbers & Currency
+        if (col.type === "number" || (col.format && col.format.includes("$"))) {
+            const num = parseFloat(input.value);
+            return isNaN(num) ? null : num;
+        }
+
+        // Handle Dates, Dropdowns, and Strings
+        // HTML5 date inputs (YYYY-MM-DD) are natively accepted by Excel
+        return input.value;
+    });
+
+    try {
+        // 2. AUTH: Get fresh token
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        // 3. API CALL: Corrected URL path for Table Rows
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
+        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowData] }) // Values must be 2D array
+        });
+
+        if (response.ok) {
+            console.log(`MAE System: Row successfully added to ${tableName}`);
+            alert("Entry Saved Successfully!");
+            
+            // Clean up: Remove form and refresh table view
+            const form = document.getElementById("add-entry-form");
+            if (form) form.remove();
+            
+            loadTableData(tableName); 
+        } else {
+            const error = await response.json();
+            throw new Error(error.error.message || "Unknown API Error");
+        }
+
+    } catch (err) {
+        console.error("MAE System - Save failed:", err);
+        UI.showError(`Failed to save: ${err.message}`);
+    }
+}
+
+
+//===========END function to send data to Microsoft
 
 
 //===========END GLOBAL CLICK LISTENER============

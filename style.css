@@ -132,13 +132,95 @@ main {
     background: var(--accent);
 }
 
-/* Rugged alternating rows for readability */
-.inventory-table tr:nth-child(even) { background: #f8f9fa; }
-.inventory-table tr:hover { background: #edf2f7; }
+.form-card { 
+    background: white; 
+    padding: 20px; 
+    border-left: 5px solid var(--accent); 
+    margin-bottom: 20px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
 
-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-th { background: var(--primary); color: white; padding: 15px; text-align: left; position: sticky; top: 0; }
-td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-tr:nth-child(even) { background: #f9f9f9; }
-tr:hover { background: #f1f1f1; }
+.form-grid { 
+    display: grid; 
+    grid-template-columns: 
+    repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 20px; 
+}
+
+.input-group {
+    display: flex; 
+    flex-direction: column; 
+}
+
+.input-group label { 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    margin-bottom: 5px; 
+    color: var(--primary); 
+}
+
+.input-group input { 
+    padding: 8px; 
+    border: 1px solid var(--border); 
+    border-radius: 4px; 
+}
+
+.save-btn { 
+    background: #27ae60; 
+    color: white; 
+    padding: 10px 20px; 
+    border: none; 
+    cursor: pointer; 
+    border-radius: 4px; 
+}
+
+.cancel-btn { 
+    background: #7f8c8d; 
+    color: white; 
+    padding: 10px 20px; 
+    border: none; 
+    cursor: pointer; 
+    border-radius: 4px; 
+    margin-left: 10px; 
+}
+
+
+/* Rugged alternating rows for readability */
+.inventory-table tr:nth-child(even) { 
+    background: #f8f9fa; 
+}
+
+.inventory-table tr:hover { 
+    background: #edf2f7; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    min-width: 800px; 
+}
+
+th { 
+    background: var(--primary); 
+    color: white; 
+    padding: 15px; 
+    text-align: left; 
+    position: sticky; 
+    top: 0; 
+}
+
+td { 
+    padding: 12px; 
+    border-bottom: 1px solid var(--border); 
+    font-size: 0.95rem; 
+}
+
+tr:nth-child(even) { 
+    background: #f9f9f9; 
+}
+
+tr:hover { 
+    background: #f1f1f1; 
+}
 
