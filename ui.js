@@ -133,6 +133,9 @@ export const UI = {
 
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
+
+         // Define tables that should NOT show Add/Edit buttons
+        const dashboardTables = ["Master_Dashboard", "TEST_Dashboard"];
         
         // Define buttons based on the current context
         let buttons = `
@@ -140,8 +143,8 @@ export const UI = {
             <button class="action-btn" id="btn-manual-print">Print Manual Log</button>
         `;
 
-        // Only show "Add" and "Edit" if it's not the Dashboard
-        if (tableName !== "Master_Dashboard") {
+        // Only show "Add" and "Edit" if the current table is NOT in the dashboard list
+        if (!dashboardTables.includes(tableName)) {
             buttons += `
                 <button class="action-btn" id="btn-add">Add Item</button>
                 <button class="action-btn" id="btn-edit">Edit Table</button>
