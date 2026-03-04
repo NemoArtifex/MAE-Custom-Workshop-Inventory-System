@@ -135,7 +135,8 @@ export const UI = {
         const container = document.getElementById("action-bar-zone");
 
          // Define tables that should NOT show Add/Edit buttons
-        const dashboardTables = ["Master_Dashboard", "TEST_Dashboard"];
+        const normalizedName = tableName.trim().toLowerCase();
+        const dashboardTables = ["master_dashboard", "test_dashboard"];
         
         // Define buttons based on the current context
         let buttons = `
@@ -144,7 +145,7 @@ export const UI = {
         `;
 
         // Only show "Add" and "Edit" if the current table is NOT in the dashboard list
-        if (!dashboardTables.includes(tableName)) {
+        if (!dashboardTables.includes(normalizedName)) {
             buttons += `
                 <button class="action-btn" id="btn-add">Add Item</button>
                 <button class="action-btn" id="btn-edit">Edit Table</button>
