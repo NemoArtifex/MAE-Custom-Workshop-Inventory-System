@@ -2,23 +2,86 @@
  * MAE Custom Digital Solutions - Master System Manifest
  * Philosophy: Practical, Functional, Simple, Rugged.
  * Version 1.2.1: added active:true to json file
+ * Version 1.2.2: added two TEST worksheets in the beginning
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.1",
+    version: "1.2.2",
     
     worksheets: [
+        {
+            tabName: "TEST Inventory",
+            tableName: "TEST_Inventory",
+            active: true,
+            columns: [
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "TEST String", type: "string", locked: true },
+                { header: "TEST Integer", type: "number", format: "0", locked: true },
+                { header: "TEST Currency", type: "number", format: "$#,##0.00", locked: true },
+                {
+                    header: "TEST Formula", 
+                    type: "formula",
+                    formula: "=[@[TEST Integer]]*[@[TEST Currency]]",
+                    format: "$#,##0.00",
+                    locked: true
+                },
+                {
+                    header: "TEST Dropdown",
+                    type: "dropdown",
+                    options: ["Red", "White", "Blue"],
+                    locked: true
+                }
+            ]
+        },
+        {
+            tabName: "TEST Dashboard",
+            tableName: "TEST_Dashboard",
+            active: true,
+            columns: [
+                {
+                    header: "TEST calc from other table",
+                    type: "formula",
+                    formula: "=SUM(TEST_Inventory[TEST Currency])",
+                    format: "$#,##0.00",
+                    locked: true
+                },
+                {
+                    header: "TEST Number Calc from other table",
+                    type: "formula",
+                    formula: "=SUM(TEST_Inventory[TEST Integer])",
+                    format: "0",
+                    locked: true
+                }
+            ]
+        },
         {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Total Inventory Value", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Low Stock Alerts", type: "string", locked: true },
+                { 
+                    header: "Total Inventory Value", 
+                    type: "formula", 
+                    formula: "=SUM(Resell_Inventory[Total Investment])",
+                    format: "$#,##0.00", 
+                    locked: true 
+                },
+                { 
+                    header: "Low Stock Alerts", 
+                    type: "formula",
+                    formula: "=COUNTIF(Shop_Consumables[Current Stock], \"<\"&Shop_Consumables[Reorder Point])",
+                    locked: true 
+                },
                 { header: "Upcoming Maintenance", type: "string", locked: true },
-                { header: "Monthly Overhead Total", type: "number", format: "$#,##0.00", locked: true },
+                { 
+                    header: "Monthly Overhead Total", 
+                    type: "formula", 
+                    formula: "=SUM(Shop_Overhead[Amount])",
+                    format: "$#,##0.00", 
+                    locked: true 
+                },
                 { header: "Supplier Performance", type: "string", locked: true }
             ]
         },
@@ -37,7 +100,7 @@ export const maeSystemConfig = {
                 { 
                     header: "Total Investment", 
                     type: "formula", 
-                    formula: "=[[#This Row],[Purchase Price]]+[[#This Row],[Restoration Cost]]",
+                    formula: "=[@[Purchase Price]]+[@[Restoration Cost]]",
                     format: "$#,##0.00",
                     locked: true 
                 },
@@ -138,14 +201,11 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Supplier Contact Name", type: "string", locked: true },
-                { header: "Category", type: "string", locked: true },
-                { header: "Account Number", type: "string", locked: true },
-                { header: "Primary Contact", type: "string", locked: true },
-                { header: "Email", type: "string", locked: true },
+                { header: "Supplier Name", type: "string", locked: true },
+                { header: "Contact Person", type: "string", locked: true },
                 { header: "Phone", type: "string", locked: true },
-                { header: "Lead Time", type: "string", locked: true },
-                { header: "Website Link", type: "string", locked: true }
+                { header: "Email", type: "string", locked: true },
+                { header: "Website", type: "string", locked: true }
             ]
         }
     ]
