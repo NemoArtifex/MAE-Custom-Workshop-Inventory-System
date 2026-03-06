@@ -256,4 +256,25 @@ tr:hover {
     cursor: default;
 }
 
+/* style.css - Add these specifically to the bottom */
+
+/* 1. Ensure cells are the highest priority for clicks */
+.inventory-table td.editable-cell {
+    position: relative !important;
+    z-index: 5 !important;
+    pointer-events: auto !important;
+}
+
+/* 2. Remove any user-select restrictions */
+.inventory-table, .editable-cell {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+}
+
+/* 3. Force the I-Beam cursor to show the shop owner it's ready */
+.is-editing .editable-cell {
+    cursor: text !important;
+    background-color: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+}
 

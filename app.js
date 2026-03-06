@@ -355,9 +355,10 @@ function handleEditClick(tableName) {
     
     // 2. UNLOCK CELLS: Find all cells marked as 'editable' and turn on browser editing
     const cells = table.querySelectorAll(".editable-cell");
-    // app.js - inside handleEditClick loop
+   
     cells.forEach(cell => {
         cell.contentEditable = "true";
+        cell.setAttribute('tabindex', '0');
     
     // RUGGED: This is the most reliable way to force the cursor
         cell.onmousedown = function(e) {
@@ -365,7 +366,8 @@ function handleEditClick(tableName) {
     };
     
     // Explicitly focus on click to ensure the cursor appears
-        cell.onclick = function() {
+        cell.onclick = function(e) {
+            e.stopPropagation;
             this.focus();
     };
 });
