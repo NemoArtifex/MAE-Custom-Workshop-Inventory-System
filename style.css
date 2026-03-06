@@ -268,4 +268,15 @@ tr:hover {
     outline: 2px solid var(--accent);
 }
 
+.editable-cell {
+    display: table-cell; /* Ensures it retains table behavior */
+    min-height: 1.2em;   /* Gives the cursor room to appear */
+    outline: none;       /* Removes the blue box so your orange border shows */
+}
+
+.is-editing .editable-cell {
+    z-index: 10;         /* Brings editable cells to the "front" */
+    position: relative; 
+}
+
 

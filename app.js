@@ -358,22 +358,24 @@ function handleEditClick(tableName) {
     cells.forEach(cell => {
         cell.contentEditable = "true";
         cell.setAttribute('tabindex', '0');// Allows the cell to be "tabbed" into and focused
+        cell.addEventListener('mousedown', function (){
+            this.focus();// Forces the browser to put the typing cursor inside
+        })
     });
 
 
     // 3. RUGGED PROTECTION: Click-Outside-To-Save logic
     const handleOutsideClick = (e) => {
-        // If the user clicks something that ISN'T the table or the Edit button itself...
-        const isClickInsideTable = table.contains(e.target);
-        const isClickEditBtn = e.target.closest('#btn-edit');
+    const table = document.getElementById("main-data-table");
+    // Only exit if the click is TRULY outside the table 
+    // AND not on the edit button itself
+    if (!table.contains(e.target) && !e.target.closest('#btn-edit')) {
+        processInPlaceTableUpdate(tableName); 
+        exitEditMode();
+        document.removeEventListener('click', handleOutsideClick);
+    }
+};
 
-        if (!isClickInsideTable && !isClickEditBtn) {
-            // ...Save the changes and lock the table back up
-            processInPlaceTableUpdate(tableName); 
-            exitEditMode();
-            document.removeEventListener('click', handleOutsideClick);
-        }
-    };
 
     // Timeout (100ms) ensures the click that opened the mode doesn't immediately close it
     setTimeout(() => {

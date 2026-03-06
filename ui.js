@@ -171,74 +171,7 @@ export const UI = {
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
     },
 
-/*   // ui.js inside the export const UI = { ... }
-
-   renderAddForm(tableName, sheetConfig, onSaveCallback) {
-    const container = document.getElementById("table-container");
-    
-    // 1. Create the Form Container
-    let formHtml = `
-        <div class="form-card" id="add-entry-form">
-            <div class="form-header">
-                <h3>Add New Entry: ${sheetConfig.tabName}</h3>
-                <button class="close-x" onclick="document.getElementById('add-entry-form').remove()">×</button>
-            </div>
-            <div class="form-grid">`;
-
-    // 2. Loop through columns and build inputs/dropdowns
-    sheetConfig.columns.forEach(col => {
-        // RUGGED: Skip ID, Hidden, and Formulas
-        if (!col.hidden && col.type !== "formula") {
-            formHtml += `<div class="input-group"><label>${col.header}</label>`;
-
-            // HANDLE DROPDOWNS
-            if (col.type === "dropdown") {
-                formHtml += `
-                    <select id="field-${col.header.replace(/\s+/g, '')}">
-                        <option value="">-- Select ${col.header} --</option>
-                        ${col.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-                    </select>`;
-            } 
-            // HANDLE STANDARD INPUTS (Date, Number, Text)
-            else {
-                let inputType = "text";
-                if (col.type === "number") inputType = "number";
-                if (col.type === "date") inputType = "date";
-
-                const stepAttr = (col.type === "number" || (col.format && col.format.includes("$"))) ? 'step="0.01"' : '';
-
-                formHtml += `
-                    <input type="${inputType}" 
-                           ${stepAttr}
-                           id="field-${col.header.replace(/\s+/g, '')}" 
-                           placeholder="Enter ${col.header}...">`;
-            }
-
-            formHtml += `</div>`;
-        }
-    });
-
-    formHtml += `</div>
-        <div class="form-actions">
-            <button class="save-btn" id="submit-new-row">Save to OneDrive</button>
-            <button class="cancel-btn" onclick="document.getElementById('add-entry-form').remove()">Cancel</button>
-        </div>
-    </div>`;
-
-    // 3. Inject the form (using 'afterbegin' so it appears at the top of the table container)
-    // or 'beforebegin' if you want it outside the table box entirely.
-    container.insertAdjacentHTML('beforebegin', formHtml);
-
-    // 4. Attach the Logic Trigger
-    document.getElementById("submit-new-row").onclick = () => {
-        // Validation: Simple check to ensure form isn't empty
-        onSaveCallback();
-    };
-}*/
-
-// ui.js - Refactored for both Add and Edit
-
-renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
+    renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");
     const isEdit = mode === 'edit';
     
