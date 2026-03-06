@@ -234,6 +234,7 @@ tr:hover {
     border: 2px solid var(--accent);
     background: #fff;
     cursor: text;
+    outline: none;
 }
 
 .is-editing .locked-cell {
@@ -266,6 +267,13 @@ tr:hover {
 .is-editing .editable-cell:focus {
     background: #fff;
     outline: 2px solid var(--accent);
+
+}
+
+/* Adds a subtle glow when the shop owner is actively typing */
+.editable-cell:focus {
+    background: #fff;
+    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
 }
 
 .editable-cell {

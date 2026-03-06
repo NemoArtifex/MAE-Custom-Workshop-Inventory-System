@@ -358,7 +358,8 @@ function handleEditClick(tableName) {
     cells.forEach(cell => {
         cell.contentEditable = "true";
         cell.setAttribute('tabindex', '0');// Allows the cell to be "tabbed" into and focused
-        cell.addEventListener('mousedown', function (){
+        cell.addEventListener('mousedown', function (e){
+            e.stopPropagation();// CRITICAL: Tells the 'Click Outside' logic to ignore this click
             this.focus();// Forces the browser to put the typing cursor inside
         })
     });
