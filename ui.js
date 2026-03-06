@@ -87,7 +87,7 @@ export const UI = {
         // Render Rows using ONLY those visible indices
         if (rows && rows.length > 0) {
             rows.forEach((row, rowIndex) => {
-                html += `<tr data-row-index=${rowIndex}>`;
+                html += `<tr data-row-index="${rowIndex}">`;
 
                 // 2. Add Delete Icon Cell
             html += `<td class="edit-only-cell">
@@ -100,7 +100,7 @@ export const UI = {
 
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
-                    const isEditable = !colDef.locked && colDef.type !-- 'formula';
+                    const isEditable = !colDef.locked && colDef.type !== 'formula';
                     const value = allCells[idx] ?? '';
 
                     // 3. Mark cells as editable if they aren't formulas/locked
