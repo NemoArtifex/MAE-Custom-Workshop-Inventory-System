@@ -350,30 +350,42 @@ function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 1. Show the Delete column and Orange borders
     table.classList.add("is-editing");
     
-    // 2. Unlock the cells
     const cells = table.querySelectorAll(".editable-cell");
     cells.forEach(cell => {
         cell.contentEditable = "true";
-        
-        // Ensure the "Click Outside" logic doesn't trigger when clicking INSIDE a cell
-        cell.onmousedown = (e) => e.stopPropagation();
+        cell.setAttribute('tabindex', '0');
+
+        // RUGGED: This is the key. Stop the click from 'bubbling' up to the document.
+        cell.onmousedown = (e) => {
+            e.stopImmediatePropagation(); 
+        };
+
+        cell.onclick = (e) => {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            cell.focus(); 
+        };
     });
 
-    // 3. The "Revert" Logic
     const handleOutsideClick = (e) => {
-        // SAFETY: Only save if we are truly outside the table zone
-        if (!table.contains(e.target) && !e.target.closest('#btn-edit')) {
+        const editBtn = document.getElementById('btn-edit');
+        
+        // Only trigger if we click truly away from the table AND the edit button
+        if (!table.contains(e.target) && (!editBtn || !editBtn.contains(e.target))) {
             processInPlaceTableUpdate(tableName); 
             exitEditMode();
-            document.removeEventListener('click', handleOutsideClick);
-        } 
+            document.removeEventListener('mousedown', handleOutsideClick); // Use mousedown for faster detection
+        }
     };
 
-    setTimeout(() => document.addEventListener('click', handleOutsideClick), 100);
+    // Delay the listener slightly so it doesn't catch the initial button click
+    setTimeout(() => {
+        document.addEventListener('mousedown', handleOutsideClick);
+    }, 150);
 }
+
 
 function exitEditMode() {
     const table = document.getElementById("main-data-table");
