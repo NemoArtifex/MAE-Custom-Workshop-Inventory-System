@@ -226,57 +226,63 @@ tr:hover {
 
 /* style.css - Consolidated & Rugged */
 
-/* style.css - Clean, Consolidated Table Logic */
+/* style.css - FINAL CONSOLIDATED TABLE LOGIC */
 
-/* 1. Default State: Delete column is GONE */
+/* 1. Hide the Action/Delete column by default */
 .edit-only-cell { 
     display: none; 
 }
 
-/* 2. Edit Mode: Show Delete column & highlight editable cells */
+/* 2. Show Action column only during Edit Mode */
 .is-editing .edit-only-cell { 
     display: table-cell; 
 }
 
+/* 3. The "Rugged" Editable Cell: No relative positioning (breaks focus) */
 .is-editing .editable-cell {
     background: #ffffff !important;
     border: 2px solid var(--accent) !important;
     cursor: text !important;
-    /* RUGGED: No position:relative or z-index here - they break table focus */
+    pointer-events: auto !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
-/* 3. Locked cells look "disabled" */
+/* 4. Visual cues for the workshop owner */
+.editable-cell:focus {
+    background: #ffffff !important;
+    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
+    outline: none;
+}
+
 .is-editing .locked-cell {
     background: #eeeeee !important;
     color: #888888;
     cursor: default;
 }
 
-/* 4. Global safety for interaction */
-.editable-cell {
+/* 5. Ensure the Main container doesn't block the mouse */
+main, #table-container, .inventory-table {
     pointer-events: auto !important;
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    outline: none;
-}
-
-/* 5. Show a subtle glow when the user is actually typing */
-.editable-cell:focus {
-    background: #fff !important;
-    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
 }
 
 /* style.css */
 .is-editing .editable-cell {
+    /* Lift the cell to the front so the click hits it directly */
+    position: relative !important;
+    z-index: 100 !important;
+    
+    /* Force the cell to be interactive */
     pointer-events: auto !important;
-    user-select: text !important;
     -webkit-user-select: text !important;
-    /* Ensure no transparent layers are on top */
-    position: relative;
-    z-index: 5;
+    user-select: text !important;
+    
+    /* Visual confirmation */
+    background-color: #ffffff !important;
+    cursor: text !important;
 }
 
-/* This forces the I-beam cursor to appear on hover */
-.is-editing .editable-cell:hover {
-    cursor: text !important;
+/* Ensure the main app content doesn't "swallow" the click */
+#app-content, #table-container {
+    pointer-events: auto !important;
 }

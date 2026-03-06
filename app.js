@@ -359,31 +359,34 @@ function handleEditClick(tableName) {
 
         // RUGGED: This is the key. Stop the click from 'bubbling' up to the document.
         cell.onmousedown = (e) => {
-            e.stopImmediatePropagation(); 
+            e.stopPropagation();
+            e.preventDefault();
+            this.focue();
         };
 
         cell.onclick = (e) => {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-            cell.focus(); 
+            e.stopPropagation();
+            this.focus;
         };
     });
 
+   // app.js - inside handleEditClick()
     const handleOutsideClick = (e) => {
-        const editBtn = document.getElementById('btn-edit');
-        
-        // Only trigger if we click truly away from the table AND the edit button
-        if (!table.contains(e.target) && (!editBtn || !editBtn.contains(e.target))) {
-            processInPlaceTableUpdate(tableName); 
-            exitEditMode();
-            document.removeEventListener('mousedown', handleOutsideClick); // Use mousedown for faster detection
-        }
+        const table = document.getElementById("main-data-table");
+    
+    // If the click is inside the table, do NOTHING
+        if (table && table.contains(e.target)) return;
+
+        processInPlaceTableUpdate(tableName); 
+        exitEditMode();
+        document.removeEventListener('mousedown', handleOutsideClick);
     };
 
-    // Delay the listener slightly so it doesn't catch the initial button click
+// Use mousedown to match the cell's listener
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
     }, 150);
+
 }
 
 
