@@ -324,25 +324,71 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const btn = event.target.closest('button');
     if (!btn) return;// Exit if they clicked the bar but not the button
 
-    console.log("Button clicked:", btn.id);
-
     if (btn.id === 'btn-add') {
         // Trigger the Add Item flow
         handleAddClick(window.currentTable); 
-    } 
+    } else if (btn.id === 'btn-edit') {
+        handleEditClick(window.currentTable);
+    }
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
 
-// 2. THE HANDLER FUNCTION
+// handle ADD Click function
 async function handleAddClick(tableName) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
     // Call the UI tool to draw the form
     // We pass a 'callback' function so the UI knows what to do when 'Save' is clicked
-    UI.renderAddForm(tableName, sheetConfig, () => {
+    UI.renderEntryForm('add',tableName, sheetConfig, () => {
         submitNewRow(tableName, sheetConfig);
     });
 }
+
+// Handle EDIT CLICK function
+// app.js - REPLACES the previous handleEditClick
+function handleEditClick(tableName) {
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
+
+    // 1. VISUAL FEEDBACK: Add the "is-editing" class to show borders & delete icons
+    table.classList.add("is-editing");
+    
+    // 2. UNLOCK CELLS: Find all cells marked as 'editable' and turn on browser editing
+    const cells = table.querySelectorAll(".editable-cell");
+    cells.forEach(cell => {
+        cell.contentEditable = "true";
+    });
+
+    // 3. RUGGED PROTECTION: Click-Outside-To-Save logic
+    const handleOutsideClick = (e) => {
+        // If the user clicks something that ISN'T the table or the Edit button itself...
+        const isClickInsideTable = table.contains(e.target);
+        const isClickEditBtn = e.target.closest('#btn-edit');
+
+        if (!isClickInsideTable && !isClickEditBtn) {
+            // ...Save the changes and lock the table back up
+            processInPlaceTableUpdate(tableName); 
+            exitEditMode();
+            document.removeEventListener('click', handleOutsideClick);
+        }
+    };
+
+    // Timeout (100ms) ensures the click that opened the mode doesn't immediately close it
+    setTimeout(() => {
+        document.addEventListener('click', handleOutsideClick);
+    }, 100);
+}
+
+// Helper to lock the UI back down
+function exitEditMode() {
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
+
+    table.classList.remove("is-editing");
+    const cells = table.querySelectorAll(".editable-cell");
+    cells.forEach(cell => cell.contentEditable = "false");
+}
+
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========
 // app.js
@@ -422,6 +468,101 @@ async function submitNewRow(tableName, sheetConfig) {
 
 //===========END GLOBAL CLICK LISTENER============
 
+// ======= FUNCTION to scan html table and send updates to OneDrive ==========
+//=======  function processInPlaceTableUpdate ========
 
+// app.js - The "Brain" for In-Place Saving
 
+async function processInPlaceTableUpdate(tableName) {
+    const table = document.getElementById("main-data-table");
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    const rows = table.querySelectorAll("tbody tr");
+    
+    // We only want to send rows that have actually been modified to save on API calls
+    const updates = [];
 
+    rows.forEach(tr => {
+        const rowIndex = tr.getAttribute("data-row-index");
+        const rowValues = [];
+
+        // Build the row array based on config order
+        sheetConfig.columns.forEach((col, index) => {
+            // Find the cell in this row that matches the config column index
+            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
+            
+            if (col.type === "formula") {
+                rowValues.push(null); // Excel will recalculate formulas
+            } else if (cell) {
+                let val = cell.innerText.trim();
+                // Rugged: Convert to numbers where required so Excel math doesn't break
+                if (col.type === "number") {
+                    val = val === "" ? null : parseFloat(val.replace(/[^0-9.-]+/g,""));
+                }
+                rowValues.push(val);
+            } else {
+                rowValues.push(null);
+            }
+        });
+        
+        updates.push({ index: rowIndex, values: [rowValues] });
+    });
+
+    // Send to Microsoft Graph
+    try {
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        // Professional Approach: Update rows one by one or in a batch if supported
+        for (const update of updates) {
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${update.index})`;
+            //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+            await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ values: update.values })
+            });
+        }
+        console.log("MAE System: All changes synced to OneDrive.");
+    } catch (err) {
+        console.error("Sync Error:", err);
+        UI.showError("Failed to sync changes. Check internet connection.");
+    }
+}
+
+// =====  END  function processInPlaceTableUpdate   ==========
+
+//======== FUNCTION delete Excel Row ===========
+// app.js - Rugged Row Deletion
+
+async function deleteExcelRow(tableName, rowIndex) {
+    try {
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+         //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+        });
+
+        if (response.ok) {
+            alert("Row deleted successfully.");
+            loadTableData(tableName); // Refresh the UI to reflect the removal
+        } else {
+            throw new Error("Failed to delete row.");
+        }
+    } catch (err) {
+        console.error("Delete Error:", err);
+        alert("Could not delete row: " + err.message);
+    }
+}
+
+//====== END delete Excel Row ============

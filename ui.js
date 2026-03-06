@@ -62,7 +62,6 @@ export const UI = {
     renderTable(rows, tableName, sheetConfig) {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
-        
         title.innerText = `View: ${sheetConfig.tabName}`;
 
         if (!sheetConfig) {
@@ -72,7 +71,10 @@ export const UI = {
 
         // Identify which column indices are NOT hidden
         const visibleIndices = [];
-        let html = `<table class="inventory-table"><thead><tr>`;
+        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
+        
+        // 1. Add "Delete" Header (Hidden by default via CSS)
+        html += `<th class="edit-only-cell">Action</th>`;
         
         sheetConfig.columns.forEach((col, index) => {
             if (col.hidden !== true) { 
@@ -84,16 +86,29 @@ export const UI = {
 
         // Render Rows using ONLY those visible indices
         if (rows && rows.length > 0) {
-            rows.forEach((row) => {
-                html += `<tr>`;
+            rows.forEach((row, rowIndex) => {
+                html += `<tr data-row-index=${rowIndex}>`;
+
+                // 2. Add Delete Icon Cell
+            html += `<td class="edit-only-cell">
+                        <button class="delete-row-btn" onclick="app.requestDelete(${rowIndex})">🗑️</button>
+                     </td>`;
                 
                 // Microsoft Graph /rows returns values as an array [cell0, cell1...]
                 // Note: Depending on your API call, it might be row.values[0] or just row.values
                 const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
 
                 visibleIndices.forEach(idx => {
-                    const value = allCells[idx];
-                    html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
+                    const colDef = sheetConfig.columns[idx];
+                    const isEditable = !colDef.locked && colDef.type !-- 'formula';
+                    const value = allCells[idx] ?? '';
+
+                    // 3. Mark cells as editable if they aren't formulas/locked
+                    html += `<td 
+                            class="${isEditable ? 'editable-cell' : 'locked-cell'}" 
+                            data-col-index="${idx}"
+                            contenteditable="false">${value}</td>`;
+                   // html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
                 });
                 html += `</tr>`;
             });
@@ -156,9 +171,9 @@ export const UI = {
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
     },
 
-    // ui.js inside the export const UI = { ... }
+/*   // ui.js inside the export const UI = { ... }
 
-renderAddForm(tableName, sheetConfig, onSaveCallback) {
+   renderAddForm(tableName, sheetConfig, onSaveCallback) {
     const container = document.getElementById("table-container");
     
     // 1. Create the Form Container
@@ -219,7 +234,68 @@ renderAddForm(tableName, sheetConfig, onSaveCallback) {
         // Validation: Simple check to ensure form isn't empty
         onSaveCallback();
     };
+}*/
+
+// ui.js - Refactored for both Add and Edit
+
+renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
+    const container = document.getElementById("table-container");
+    const isEdit = mode === 'edit';
+    
+    let formHtml = `
+        <div class="form-card" id="entry-form">
+            <div class="form-header">
+                <h3>${isEdit ? 'Edit' : 'Add New'} Entry: ${sheetConfig.tabName}</h3>
+                <button class="close-x" onclick="document.getElementById('entry-form').remove()">×</button>
+            </div>
+            <div class="form-grid">`;
+
+    sheetConfig.columns.forEach((col, index) => {
+        // RUGGED: Skip ID, Hidden, and Formulas
+        if (!col.hidden && col.type !== "formula") {
+            const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+            // If editing, pull the value from existingData using the column index
+            const val = (isEdit && existingData) ? existingData[index] : "";
+
+            formHtml += `<div class="input-group"><label>${col.header}</label>`;
+
+            if (col.type === "dropdown") {
+                formHtml += `
+                    <select id="${fieldId}">
+                        <option value="">-- Select ${col.header} --</option>
+                        ${col.options.map(opt => 
+                            `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
+                        ).join('')}
+                    </select>`;
+            } else {
+                let inputType = "text";
+                if (col.type === "number") inputType = "number";
+                if (col.type === "date") inputType = "date";
+
+                const stepAttr = (col.type === "number" || (col.format && col.format.includes("$"))) ? 'step="0.01"' : '';
+
+                formHtml += `
+                    <input type="${inputType}" ${stepAttr} id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
+            }
+            formHtml += `</div>`;
+        }
+    });
+
+    formHtml += `</div>
+        <div class="form-actions">
+            <button class="save-btn" id="submit-form-btn">${isEdit ? 'Update' : 'Save'} to OneDrive</button>
+            <button class="cancel-btn" onclick="document.getElementById('entry-form').remove()">Cancel</button>
+        </div>
+    </div>`;
+
+    container.insertAdjacentHTML('beforebegin', formHtml);
+
+    // Attach the logic trigger
+    document.getElementById("submit-form-btn").onclick = () => {
+        onSaveCallback(rowIndex, existingData); 
+    };
 }
+
 
 
 };
