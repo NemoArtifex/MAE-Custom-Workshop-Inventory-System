@@ -226,73 +226,42 @@ tr:hover {
 
 /* style.css - Consolidated & Rugged */
 
-/* 1. Reset: Let the browser treat them as normal table cells first */
-.editable-cell, .locked-cell {
-    display: table-cell;
-    pointer-events: auto !important;
-    user-select: text !important;
+/* style.css - Clean, Consolidated Table Logic */
+
+/* 1. Default State: Delete column is GONE */
+.edit-only-cell { 
+    display: none; 
 }
 
-/* 2. The Edit Mode Style */
+/* 2. Edit Mode: Show Delete column & highlight editable cells */
+.is-editing .edit-only-cell { 
+    display: table-cell; 
+}
+
 .is-editing .editable-cell {
     background: #ffffff !important;
     border: 2px solid var(--accent) !important;
     cursor: text !important;
-    outline: none;
-    /* REMOVED: position: relative and z-index (these clash with table-cells) */
+    /* RUGGED: No position:relative or z-index here - they break table focus */
 }
 
-/* 3. The Active Focus (When typing) */
-.editable-cell:focus {
-    background: #fff !important;
-    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
-    border-color: var(--accent) !important;
-}
-
-/* 4. Locked cells should stay visible but unclickable */
+/* 3. Locked cells look "disabled" */
 .is-editing .locked-cell {
     background: #eeeeee !important;
     color: #888888;
     cursor: default;
 }
 
-/* style.css - Add these specifically to the bottom */
-
-/* 1. Ensure cells are the highest priority for clicks */
-.inventory-table td.editable-cell {
-    position: relative !important;
-    z-index: 5 !important;
+/* 4. Global safety for interaction */
+.editable-cell {
     pointer-events: auto !important;
-}
-
-/* 2. Remove any user-select restrictions */
-.inventory-table, .editable-cell {
-    -webkit-user-select: text !important;
     user-select: text !important;
-}
-
-/* 3. Force the I-Beam cursor to show the shop owner it's ready */
-.is-editing .editable-cell {
-    cursor: text !important;
-    background-color: #ffffff !important;
-    border: 2px solid var(--accent) !important;
-    position: relative !important;
-    
-}
-
-/* style.css */
-.is-editing .editable-cell {
-    position: relative !important;
-    z-index: 10 !important; /* "Lifts" the cell above any transparent wrappers */
-    pointer-events: auto !important; 
-    cursor: text !important;
-    background: #ffffff !important;
-    border: 2px solid var(--accent) !important;
-}
-
-/* Ensure the text itself is selectable */
-.editable-cell, .editable-cell * {
     -webkit-user-select: text !important;
-    user-select: text !important;
+    outline: none;
 }
 
+/* 5. Show a subtle glow when the user is actually typing */
+.editable-cell:focus {
+    background: #fff !important;
+    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
+}

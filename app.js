@@ -345,63 +345,40 @@ async function handleAddClick(tableName) {
 }
 
 // Handle EDIT CLICK function
-// app.js - REPLACES the previous handleEditClick
+
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 1. VISUAL FEEDBACK: Add the "is-editing" class to show borders & delete icons
+    // 1. Show the Delete column and Orange borders
     table.classList.add("is-editing");
     
-    // 2. UNLOCK CELLS: Find all cells marked as 'editable' and turn on browser editing
+    // 2. Unlock the cells
     const cells = table.querySelectorAll(".editable-cell");
-   
     cells.forEach(cell => {
         cell.contentEditable = "true";
-        cell.setAttribute('tabindex', '0');
-    
-    // RUGGED: This is the most reliable way to force the cursor
-        cell.onmousedown = function(e) {
-        e.stopPropagation(); // Stops the 'click outside' from closing edit mode
-    };
-    
-    // Explicitly focus on click to ensure the cursor appears
-        cell.onclick = function(e) {
-            e.preventDefault();// Stop default browser table behavior
-            e.stopPropagation;
-            this.focus();
-    };
-});
+        
+        // Ensure the "Click Outside" logic doesn't trigger when clicking INSIDE a cell
+        cell.onmousedown = (e) => e.stopPropagation();
+    });
 
-
-
-    // 3. RUGGED PROTECTION: Click-Outside-To-Save logic
+    // 3. The "Revert" Logic
     const handleOutsideClick = (e) => {
-    const table = document.getElementById("main-data-table");
-    // Only exit if the click is TRULY outside the table 
-    // AND not on the edit button itself
-    if (!table.contains(e.target) && !e.target.closest('#btn-edit')) {
-        processInPlaceTableUpdate(tableName); 
-        exitEditMode();
-        document.removeEventListener('click', handleOutsideClick);
-    }
-};
+        const editBtn = document.getElementById('btn-edit');
+        if (!table.contains(e.target) && !editBtn.contains(e.target)) {
+            processInPlaceTableUpdate(tableName); 
+            exitEditMode();
+            document.removeEventListener('click', handleOutsideClick);
+        }
+    };
 
-
-    // Timeout (100ms) ensures the click that opened the mode doesn't immediately close it
-    setTimeout(() => {
-        document.addEventListener('click', handleOutsideClick);
-    }, 100);
+    setTimeout(() => document.addEventListener('click', handleOutsideClick), 100);
 }
 
-// Helper to lock the UI back down
 function exitEditMode() {
     const table = document.getElementById("main-data-table");
-    if (!table) return;
-
     table.classList.remove("is-editing");
-    const cells = table.querySelectorAll(".editable-cell");
-    cells.forEach(cell => cell.contentEditable = "false");
+    table.querySelectorAll(".editable-cell").forEach(c => c.contentEditable = "false");
 }
 
 
