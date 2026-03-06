@@ -224,67 +224,36 @@ tr:hover {
     background: #f1f1f1; 
 }
 
-/* Hidden by default */
-.edit-only-cell { display: none; }
+/* style.css - Consolidated & Rugged */
 
-/* When the table is in "Edit Mode" */
-.is-editing .edit-only-cell { display: table-cell; }
-
-.is-editing .editable-cell {
-    border: 2px solid var(--accent);
-    background: #fff;
-    cursor: text;
-    outline: none;
-}
-
-.is-editing .locked-cell {
-    background: #eee;
-    color: #888;
-    cursor: default;
-    pointer-events: auto;
-}
-
-.delete-row-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-}
-
-/* style.css */
-.editable-cell {
-    user-select: text; /* Allows the cursor to enter the cell */
-    -webkit-user-select: text;
-}
-
-/* Ensure the table and cells are fully interactive */
-.inventory-table, .editable-cell {
+/* 1. Reset: Let the browser treat them as normal table cells first */
+.editable-cell, .locked-cell {
+    display: table-cell;
     pointer-events: auto !important;
     user-select: text !important;
-    -webkit-user-select: text !important;
 }
 
-.is-editing .editable-cell:focus {
-    background: #fff;
-    outline: 2px solid var(--accent);
-
-}
-
-/* Adds a subtle glow when the shop owner is actively typing */
-.editable-cell:focus {
-    background: #fff;
-    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
-}
-
-.editable-cell {
-    display: table-cell; /* Ensures it retains table behavior */
-    min-height: 1.2em;   /* Gives the cursor room to appear */
-    outline: none;       /* Removes the blue box so your orange border shows */
-}
-
+/* 2. The Edit Mode Style */
 .is-editing .editable-cell {
-    z-index: 10;         /* Brings editable cells to the "front" */
-    position: relative; 
+    background: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+    cursor: text !important;
+    outline: none;
+    /* REMOVED: position: relative and z-index (these clash with table-cells) */
+}
+
+/* 3. The Active Focus (When typing) */
+.editable-cell:focus {
+    background: #fff !important;
+    box-shadow: inset 0 0 5px rgba(211, 84, 0, 0.2);
+    border-color: var(--accent) !important;
+}
+
+/* 4. Locked cells should stay visible but unclickable */
+.is-editing .locked-cell {
+    background: #eeeeee !important;
+    color: #888888;
+    cursor: default;
 }
 
 

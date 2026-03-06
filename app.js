@@ -355,14 +355,21 @@ function handleEditClick(tableName) {
     
     // 2. UNLOCK CELLS: Find all cells marked as 'editable' and turn on browser editing
     const cells = table.querySelectorAll(".editable-cell");
+    // app.js - inside handleEditClick loop
     cells.forEach(cell => {
         cell.contentEditable = "true";
-        cell.setAttribute('tabindex', '0');// Allows the cell to be "tabbed" into and focused
-        cell.addEventListener('mousedown', function (e){
-            e.stopPropagation();// CRITICAL: Tells the 'Click Outside' logic to ignore this click
-            this.focus();// Forces the browser to put the typing cursor inside
-        })
-    });
+    
+    // RUGGED: This is the most reliable way to force the cursor
+        cell.onmousedown = function(e) {
+        e.stopPropagation(); // Stops the 'click outside' from closing edit mode
+    };
+    
+    // Explicitly focus on click to ensure the cursor appears
+        cell.onclick = function() {
+            this.focus();
+    };
+});
+
 
 
     // 3. RUGGED PROTECTION: Click-Outside-To-Save logic
