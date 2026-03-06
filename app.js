@@ -543,6 +543,22 @@ async function processInPlaceTableUpdate(tableName) {
 //======== FUNCTION delete Excel Row ===========
 // app.js - Rugged Row Deletion
 
+// 1. The Wrapper (The button calls this)
+async function requestDelete(rowIndex) {
+    // RUGGED: Always warn the user before a destructive action
+    const confirmed = confirm(`WARNING: Are you sure you want to delete row ${rowIndex + 1}? This cannot be undone.`);
+    
+    if (confirmed) {
+        // If they say yes, call your API function
+        await deleteExcelRow(window.currentTable, rowIndex);
+    }
+}
+
+// 2. EXPOSE TO WINDOW: This fixes the ReferenceError
+window.requestDelete = requestDelete;
+
+
+// API logic to delete an Excel Row
 async function deleteExcelRow(tableName, rowIndex) {
     try {
         const tokenResponse = await myMSALObj.acquireTokenSilent({
@@ -572,5 +588,4 @@ async function deleteExcelRow(tableName, rowIndex) {
 
 
 //====== END delete Excel Row ============
-window.requestDelete = requestDelete;
 window.handleEditClick = handleEditClick;
