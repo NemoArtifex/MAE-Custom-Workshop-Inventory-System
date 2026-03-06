@@ -364,12 +364,12 @@ function handleEditClick(tableName) {
 
     // 3. The "Revert" Logic
     const handleOutsideClick = (e) => {
-        const editBtn = document.getElementById('btn-edit');
-        if (!table.contains(e.target) && !editBtn.contains(e.target)) {
+        // SAFETY: Only save if we are truly outside the table zone
+        if (!table.contains(e.target) && !e.target.closest('#btn-edit')) {
             processInPlaceTableUpdate(tableName); 
             exitEditMode();
             document.removeEventListener('click', handleOutsideClick);
-        }
+        } 
     };
 
     setTimeout(() => document.addEventListener('click', handleOutsideClick), 100);
@@ -377,6 +377,7 @@ function handleEditClick(tableName) {
 
 function exitEditMode() {
     const table = document.getElementById("main-data-table");
+    if (!table) return;
     table.classList.remove("is-editing");
     table.querySelectorAll(".editable-cell").forEach(c => c.contentEditable = "false");
 }
@@ -467,6 +468,7 @@ async function submitNewRow(tableName, sheetConfig) {
 
 async function processInPlaceTableUpdate(tableName) {
     const table = document.getElementById("main-data-table");
+    if (!table) return;
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     const rows = table.querySelectorAll("tbody tr");
     
