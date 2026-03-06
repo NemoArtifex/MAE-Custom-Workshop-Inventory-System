@@ -367,6 +367,7 @@ function handleEditClick(tableName) {
     
     // Explicitly focus on click to ensure the cursor appears
         cell.onclick = function(e) {
+            e.preventDefault();// Stop default browser table behavior
             e.stopPropagation;
             this.focus();
     };

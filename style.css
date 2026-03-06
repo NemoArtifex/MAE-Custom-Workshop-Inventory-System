@@ -276,5 +276,23 @@ tr:hover {
     cursor: text !important;
     background-color: #ffffff !important;
     border: 2px solid var(--accent) !important;
+    position: relative !important;
+    
+}
+
+/* style.css */
+.is-editing .editable-cell {
+    position: relative !important;
+    z-index: 10 !important; /* "Lifts" the cell above any transparent wrappers */
+    pointer-events: auto !important; 
+    cursor: text !important;
+    background: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+}
+
+/* Ensure the text itself is selectable */
+.editable-cell, .editable-cell * {
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
