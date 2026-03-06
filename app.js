@@ -360,22 +360,31 @@ function handleEditClick(tableName) {
         // RUGGED: This is the key. Stop the click from 'bubbling' up to the document.
         cell.onmousedown = (e) => {
             e.stopPropagation();
-            e.preventDefault();
-            this.focue();
         };
 
-        cell.onclick = (e) => {
-            e.stopPropagation();
-            this.focus;
+        // RUGGED: Physically force the cursor into the cell
+    cell.onclick = function(e) {
+        e.stopPropagation();
+        
+        // 1. Standard focus command
+        this.focus(); 
+
+        // 2. FORCE the cursor to appear if the browser is being stubborn
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(this);
+        range.collapse(false); // Places cursor at the end of existing text
+        selection.removeAllRanges();
+        selection.addRange(range);
         };
     });
 
    // app.js - inside handleEditClick()
-    const handleOutsideClick = (e) => {
-        const table = document.getElementById("main-data-table");
+        const handleOutsideClick = (e) => {
+            const table = document.getElementById("main-data-table");
     
     // If the click is inside the table, do NOTHING
-        if (table && table.contains(e.target)) return;
+         if (table && table.contains(e.target)) return;
 
         processInPlaceTableUpdate(tableName); 
         exitEditMode();

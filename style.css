@@ -286,3 +286,22 @@ main, #table-container, .inventory-table {
 #app-content, #table-container {
     pointer-events: auto !important;
 }
+
+/* style.css */
+
+/* Lift the cell above any invisible containers */
+.is-editing .editable-cell {
+    position: relative !important;
+    z-index: 999 !important; /* Forces the cell to the absolute front */
+    pointer-events: auto !important;
+    cursor: text !important;
+    background: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+}
+
+/* Ensure the main app content doesn't "swallow" the click */
+#app-content, #table-container, .inventory-table {
+    pointer-events: auto !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+}
