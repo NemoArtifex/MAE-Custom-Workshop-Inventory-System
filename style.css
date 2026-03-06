@@ -239,7 +239,8 @@ tr:hover {
 .is-editing .locked-cell {
     background: #eee;
     color: #888;
-    cursor: not-allowed;
+    cursor: default;
+    pointer-events: auto;
 }
 
 .delete-row-btn {
@@ -248,3 +249,10 @@ tr:hover {
     cursor: pointer;
     font-size: 1.2rem;
 }
+
+/* style.css */
+.editable-cell {
+    user-select: text; /* Allows the cursor to enter the cell */
+    -webkit-user-select: text;
+}
+
