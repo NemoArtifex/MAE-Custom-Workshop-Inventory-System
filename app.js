@@ -565,4 +565,6 @@ async function deleteExcelRow(tableName, rowIndex) {
     }
 }
 
+window.requestDelete = requestDelete;
+
 //====== END delete Excel Row ============
