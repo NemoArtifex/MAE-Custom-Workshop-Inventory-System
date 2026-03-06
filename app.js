@@ -357,7 +357,9 @@ function handleEditClick(tableName) {
     const cells = table.querySelectorAll(".editable-cell");
     cells.forEach(cell => {
         cell.contentEditable = "true";
+        cell.setAttribute('tabindex', '0');// Allows the cell to be "tabbed" into and focused
     });
+
 
     // 3. RUGGED PROTECTION: Click-Outside-To-Save logic
     const handleOutsideClick = (e) => {
@@ -565,6 +567,8 @@ async function deleteExcelRow(tableName, rowIndex) {
     }
 }
 
-window.requestDelete = requestDelete;
+
 
 //====== END delete Excel Row ============
+window.requestDelete = requestDelete;
+window.handleEditClick = handleEditClick;

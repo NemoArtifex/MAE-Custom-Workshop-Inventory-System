@@ -256,3 +256,16 @@ tr:hover {
     -webkit-user-select: text;
 }
 
+/* Ensure the table and cells are fully interactive */
+.inventory-table, .editable-cell {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+.is-editing .editable-cell:focus {
+    background: #fff;
+    outline: 2px solid var(--accent);
+}
+
+

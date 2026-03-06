@@ -91,7 +91,7 @@ export const UI = {
 
                 // 2. Add Delete Icon Cell
             html += `<td class="edit-only-cell">
-                        <button class="delete-row-btn" onclick="app.requestDelete(${rowIndex})">🗑️</button>
+                        <button class="delete-row-btn" onclick="requestDelete(${rowIndex})">🗑️</button>
                      </td>`;
                 
                 // Microsoft Graph /rows returns values as an array [cell0, cell1...]
@@ -107,7 +107,7 @@ export const UI = {
                     html += `<td 
                             class="${isEditable ? 'editable-cell' : 'locked-cell'}" 
                             data-col-index="${idx}"
-                            contenteditable="false">${value}</td>`;
+                            contentEditable="false">${value}</td>`;
                    // html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
                 });
                 html += `</tr>`;
