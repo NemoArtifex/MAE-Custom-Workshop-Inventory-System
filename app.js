@@ -337,23 +337,29 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
 async function handleAddClick(tableName) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    // Call the UI tool to draw the form
-    // We pass a 'callback' function so the UI knows what to do when 'Save' is clicked
-    UI.renderEntryForm('add',tableName, sheetConfig, async () => {
-        // Submit data
+    UI.renderEntryForm('add', tableName, sheetConfig, async () => {
+        // 1. Submit the data
         const success = await submitNewRow(tableName, sheetConfig);
-        // If successful, clear the inputs instead of removing form
+        
+        // 2. If successful, clear the inputs so the form stays open for more items
         if (success) {
-            const form = document.getElementById("entry-form");
-            const inputs = form.querySelectorAll("input, select");
-            inputs.forEach(input => input.value = ""); //clear all fields
-            //Refocus the first input for the next entry
-            if (inputs[0]) inputs[0].focus();
+            const formContainer = document.getElementById("entry-form");
+            if (formContainer) {
+                const inputs = formContainer.querySelectorAll("input, select");
+                inputs.forEach(input => {
+                    input.value = ""; // Clear the text
+                });
 
-            console.log ("MAE System: Form cleared for next entry");
+                // RUGGED: Auto-focus the first visible input (skips hidden IDs)
+                const firstVisible = formContainer.querySelector("input:not([type='hidden']), select");
+                if (firstVisible) firstVisible.focus();
+
+                console.log("MAE System: Entry saved. Form cleared for next item.");
+            }
         }
     });
 }
+
 
 // Handle EDIT CLICK function
 
@@ -490,8 +496,8 @@ async function submitNewRow(tableName, sheetConfig) {
             alert("Entry Saved Successfully!");
             
             // Clean up: Remove form and refresh table view
-            const form = document.getElementById("add-entry-form");
-            if (form) form.remove();
+            //const form = document.getElementById("add-entry-form");
+           // if (form) form.remove();
             
             loadTableData(tableName); 
             return true;

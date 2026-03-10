@@ -8,12 +8,12 @@
 //NOTE OUTSIDE of main UI object to keep it available to all functions
 // without cluttering the main UI object
 const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === "") return "";
     const num = parseFloat(value);
-    if (isNaN(num)) return value; 
+    if (isNaN(num)) return value; // Return as-is if it's not a number
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
+        minimumFractionDigits: 2 // Ensures .00 always appears
     }).format(num);
 };
 
@@ -129,8 +129,7 @@ export const UI = {
                     // We add 'col-type-qty' as a class to help the app.js Arrow Key logic
                     html += `<td 
                             class="${isEditable ? 'editable-cell' : 'locked-cell'} ${isQuantity ? 'col-type-qty' : ''}" 
-                            data-col-index="${idx}"
-                            contentEditable="false">${displayValue}</td>`;
+                            data-col-index="${idx}">${displayValue}</td>`;
                 });
                 html += `</tr>`;
             });
