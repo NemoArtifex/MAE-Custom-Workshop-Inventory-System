@@ -354,13 +354,16 @@ main, #table-container, .inventory-table {
 }
 
 /* =========== PRINT TABLE =================== */
-/* style.css - Add at the very bottom */
+/* Screen Title (Hidden by default during normal app use) */
+.print-only-title { display: none; }
+
 @media print {
-    /* Set landscape orientation and margins */
+    /* 1. SET LANDSCAPE & MARGINS */
     @page {
         size: landscape;
         margin: 1cm;
-        /* Page numbering: Page X of Y */
+        /* Note: Page numbering @bottom-right is a modern CSS standard, 
+           but some browsers still require "Headers/Footers" checked in Print Dialog. */
         @bottom-right {
             content: "Page " counter(page) " of " counter(pages);
             font-family: 'Segoe UI', sans-serif;
@@ -368,42 +371,71 @@ main, #table-container, .inventory-table {
         }
     }
 
-    /* Hide everything EXCEPT the table container */
+    /* 2. HIDE UI ELEMENTS (Sidebar, Buttons, etc.) */
     body * { visibility: hidden; }
     #table-container, #table-container *, .print-only-title, .print-only-title * {
-        visibility: visible;
+        visibility: visible !important;
     }
     
-    /* Position the table at the very top of the print page */
+    .sidebar, .command-bar, .edit-only-cell, #auth-btn {
+        display: none !important;
+    }
+
+    /* 3. POSITION TABLE AT TOP OF PAGE */
     #table-container {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
-        box-shadow: none; /* Rugged fix: remove screen shadows */
+        box-shadow: none;
+        background: white !important;
     }
 
-    /* Repeat Header on Every Page */
-    thead { display: table-header-group; } 
-    
-    /* Excel-style borders and fit */
+    /* 4. EXCEL-STYLE BORDERS & REPEATING HEADERS */
+    thead { display: table-header-group !important; } 
+
     .inventory-table {
         width: 100%;
-        border: 1px solid black !important;
-        table-layout: auto; /* Shrink to fit columns */
-    }
-    .inventory-table th, .inventory-table td {
-        border: 1px solid #333 !important;
-        font-size: 9pt; /* Smaller font for dense data */
-        color: black !important;
+        border: 2px solid black !important;
+        border-collapse: collapse !important;
+        table-layout: auto; 
     }
 
-    /* Hide UI-specific elements during print */
-    .edit-only-cell, .command-bar, .sidebar { display: none !important; }
+    /* 5. FORCE BLACK & WHITE FOR INK EFFICIENCY */
+    .inventory-table th {
+        background-color: #ffffff !important; 
+        color: #000000 !important;
+        border: 2px solid black !important;
+        font-weight: bold;
+        padding: 10px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .inventory-table td {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #333 !important;
+        font-size: 9pt; /* Crisp and readable on paper */
+        padding: 8px;
+    }
+
+    /* 6. SHOW THE PRINT TITLE */
+    .print-only-title { 
+        display: block !important; 
+        text-align: center; 
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    .print-only-title h1 {
+        color: black !important;
+        font-size: 18pt;
+        margin: 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid black;
+    }
 }
 
-/* Screen Title (Hidden by default) */
-.print-only-title { display: none; }
-@media print { .print-only-title { display: block; text-align: center; } }
 
 /*==== END PRINT TABLE ======*/
