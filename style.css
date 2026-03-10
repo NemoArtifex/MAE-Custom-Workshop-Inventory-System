@@ -314,3 +314,12 @@ main, #table-container, .inventory-table {
     -webkit-user-select: text !important;
     user-select: text !important;
 }
+
+.dropdown-edit-zone {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='gray' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 25px !important;
+}
+
