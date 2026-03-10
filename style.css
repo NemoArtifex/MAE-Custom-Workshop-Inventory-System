@@ -72,7 +72,7 @@ main {
     overflow-y: auto; /* This is where the actual scrolling happens */
     background: white;
     border-radius: 8px;
-    margin-bottom: 20px; /* Space between table and buttons */
+    margin-bottom: 0; /* Space between table and buttons */
 }
 
 /* Target the specific class used in JS */
@@ -110,7 +110,8 @@ main {
     flex-shrink: 0; 
     display: flex;
     gap: 12px;
-    
+    height: auto;
+    min-height: 70px;
     /* VISUAL STYLING */
     padding: 15px 25px; /* Fixed the typo from '15 25px' */
     background: #ecf0f1; 
@@ -225,10 +226,6 @@ tr:nth-child(even) {
 tr:hover { 
     background: #f1f1f1; 
 }
-
-/* style.css - Consolidated & Rugged */
-
-/* style.css - FINAL CONSOLIDATED TABLE LOGIC */
 
 /* 1. Hide the Action/Delete column by default */
 .edit-only-cell { 
