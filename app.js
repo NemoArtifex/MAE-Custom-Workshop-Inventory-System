@@ -363,7 +363,6 @@ async function handleAddClick(tableName) {
 
 // Handle EDIT CLICK function
 
-// app.js - REVISED handleEditClick with Dropdown Fix
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
@@ -377,21 +376,20 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // --- CASE A: DROPDOWN COLUMNS ---
+        // --- RUGGED RULE: NO contentEditable for Dropdowns ---
         if (colDef.type === "dropdown") {
-            // RUGGED FIX: Explicitly disable contentEditable for dropdowns 
-            // to prevent browser click conflicts.
             cell.contentEditable = "false"; 
-            cell.setAttribute('tabindex', '0');
-            cell.style.cursor = "pointer"; // Visual cue
+            cell.setAttribute('tabindex', '0'); 
+            cell.classList.add("dropdown-edit-zone");
 
-            cell.onclick = (e) => {
+            // Event listener to inject the select menu
+            const startDropdownEdit = (e) => {
                 e.stopPropagation();
-                if (cell.querySelector('select')) return;
+                if (cell.querySelector('select')) return; // Already editing
 
                 const currentVal = cell.innerText.trim();
+                let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
                 
-                let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7; font-family:inherit; font-size:inherit; color:var(--primary); outline:none; cursor:pointer;">`;
                 colDef.options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
                 });
@@ -399,25 +397,29 @@ function handleEditClick(tableName) {
 
                 cell.innerHTML = selectHtml;
                 const select = cell.querySelector('select');
-                
-                // Open the dropdown immediately
                 select.focus();
 
-                // Finalize selection on change or blur
-                const finalize = () => {
-                    cell.innerText = select.value;
-                    cell.style.background = ""; // Reset background after choice
+                // Logic to finish editing
+                const finishEdit = () => {
+                    cell.innerText = select.value; // Store value as text for processInPlaceTableUpdate
                 };
 
-                select.onchange = finalize;
-                select.onblur = finalize;
+                select.onchange = finishEdit;
+                select.onblur = finishEdit;
+                // Allow "Enter" to finish edit
+                select.onkeydown = (k) => { if(k.key === 'Enter') finishEdit(); };
             };
+
+            cell.onclick = startDropdownEdit;
+            // Also trigger on 'Enter' key for keyboard accessibility (Rugged)
+            cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
-        // --- CASE B: STANDARD TEXT/NUMBER ---
+        // --- STANDARD TEXT/NUMBERS ---
         else {
             cell.contentEditable = "true";
             cell.setAttribute('tabindex', '0');
 
+            // Quick Update: Arrow keys
             if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
                 cell.onkeydown = (e) => {
                     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
@@ -432,7 +434,7 @@ function handleEditClick(tableName) {
         cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    // CLICK OUTSIDE TO SAVE
+    // Global Click-Outside logic
     const handleOutsideClick = (e) => {
         if (e.target.closest('.delete-row-btn')) return;
         if (table && !table.contains(e.target)) {
@@ -446,7 +448,6 @@ function handleEditClick(tableName) {
         document.addEventListener('mousedown', handleOutsideClick);
     }, 150);
 }
-
 
 
 
