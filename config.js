@@ -3,11 +3,14 @@
  * Philosophy: Practical, Functional, Simple, Rugged.
  * Version 1.2.1: added active:true to json file
  * Version 1.2.2: added two TEST worksheets in the beginning
+ * Version 1.2.3: changed "locked: true" to "locked: false" to allow editing from app 
+ *      [except for mae_id, formulas, Master Dashboard (should be read-only) ]
+ * Version xxxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.2",
+    version: "1.2.3",
     
     worksheets: [
         {
@@ -16,9 +19,9 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "TEST String", type: "string", locked: true },
-                { header: "TEST Integer", type: "number", format: "0", locked: true },
-                { header: "TEST Currency", type: "number", format: "$#,##0.00", locked: true },
+                { header: "TEST String", type: "string", locked: false },
+                { header: "TEST Integer", type: "number", format: "0", locked: false },
+                { header: "TEST Currency", type: "number", format: "$#,##0.00", locked: false },
                 {
                     header: "TEST Formula", 
                     type: "formula",
@@ -30,7 +33,7 @@ export const maeSystemConfig = {
                     header: "TEST Dropdown",
                     type: "dropdown",
                     options: ["Red", "White", "Blue"],
-                    locked: true
+                    locked: false
                 }
             ]
         },
@@ -91,12 +94,12 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset ID", type: "string", locked: true },
-                { header: "Item Name", type: "string", locked: true },
-                { header: "Category", type: "string", locked: true },
-                { header: "Acquisition Date", type: "date", format: "mm/dd/yyyy", locked: true },
-                { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Restoration Cost", type: "number", format: "$#,##0.00", locked: true },
+                { header: "Asset ID", type: "string", locked: false },
+                { header: "Item Name", type: "string", locked: false },
+                { header: "Category", type: "string", locked: false },
+                { header: "Acquisition Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Restoration Cost", type: "number", format: "$#,##0.00", locked: false },
                 { 
                     header: "Total Investment", 
                     type: "formula", 
@@ -104,10 +107,10 @@ export const maeSystemConfig = {
                     format: "$#,##0.00",
                     locked: true 
                 },
-                { header: "Current Status", type: "string", locked: true },
-                { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Location", type: "string", locked: true }
+                { header: "Current Status", type: "string", locked: false },
+                { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Location", type: "string", locked: false }
             ]
         },
         {
@@ -116,15 +119,15 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset ID", type: "string", locked: true },
-                { header: "Machine Name/Model", type: "string", locked: true },
-                { header: "Manufacturer/Brand", type: "string", locked: true },
-                { header: "Serial Number", type: "string", locked: true },
-                { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: true },
-                { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Location", type: "string", locked: true },
-                { header: "Status", type: "string", locked: true },
-                { header: "Manual Link", type: "string", locked: true }
+                { header: "Asset ID", type: "string", locked: false },
+                { header: "Machine Name/Model", type: "string", locked: false },
+                { header: "Manufacturer/Brand", type: "string", locked: false },
+                { header: "Serial Number", type: "string", locked: false },
+                { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Location", type: "string", locked: false },
+                { header: "Status", type: "string", locked: false },
+                { header: "Manual Link", type: "string", locked: false}
             ]
         },
         {
@@ -133,13 +136,13 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Log ID", type: "string", locked: true },
+                { header: "Log ID", type: "string", locked: false },
                 { header: "Asset ID", type: "string", locked: true },
-                { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: true },
-                { header: "Service Type", type: "string", locked: true },
-                { header: "Performed By", type: "string", locked: true },
-                { header: "Cost", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Next Service Date", type: "date", format: "mm/dd/yyyy", locked: true }
+                { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Service Type", type: "string", locked: false },
+                { header: "Performed By", type: "string", locked: false },
+                { header: "Cost", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Next Service Date", type: "date", format: "mm/dd/yyyy", locked: false }
             ]
         },
         {
@@ -148,10 +151,10 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Tool ID", type: "string", locked: true },
-                { header: "Tool Name/Model", type: "string", locked: true },
-                { header: "Category", type: "string", locked: true },
-                { header: "Condition", type: "string", locked: true }
+                { header: "Tool ID", type: "string", locked: false },
+                { header: "Tool Name/Model", type: "string", locked: false },
+                { header: "Category", type: "string", locked: false},
+                { header: "Condition", type: "string", locked: false }
             ]
         },
         {
@@ -160,10 +163,10 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Tool ID", type: "string", locked: true },
-                { header: "Tool Name/Model", type: "string", locked: true },
-                { header: "Category", type: "string", locked: true },
-                { header: "Quantity", type: "number", format: "0", locked: true }
+                { header: "Tool ID", type: "string", locked: false },
+                { header: "Tool Name/Model", type: "string", locked: false },
+                { header: "Category", type: "string", locked: false },
+                { header: "Quantity", type: "number", format: "0", locked: false }
             ]
         },
         {
@@ -172,13 +175,13 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Item Name", type: "string", locked: true },
-                { header: "SKU/Item ID", type: "string", locked: true },
-                { header: "Unit of Measure", type: "string", locked: true },
-                { header: "Current Stock", type: "number", format: "0", locked: true },
-                { header: "Reorder Point", type: "number", format: "0", locked: true },
-                { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Preferred Supplier", type: "string", locked: true }
+                { header: "Item Name", type: "string", locked: false },
+                { header: "SKU/Item ID", type: "string", locked: false },
+                { header: "Unit of Measure", type: "string", locked: false },
+                { header: "Current Stock", type: "number", format: "0", locked: false },
+                { header: "Reorder Point", type: "number", format: "0", locked: false },
+                { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Preferred Supplier", type: "string", locked: false }
             ]
         },
         {
@@ -187,12 +190,12 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Expense Category", type: "string", locked: true },
-                { header: "Description", type: "string", locked: true },
-                { header: "Payment Frequency", type: "string", locked: true },
-                { header: "Due Date", type: "date", format: "mm/dd/yyyy", locked: true },
-                { header: "Amount", type: "number", format: "$#,##0.00", locked: true },
-                { header: "Auto-Pay?", type: "string", locked: true }
+                { header: "Expense Category", type: "string", locked: false },
+                { header: "Description", type: "string", locked: false },
+                { header: "Payment Frequency", type: "string", locked: false },
+                { header: "Due Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Amount", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Auto-Pay?", type: "string", locked: false }
             ]
         },
         {
@@ -201,11 +204,11 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Supplier Name", type: "string", locked: true },
-                { header: "Contact Person", type: "string", locked: true },
-                { header: "Phone", type: "string", locked: true },
-                { header: "Email", type: "string", locked: true },
-                { header: "Website", type: "string", locked: true }
+                { header: "Supplier Name", type: "string", locked: false },
+                { header: "Contact Person", type: "string", locked: false },
+                { header: "Phone", type: "string", locked: false },
+                { header: "Email", type: "string", locked: false },
+                { header: "Website", type: "string", locked: false}
             ]
         }
     ]

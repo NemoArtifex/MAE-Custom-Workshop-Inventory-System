@@ -349,13 +349,29 @@ async function handleAddClick(tableName) {
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
-
+    // Get the config for the current table to check headers
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     table.classList.add("is-editing");
     
     const cells = table.querySelectorAll(".editable-cell");
     cells.forEach(cell => {
         cell.contentEditable = "true";
         cell.setAttribute('tabindex', '0');
+
+         // 1. Get the column header from config using the cell's index
+    const colIdx = parseInt(cell.getAttribute('data-col-index'));
+    const headerName = sheetConfig.columns[colIdx].header;
+
+    // 2. Attach the "Quick Update" arrow key listener
+    if (headerName === "Quantity" || headerName === "Current Stock") {
+        cell.onkeydown = (e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault(); // Stop cursor from jumping
+                let val = parseInt(cell.innerText) || 0;
+                cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
+            }
+        };
+    }
 
         // RUGGED: This is the key. Stop the click from 'bubbling' up to the document.
         cell.onmousedown = (e) => {
@@ -379,7 +395,7 @@ function handleEditClick(tableName) {
         };
     });
 
-   // app.js - inside handleEditClick()
+   // inside handleEditClick()
         const handleOutsideClick = (e) => {
             const table = document.getElementById("main-data-table");
     
@@ -408,7 +424,6 @@ function exitEditMode() {
 
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========
-// app.js
 
 async function submitNewRow(tableName, sheetConfig) {
     // 1. MAP DATA: Order matches config.js exactly
@@ -481,8 +496,6 @@ async function submitNewRow(tableName, sheetConfig) {
 
 
 //===========END function to send data to Microsoft
-
-
 //===========END GLOBAL CLICK LISTENER============
 
 // ======= FUNCTION to scan html table and send updates to OneDrive ==========
@@ -554,8 +567,7 @@ async function processInPlaceTableUpdate(tableName) {
 
 // =====  END  function processInPlaceTableUpdate   ==========
 
-//======== FUNCTION delete Excel Row ===========
-// app.js - Rugged Row Deletion
+//======== FUNCTION delete Excel Row ==========
 
 // 1. The Wrapper (The button calls this)
 async function requestDelete(rowIndex) {
@@ -599,7 +611,6 @@ async function deleteExcelRow(tableName, rowIndex) {
     }
 }
 
-
-
 //====== END delete Excel Row ============
 window.handleEditClick = handleEditClick;
+window.requestDelete = requestDelete;
