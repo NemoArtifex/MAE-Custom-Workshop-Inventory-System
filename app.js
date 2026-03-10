@@ -363,37 +363,35 @@ async function handleAddClick(tableName) {
 
 // Handle EDIT CLICK function
 
-// app.js - REVISED handleEditClick
+// app.js - REVISED handleEditClick with Dropdown Fix
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 1. Get the blueprint for this specific table from config.js
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    
-    // Visual cue: Safety Orange border
     table.classList.add("is-editing");
     
     const cells = table.querySelectorAll(".editable-cell");
 
     cells.forEach(cell => {
-        // Find which column this cell belongs to in the config
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
         // --- CASE A: DROPDOWN COLUMNS ---
         if (colDef.type === "dropdown") {
+            // RUGGED FIX: Explicitly disable contentEditable for dropdowns 
+            // to prevent browser click conflicts.
+            cell.contentEditable = "false"; 
             cell.setAttribute('tabindex', '0');
-            
+            cell.style.cursor = "pointer"; // Visual cue
+
             cell.onclick = (e) => {
                 e.stopPropagation();
-                // Don't redraw if the select is already there
                 if (cell.querySelector('select')) return;
 
                 const currentVal = cell.innerText.trim();
                 
-                // Build the dropdown HTML
-                let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:transparent; font-family:inherit; font-size:inherit; color:var(--primary); outline:none;">`;
+                let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7; font-family:inherit; font-size:inherit; color:var(--primary); outline:none; cursor:pointer;">`;
                 colDef.options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
                 });
@@ -401,24 +399,29 @@ function handleEditClick(tableName) {
 
                 cell.innerHTML = selectHtml;
                 const select = cell.querySelector('select');
+                
+                // Open the dropdown immediately
                 select.focus();
 
-                // When user selects a value, convert it back to text for the final sync
-                select.onchange = () => { cell.innerText = select.value; };
-                select.onblur = () => { cell.innerText = select.value; };
+                // Finalize selection on change or blur
+                const finalize = () => {
+                    cell.innerText = select.value;
+                    cell.style.background = ""; // Reset background after choice
+                };
+
+                select.onchange = finalize;
+                select.onblur = finalize;
             };
         } 
-        
-        // --- CASE B: STANDARD TEXT/NUMBER/QUANTITY COLUMNS ---
+        // --- CASE B: STANDARD TEXT/NUMBER ---
         else {
             cell.contentEditable = "true";
             cell.setAttribute('tabindex', '0');
 
-            // Quick Update: Arrow keys for Quantity or Current Stock
             if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
                 cell.onkeydown = (e) => {
                     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                        e.preventDefault(); // Stop cursor from moving
+                        e.preventDefault();
                         let val = parseInt(cell.innerText) || 0;
                         cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
                     }
@@ -426,16 +429,12 @@ function handleEditClick(tableName) {
             }
         }
 
-        // Prevent the 'Click Outside' from firing when clicking a cell
         cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    // 2. CLICK OUTSIDE TO SAVE LOGIC
+    // CLICK OUTSIDE TO SAVE
     const handleOutsideClick = (e) => {
-        // Don't trigger save if clicking a delete button
         if (e.target.closest('.delete-row-btn')) return;
-
-        // If the click is NOT inside the table, save and close
         if (table && !table.contains(e.target)) {
             processInPlaceTableUpdate(tableName); 
             exitEditMode();
@@ -443,11 +442,11 @@ function handleEditClick(tableName) {
         }
     };
 
-    // Delay prevents the initial button click from closing the edit mode immediately
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
     }, 150);
 }
+
 
 
 
