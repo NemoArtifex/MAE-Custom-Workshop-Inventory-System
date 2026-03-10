@@ -4,6 +4,20 @@
  * Philosophy: Practical, Functional, Simple, Rugged.
  */
 
+// Helper to format numbers as currency $0.00; 
+//NOTE OUTSIDE of main UI object to keep it available to all functions
+// without cluttering the main UI object
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+    const num = parseFloat(value);
+    if (isNaN(num)) return value; 
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(num);
+};
+
+
 export const UI = {
     
     // 1. AUTH UI STATES
@@ -62,18 +76,19 @@ export const UI = {
     renderTable(rows, tableName, sheetConfig) {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
-        title.innerText = `View: ${sheetConfig.tabName}`;
-
+        
         if (!sheetConfig) {
             container.innerHTML = "Error: Worksheet configuration not found.";
             return;
         }
 
-        // Identify which column indices are NOT hidden
+        title.innerText = `View: ${sheetConfig.tabName}`;
+
+        // 1. Identify visible columns from the Manifest (config.js)
         const visibleIndices = [];
         let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
         
-        // 1. Add "Delete" Header (Hidden by default via CSS)
+        // Add "Delete" Header (Hidden by default via .edit-only-cell CSS)
         html += `<th class="edit-only-cell">Action</th>`;
         
         sheetConfig.columns.forEach((col, index) => {
@@ -84,41 +99,51 @@ export const UI = {
         });
         html += `</tr></thead><tbody>`;
 
-        // Render Rows using ONLY those visible indices
+        // 2. Render Rows
         if (rows && rows.length > 0) {
             rows.forEach((row, rowIndex) => {
                 html += `<tr data-row-index="${rowIndex}">`;
 
-                // 2. Add Delete Icon Cell
-            html += `<td class="edit-only-cell">
-                        <button class="delete-row-btn" onclick="requestDelete(${rowIndex})">🗑️</button>
-                     </td>`;
+                // Add Delete Icon Cell
+                html += `<td class="edit-only-cell">
+                            <button class="delete-row-btn" onclick="requestDelete(${rowIndex})">🗑️</button>
+                         </td>`;
                 
-                // Microsoft Graph /rows returns values as an array [cell0, cell1...]
-                // Note: Depending on your API call, it might be row.values[0] or just row.values
+                // Extract cell data (handles different Graph API response formats)
                 const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
 
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
                     const isEditable = !colDef.locked && colDef.type !== 'formula';
-                    const value = allCells[idx] ?? '';
+                    const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
+                    
+                    // Get raw value
+                    let displayValue = allCells[idx] ?? '';
 
-                    // 3. Mark cells as editable if they aren't formulas/locked
+                    // APPLY FORMATTING: If config shows currency format, use helper
+                    if (colDef.format && colDef.format.includes("$")) {
+                        displayValue = formatCurrency(displayValue);
+                    }
+
+                    // 3. Build the Cell
+                    // We add 'col-type-qty' as a class to help the app.js Arrow Key logic
                     html += `<td 
-                            class="${isEditable ? 'editable-cell' : 'locked-cell'}" 
+                            class="${isEditable ? 'editable-cell' : 'locked-cell'} ${isQuantity ? 'col-type-qty' : ''}" 
                             data-col-index="${idx}"
-                            contentEditable="false">${value}</td>`;
-                   // html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
+                            contentEditable="false">${displayValue}</td>`;
                 });
                 html += `</tr>`;
             });
         } else {
-            html += `<tr><td colspan="${visibleIndices.length}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
+            // Span across all visible columns + the hidden delete column
+            const colSpan = visibleIndices.length + 1;
+            html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
         }
 
         html += `</tbody></table>`;
         container.innerHTML = html;
     },
+
 
     // 4. STATUS HELPERS
     showLoading(tableName) {

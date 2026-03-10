@@ -339,8 +339,19 @@ async function handleAddClick(tableName) {
     
     // Call the UI tool to draw the form
     // We pass a 'callback' function so the UI knows what to do when 'Save' is clicked
-    UI.renderEntryForm('add',tableName, sheetConfig, () => {
-        submitNewRow(tableName, sheetConfig);
+    UI.renderEntryForm('add',tableName, sheetConfig, async () => {
+        // Submit data
+        const success = await submitNewRow(tableName, sheetConfig);
+        // If successful, clear the inputs instead of removing form
+        if (success) {
+            const form = document.getElementById("entry-form");
+            const inputs = form.querySelectorAll("input, select");
+            inputs.forEach(input => input.value = ""); //clear all fields
+            //Refocus the first input for the next entry
+            if (inputs[0]) inputs[0].focus();
+
+            console.log ("MAE System: Form cleared for next entry");
+        }
     });
 }
 
@@ -483,6 +494,7 @@ async function submitNewRow(tableName, sheetConfig) {
             if (form) form.remove();
             
             loadTableData(tableName); 
+            return true;
         } else {
             const error = await response.json();
             throw new Error(error.error.message || "Unknown API Error");
@@ -492,6 +504,8 @@ async function submitNewRow(tableName, sheetConfig) {
         console.error("MAE System - Save failed:", err);
         UI.showError(`Failed to save: ${err.message}`);
     }
+
+    return false;
 }
 
 
