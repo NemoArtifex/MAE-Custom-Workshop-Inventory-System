@@ -363,73 +363,92 @@ async function handleAddClick(tableName) {
 
 // Handle EDIT CLICK function
 
+// app.js - REVISED handleEditClick
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
-    // Get the config for the current table to check headers
+
+    // 1. Get the blueprint for this specific table from config.js
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // Visual cue: Safety Orange border
     table.classList.add("is-editing");
     
     const cells = table.querySelectorAll(".editable-cell");
+
     cells.forEach(cell => {
-        cell.contentEditable = "true";
-        cell.setAttribute('tabindex', '0');
+        // Find which column this cell belongs to in the config
+        const colIdx = parseInt(cell.getAttribute('data-col-index'));
+        const colDef = sheetConfig.columns[colIdx];
 
-         // 1. Get the column header from config using the cell's index
-    const colIdx = parseInt(cell.getAttribute('data-col-index'));
-    const headerName = sheetConfig.columns[colIdx].header;
+        // --- CASE A: DROPDOWN COLUMNS ---
+        if (colDef.type === "dropdown") {
+            cell.setAttribute('tabindex', '0');
+            
+            cell.onclick = (e) => {
+                e.stopPropagation();
+                // Don't redraw if the select is already there
+                if (cell.querySelector('select')) return;
 
-    // 2. Attach the "Quick Update" arrow key listener
-    if (headerName === "Quantity" || headerName === "Current Stock") {
-        cell.onkeydown = (e) => {
-            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                e.preventDefault(); // Stop cursor from jumping
-                let val = parseInt(cell.innerText) || 0;
-                cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
-            }
-        };
-    }
+                const currentVal = cell.innerText.trim();
+                
+                // Build the dropdown HTML
+                let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:transparent; font-family:inherit; font-size:inherit; color:var(--primary); outline:none;">`;
+                colDef.options.forEach(opt => {
+                    selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
+                });
+                selectHtml += `</select>`;
 
-        // RUGGED: This is the key. Stop the click from 'bubbling' up to the document.
-        cell.onmousedown = (e) => {
-            e.stopPropagation();
-        };
+                cell.innerHTML = selectHtml;
+                const select = cell.querySelector('select');
+                select.focus();
 
-        // RUGGED: Physically force the cursor into the cell
-    cell.onclick = function(e) {
-        e.stopPropagation();
+                // When user selects a value, convert it back to text for the final sync
+                select.onchange = () => { cell.innerText = select.value; };
+                select.onblur = () => { cell.innerText = select.value; };
+            };
+        } 
         
-        // 1. Standard focus command
-        this.focus(); 
+        // --- CASE B: STANDARD TEXT/NUMBER/QUANTITY COLUMNS ---
+        else {
+            cell.contentEditable = "true";
+            cell.setAttribute('tabindex', '0');
 
-        // 2. FORCE the cursor to appear if the browser is being stubborn
-        const range = document.createRange();
-        const selection = window.getSelection();
-        range.selectNodeContents(this);
-        range.collapse(false); // Places cursor at the end of existing text
-        selection.removeAllRanges();
-        selection.addRange(range);
-        };
+            // Quick Update: Arrow keys for Quantity or Current Stock
+            if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
+                cell.onkeydown = (e) => {
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // Stop cursor from moving
+                        let val = parseInt(cell.innerText) || 0;
+                        cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
+                    }
+                };
+            }
+        }
+
+        // Prevent the 'Click Outside' from firing when clicking a cell
+        cell.onmousedown = (e) => e.stopPropagation();
     });
 
-   // inside handleEditClick()
-        const handleOutsideClick = (e) => {
-            const table = document.getElementById("main-data-table");
-    
-    // If the click is inside the table, do NOTHING
-         if (table && table.contains(e.target)) return;
+    // 2. CLICK OUTSIDE TO SAVE LOGIC
+    const handleOutsideClick = (e) => {
+        // Don't trigger save if clicking a delete button
+        if (e.target.closest('.delete-row-btn')) return;
 
-        processInPlaceTableUpdate(tableName); 
-        exitEditMode();
-        document.removeEventListener('mousedown', handleOutsideClick);
+        // If the click is NOT inside the table, save and close
+        if (table && !table.contains(e.target)) {
+            processInPlaceTableUpdate(tableName); 
+            exitEditMode();
+            document.removeEventListener('mousedown', handleOutsideClick);
+        }
     };
 
-// Use mousedown to match the cell's listener
+    // Delay prevents the initial button click from closing the edit mode immediately
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
     }, 150);
-
 }
+
 
 
 function exitEditMode() {
