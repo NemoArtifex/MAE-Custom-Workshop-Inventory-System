@@ -11,7 +11,7 @@ body {
     margin: 0; 
     background: var(--bg); 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden; /* Keeps sidebar and main content separate */
 }
 
@@ -61,15 +61,17 @@ main {
     flex-grow: 1; 
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Ensures it fills the screen */
+    height: 100vh;
+    height: 100dvh; 
     padding: 30px 30px 0 30px; 
     overflow: hidden;   
 }
 
 /* Rugged Data Table */
 #table-container {
-    flex-grow: 1; /* This pushes the command bar down */
+    flex: 1; 
     overflow-y: auto; /* This is where the actual scrolling happens */
+    min-height: 0;
     background: white;
     border-radius: 8px;
     margin-bottom: 0; /* Space between table and buttons */
@@ -113,7 +115,8 @@ main {
     height: auto;
     min-height: 70px;
     /* VISUAL STYLING */
-    padding: 15px 25px; /* Fixed the typo from '15 25px' */
+    padding: 15px 25px 30px 25px; /* Added extra bottom padding (30px) for labels */
+    box-sizing: border-box;/* Ensures padding doesn't grow the bar height */
     background: #ecf0f1; 
     border-top: 2px solid var(--border);
     box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Kept your 'lift' effect */
