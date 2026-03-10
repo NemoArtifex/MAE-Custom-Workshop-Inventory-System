@@ -144,7 +144,7 @@ async function loadDynamicMenu() {
     UI.renderMenu(activeWorksheets, (tableName) => {
         loadTableData(tableName);
     });
-
+    UI.renderCommandBar("");
 
     verifySpreadsheetExists();
     

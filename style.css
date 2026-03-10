@@ -62,17 +62,17 @@ main {
     display: flex;
     flex-direction: column;
     min-height: 100vh; /* Ensures it fills the screen */
-    padding: 30px; 
-    overflow-y: auto; /* Allows table to scroll vertically */   
+    padding: 30px 30px 0 30px; 
+    overflow: hidden;   
 }
 
 /* Rugged Data Table */
-#table-container { 
-    background: white; 
-    padding: 1px; 
-    border-radius: 8px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-    overflow-x: auto; /* Essential for many columns */
+#table-container {
+    flex-grow: 1; /* This pushes the command bar down */
+    overflow-y: auto; /* This is where the actual scrolling happens */
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 20px; /* Space between table and buttons */
 }
 
 /* Target the specific class used in JS */
@@ -106,15 +106,17 @@ main {
 
 /* New Command Bar Styling */
 .command-bar {
-    position: sticky;
-    bottom: 0;
+    /* RUGGED FLEX LOGIC: This keeps it visible at the bottom */
+    flex-shrink: 0; 
     display: flex;
     gap: 12px;
-    padding: 15 25px;
-    background: #ecf0f1; /* Light gray to separate from white table */
+    
+    /* VISUAL STYLING */
+    padding: 15px 25px; /* Fixed the typo from '15 25px' */
+    background: #ecf0f1; 
     border-top: 2px solid var(--border);
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Better visual "lift" */
-    z-index: 100; /* Ensures it stays above scrolling table rows */
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Kept your 'lift' effect */
+    z-index: 100;
 }
 
 /* Action Buttons */
