@@ -179,7 +179,7 @@ export const UI = {
         
         // Define buttons based on the current context
         let buttons = `
-            <button class="action-btn" id="btn-print">Print Sheet</button>
+            <button class="action-btn" id="btn-print">Print Table</button>
             <button class="action-btn" id="btn-manual-print">Print Manual Log</button>
         `;
 
