@@ -6,6 +6,12 @@
     --border: #bdc3c7;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
 body { 
     display: flex; 
     margin: 0; 
@@ -58,11 +64,11 @@ body {
 
 /* Main Content Area */
 main { 
-    flex-grow: 1; 
+    flex: 1; 
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh; 
+    height: 100%;
+    min-width: 0;
     padding: 30px 30px 0 30px; 
     overflow: hidden;   
 }
@@ -112,10 +118,11 @@ main {
     flex-shrink: 0; 
     display: flex;
     gap: 12px;
-    height: auto;
+    height: 90px;
     min-height: 70px;
+    align-items: center;/* Centers buttons vertically in the bar */
     /* VISUAL STYLING */
-    padding: 15px 25px 30px 25px; /* Added extra bottom padding (30px) for labels */
+    padding: 0 25px; /* Added extra bottom padding (30px) for labels */
     box-sizing: border-box;/* Ensures padding doesn't grow the bar height */
     background: #ecf0f1; 
     border-top: 2px solid var(--border);
