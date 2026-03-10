@@ -352,3 +352,58 @@ main, #table-container, .inventory-table {
     cursor: pointer;
     outline: 2px solid var(--accent);
 }
+
+/* =========== PRINT TABLE =================== */
+/* style.css - Add at the very bottom */
+@media print {
+    /* Set landscape orientation and margins */
+    @page {
+        size: landscape;
+        margin: 1cm;
+        /* Page numbering: Page X of Y */
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 10pt;
+        }
+    }
+
+    /* Hide everything EXCEPT the table container */
+    body * { visibility: hidden; }
+    #table-container, #table-container *, .print-only-title, .print-only-title * {
+        visibility: visible;
+    }
+    
+    /* Position the table at the very top of the print page */
+    #table-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none; /* Rugged fix: remove screen shadows */
+    }
+
+    /* Repeat Header on Every Page */
+    thead { display: table-header-group; } 
+    
+    /* Excel-style borders and fit */
+    .inventory-table {
+        width: 100%;
+        border: 1px solid black !important;
+        table-layout: auto; /* Shrink to fit columns */
+    }
+    .inventory-table th, .inventory-table td {
+        border: 1px solid #333 !important;
+        font-size: 9pt; /* Smaller font for dense data */
+        color: black !important;
+    }
+
+    /* Hide UI-specific elements during print */
+    .edit-only-cell, .command-bar, .sidebar { display: none !important; }
+}
+
+/* Screen Title (Hidden by default) */
+.print-only-title { display: none; }
+@media print { .print-only-title { display: block; text-align: center; } }
+
+/*==== END PRINT TABLE ======*/

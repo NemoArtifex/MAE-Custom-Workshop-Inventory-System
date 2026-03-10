@@ -328,7 +328,12 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         // Trigger the Add Item flow
         handleAddClick(window.currentTable); 
     } else if (btn.id === 'btn-edit') {
+        // Trigger the Edit Table functionality
         handleEditClick(window.currentTable);
+    } else if (btn.id === 'btn-print') {
+        // Trigger Print Entire Table functionality
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
+        UI.printTable(window.currentTable, sheetConfig);
     }
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });

@@ -169,7 +169,7 @@ export const UI = {
                 </div>`;
         }
     },
-
+//=RENDER COMMAND BAR==========
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
 
@@ -194,7 +194,7 @@ export const UI = {
 
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
     },
-
+// RENDER ENTRY FORM===============
     renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");
     const isEdit = mode === 'edit';
@@ -251,9 +251,23 @@ export const UI = {
     document.getElementById("submit-form-btn").onclick = () => {
         onSaveCallback(rowIndex, existingData); 
     };
+},
+//=====PRINT TABLE ===========
+
+printTable(tableName, sheetConfig) {
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
+
+    // Create a temporary print title for the top of the sheet
+    const printTitle = document.createElement("div");
+    printTitle.className = "print-only-title";
+    printTitle.innerHTML = `<h1>MAE Workshop Inventory System: ${sheetConfig.tabName}</h1><hr>`;
+    
+    // Inject and trigger
+    document.body.prepend(printTitle);
+    window.print();
+    printTitle.remove(); // Clean up after print dialog closes
 }
-
-
 
 };
 
