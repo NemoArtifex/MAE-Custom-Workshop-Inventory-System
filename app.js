@@ -572,7 +572,9 @@ async function processInPlaceTableUpdate(tableName) {
             if (col.type === "formula") {
                 rowValues.push(null); // Excel will recalculate formulas
             } else if (cell) {
-                let val = cell.innerText.trim();
+                let val =   cell.querySelector('.qty-value') ?
+                            cell.querySelector('.qty-value').innerText.trim() :
+                            cell.innerText.trim();
                 // Rugged: Convert to numbers where required so Excel math doesn't break
                 if (col.type === "number") {
                     val = val === "" ? null : parseFloat(val.replace(/[^0-9.-]+/g,""));
@@ -673,30 +675,47 @@ function handleQuickUpdate(tableName) {
 
     cells.forEach(cell => {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
-        // Safety check: skip cells without a data-col-index (like the delete column)
         if (isNaN(colIdx)) return; 
 
         const colDef = sheetConfig.columns[colIdx];
-
-        // RUGGED RULE: ONLY allow editing for Quantity or Current Stock
         const isInventoryCol = colDef.header === "Quantity" || colDef.header === "Current Stock";
 
         if (isInventoryCol) {
-            cell.contentEditable = "true";
+            const currentVal = cell.innerText.trim();
             cell.classList.add("quick-edit-focus");
-            cell.setAttribute('tabindex', '0');
             
-            // Arrow Key Logic
-            cell.onkeydown = (e) => {
-                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                    e.preventDefault();
-                    let val = parseInt(cell.innerText) || 0;
-                    cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
-                }
-                if (e.key === "Enter") { e.preventDefault(); cell.blur(); }
+            // Inject Visible UI: Value + Up/Down Buttons
+            cell.innerHTML = `
+                <div class="qty-editor">
+                    <span class="qty-value" contenteditable="true" tabindex="0">${currentVal}</span>
+                    <div class="qty-controls">
+                        <button class="qty-up">▲</button>
+                        <button class="qty-down">▼</button>
+                    </div>
+                </div>
+            `;
+
+            const valSpan = cell.querySelector('.qty-value');
+            const adjust = (amt) => {
+                let val = parseInt(valSpan.innerText) || 0;
+                valSpan.innerText = Math.max(0, val + amt);
             };
+
+            // Click Logic for Arrows
+            cell.querySelector('.qty-up').onclick = (e) => { e.stopPropagation(); adjust(1); };
+            cell.querySelector('.qty-down').onclick = (e) => { e.stopPropagation(); adjust(-1); };
+
+            // Keyboard Arrow Support
+            valSpan.onkeydown = (e) => {
+                if (e.key === "ArrowUp") { e.preventDefault(); adjust(1); }
+                if (e.key === "ArrowDown") { e.preventDefault(); adjust(-1); }
+                if (e.key === "Enter") { e.preventDefault(); valSpan.blur(); }
+            };
+
+            // Focus the number immediately for rapid entry
+            setTimeout(() => valSpan.focus(), 50);
+
         } else {
-            // STEP 1 & 2: Lock and dim all other columns to prevent accidental changes
             cell.contentEditable = "false";
             cell.style.opacity = "0.4";
             cell.style.backgroundColor = "#f9f9f9";
@@ -705,18 +724,20 @@ function handleQuickUpdate(tableName) {
     });
 
     const handleOutsideClick = (e) => {
-        if (table && !table.contains(e.target)) {
+        // ADDED: Guard to ignore clicks on the Quick Update button itself
+        const isBtn = e.target.id === 'btn-inventory-update';
+        
+        if (table && !table.contains(e.target) && !isBtn) {
             processInPlaceTableUpdate(tableName); 
             table.classList.remove("is-quick-updating");
             exitEditMode();
             document.removeEventListener('mousedown', handleOutsideClick);
-            loadTableData(tableName); // Refresh UI to clear manual styles
+            loadTableData(tableName); 
         }
     };
 
     setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 150);
 }
-
 
 
 // ========END handleQuickUpdate ============

@@ -480,6 +480,45 @@ main, #table-container, .inventory-table {
     outline: 2px solid #27ae60;
 }
 
+/* Container for value and arrow buttons */
+.qty-editor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.qty-value {
+    flex-grow: 1;
+    outline: none;
+    padding: 2px 5px;
+    text-align: center;
+}
+
+.qty-controls {
+    display: flex;
+    flex-direction: column;
+    margin-left: 5px;
+    border-left: 1px solid #ccc;
+}
+
+.qty-controls button {
+    background: #eee;
+    border: 1px solid #ccc;
+    font-size: 9px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 12px;
+    height: 15px;
+    transition: background 0.2s;
+}
+
+.qty-controls button:hover {
+    background: var(--accent);
+    color: white;
+}
+
 /* ==== END Quick Update ===== */
+
 
 

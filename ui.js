@@ -177,18 +177,12 @@ export const UI = {
 
     // 1. Access the global config
     const config = window.maeSystemConfig; 
-    if (!config) {
-        console.warn("MAE System: Config not ready, retrying....");
-        setTimeout(() => this.renderCommandBar(tableName), 50);
-        return;
-    }
+    if (!config) return;
 
     // 2. Find the specific sheet blueprint
     const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
-    if (!sheetConfig) {
-        console.warn(`MAE System: No config found for table: ${tableName}`);
-        return;
-    }
+    if (!sheetConfig) return; 
+        
 
     const normalizedName = tableName.trim().toLowerCase();
     const dashboardTables = ["master_dashboard", "test_dashboard", "master dashboard", "test dashboard"];
@@ -328,8 +322,6 @@ printManualLog(tableName, sheetConfig) {
     printHeader.remove();
     table.classList.remove("manual-log-mode");
 }
-
-
 
 };
 
