@@ -4,6 +4,8 @@
  * Philosophy: Practical, Functional, Simple, Rugged.
  */
 
+import { maeSystemConfig } from './config.js';
+
 // Helper to format numbers as currency $0.00; 
 //NOTE OUTSIDE of main UI object to keep it available to all functions
 // without cluttering the main UI object
