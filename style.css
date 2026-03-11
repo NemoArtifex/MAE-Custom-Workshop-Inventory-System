@@ -353,99 +353,79 @@ main, #table-container, .inventory-table {
     outline: 2px solid var(--accent);
 }
 
-/* =========== PRINT TABLE - REVISED RUGGED RESET =================== */
+
+/* =========== PRINT TABLE - RUGGED GRID RESTORE =================== */
 @media print {
-    /* 1. SCALE & ORIENTATION */
     @page {
         size: landscape;
         margin: 0.5in;
     }
 
-    /* 2. THE NUCLEAR RESET: Break Flexbox and Sidebar offsets */
-    html, body {
-        height: auto !important;
-        overflow: visible !important;
-        display: block !important; /* Forces layout to ignore the sidebar's flex position */
-    }
-
-    /* Hide everything that isn't the print content */
-    body > *:not(main), 
+    /* 1. THE NUCLEAR HIDE: Use display: none to remove all UI 'ghosts' */
+    body > *, 
     .sidebar, 
     .command-bar, 
     .edit-only-cell, 
-    .loader, 
-    #auth-btn { 
+    #current-view-title, 
+    #auth-btn, 
+    button { 
         display: none !important; 
     }
 
-    /* 3. RE-ENABLE & FLATTEN THE CONTENT ZONE */
-    main, #app-content { 
+    /* 2. RE-ENABLE CONTENT: Only show the app-content and title */
+    #app-content, 
+    .print-only-title, 
+    .print-only-title * { 
         display: block !important; 
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important; /* Removes the 30px screen padding */
-        position: static !important;
         visibility: visible !important;
-    }
-
-    /* Hide the screen title to use the custom Print Title instead */
-    #current-view-title { display: none !important; }
-
-    /* 4. FIX THE TABLE POSITIONING & FIT */
-    #table-container {
-        display: block !important;
         width: 100% !important;
-        overflow: visible !important;
         margin: 0 !important;
         padding: 0 !important;
-        box-shadow: none !important;
+    }
+
+    /* 3. RESTORE TABLE STRUCTURE: Prevents vertical stacking */
+    #table-container {
+        display: block !important;
+        visibility: visible !important;
+        overflow: visible !important;
     }
 
     .inventory-table {
+        display: table !important; /* Forces it back into a grid */
         width: 100% !important;
-        table-layout: fixed !important; /* Forces 9 columns to fit horizontally */
+        table-layout: fixed !important;
         border-collapse: collapse !important;
-        border: 1px solid #000 !important;
-        background: white !important;
+        border: 2px solid black !important;
     }
 
-    /* Ensure Headers Repeat on Every Page */
     thead { display: table-header-group !important; }
-
-    /* Crisp text and borders for shop clipboards */
-    .inventory-table th, 
-    .inventory-table td {
-        border: 1px solid #000 !important;
+    tbody { display: table-row-group !important; }
+    tr { display: table-row !important; } /* CRITICAL: Prevents vertical stack */
+    th, td { 
+        display: table-cell !important; /* CRITICAL: Prevents vertical stack */
+        border: 1px solid black !important;
         font-size: 8pt !important;
         padding: 4px !important;
-        color: #000 !important;
-        background: #fff !important;
+        color: black !important;
+        background: white !important;
         word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
     }
 
-    .inventory-table th {
-        background-color: #eee !important; /* Light gray for header contrast */
-        font-weight: bold;
-    }
+    th { background-color: #eee !important; font-weight: bold; }
 
-    /* 5. PRINT TITLE STYLING */
+    /* 4. TITLE STYLING */
     .print-only-title { 
         display: block !important; 
         text-align: center;
-        width: 100%;
-        margin-top: 0;
         margin-bottom: 20px;
     }
-
     .print-only-title h1 {
         font-size: 16pt !important;
         margin: 0;
         padding-bottom: 5px;
-        color: #000 !important;
-        border-bottom: 2px solid #000;
-        text-transform: uppercase;
+        border-bottom: 2px solid black;
     }
 }
 /*==== END PRINT TABLE ======*/
+
 
