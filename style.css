@@ -353,7 +353,7 @@ main, #table-container, .inventory-table {
     outline: 2px solid var(--accent);
 }
 
-/* =========== PRINT TABLE =================== */
+/* =========== PRINT TABLE - REVISED RUGGED RESET =================== */
 @media print {
     /* 1. SCALE & ORIENTATION */
     @page {
@@ -361,64 +361,91 @@ main, #table-container, .inventory-table {
         margin: 0.5in;
     }
 
-    /* 2. THE RUGGED RESET: Remove everything from the flow */
-    body > * { display: none !important; } /* Hide all direct children of body */
-    
-    /* 3. RE-ENABLE ONLY THE CONTENT ZONE */
-    #app-content, #app-content * { 
-        display: block !important; 
-        visibility: visible !important;
-        position: static !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    /* 2. THE NUCLEAR RESET: Break Flexbox and Sidebar offsets */
+    html, body {
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important; /* Forces layout to ignore the sidebar's flex position */
     }
 
-    /* Hide individual UI pieces inside the main content */
-    .command-bar, .edit-only-cell, .loader, #current-view-title { 
+    /* Hide everything that isn't the print content */
+    body > *:not(main), 
+    .sidebar, 
+    .command-bar, 
+    .edit-only-cell, 
+    .loader, 
+    #auth-btn { 
         display: none !important; 
     }
 
-    /* 4. FIX THE TABLE POSITIONING */
+    /* 3. RE-ENABLE & FLATTEN THE CONTENT ZONE */
+    main, #app-content { 
+        display: block !important; 
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important; /* Removes the 30px screen padding */
+        position: static !important;
+        visibility: visible !important;
+    }
+
+    /* Hide the screen title to use the custom Print Title instead */
+    #current-view-title { display: none !important; }
+
+    /* 4. FIX THE TABLE POSITIONING & FIT */
     #table-container {
         display: block !important;
         width: 100% !important;
         overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
     }
 
     .inventory-table {
         width: 100% !important;
-        table-layout: fixed !important;
+        table-layout: fixed !important; /* Forces 9 columns to fit horizontally */
         border-collapse: collapse !important;
         border: 1px solid #000 !important;
+        background: white !important;
     }
 
-    /* Repeat Header on Every Page */
+    /* Ensure Headers Repeat on Every Page */
     thead { display: table-header-group !important; }
 
-    /* Crisp text for paper */
-    .inventory-table th, .inventory-table td {
+    /* Crisp text and borders for shop clipboards */
+    .inventory-table th, 
+    .inventory-table td {
         border: 1px solid #000 !important;
         font-size: 8pt !important;
         padding: 4px !important;
         color: #000 !important;
         background: #fff !important;
         word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
 
-    /* 5. TITLE SCALING (Prevents the 'Very Large' issue) */
+    .inventory-table th {
+        background-color: #eee !important; /* Light gray for header contrast */
+        font-weight: bold;
+    }
+
+    /* 5. PRINT TITLE STYLING */
     .print-only-title { 
         display: block !important; 
         text-align: center;
         width: 100%;
-        margin-bottom: 15px;
+        margin-top: 0;
+        margin-bottom: 20px;
     }
+
     .print-only-title h1 {
-        font-size: 14pt !important; /* Fixed size to prevent blowing up */
+        font-size: 16pt !important;
         margin: 0;
+        padding-bottom: 5px;
         color: #000 !important;
         border-bottom: 2px solid #000;
-        padding-bottom: 5px;
+        text-transform: uppercase;
     }
 }
-
 /*==== END PRINT TABLE ======*/
+
