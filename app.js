@@ -445,13 +445,23 @@ function handleEditClick(tableName) {
 
     // Global Click-Outside logic
     const handleOutsideClick = (e) => {
-        if (e.target.closest('.delete-row-btn')) return;
-        if (table && !table.contains(e.target) && e.target.id !== 'btn-inventory-update') {
-            processInPlaceTableUpdate(tableName); 
-            exitEditMode();
-            document.removeEventListener('mousedown', handleOutsideClick);
-        }
-    };
+    // 1. Guards: Don't exit if they clicked a delete button or the start button
+    if (e.target.closest('.delete-row-btn')) return;
+    const isStartBtn = e.target.id === 'btn-inventory-update';
+
+    if (table && !table.contains(e.target) && !isStartBtn) {
+        // 2. THE CAPTURE: Grabs the span values and sends them to OneDrive
+        processInPlaceTableUpdate(tableName); 
+
+        // 3. THE CLEANUP: Strips the spans/arrows but KEEPS the new text in the TD
+        exitEditMode();
+
+        // 4. THE PERSISTENCE: We DO NOT call loadTableData here. 
+        // This keeps our "Local Truth" visible while the cloud syncs.
+
+        document.removeEventListener('mousedown', handleOutsideClick);
+    }
+};
 
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
@@ -459,13 +469,32 @@ function handleEditClick(tableName) {
 }
 
 
-
+// ===========   FUNCTION Exit Edit Mode ===========
 function exitEditMode() {
     const table = document.getElementById("main-data-table");
     if (!table) return;
-    table.classList.remove("is-editing");
-    table.querySelectorAll(".editable-cell").forEach(c => c.contentEditable = "false");
+
+    table.classList.remove("is-editing", "is-quick-updating");
+    
+    const cells = table.querySelectorAll("td");
+    cells.forEach(cell => {
+        // 1. Remove the "Editor" wrapper but KEEP the new value
+        const qtySpan = cell.querySelector('.qty-value');
+        if (qtySpan) {
+            const newValue = qtySpan.innerText.trim();
+            cell.innerText = newValue; // Permanent record in the table cell
+        }
+
+        // 2. Reset the "Rugged" styles
+        cell.contentEditable = "false";
+        cell.style.opacity = "";
+        cell.style.backgroundColor = "";
+        cell.style.pointerEvents = "";
+        cell.classList.remove("quick-edit-focus");
+    });
 }
+
+//=========  END Exit Edit Mode ===============
 
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========
@@ -784,10 +813,10 @@ function handleQuickUpdate(tableName) {
         
         if (table && !table.contains(e.target) && !isBtn) {
             processInPlaceTableUpdate(tableName); 
-            table.classList.remove("is-quick-updating");
+            table.classList.remove("is-quick-updating", "is-editing");
             exitEditMode();
             document.removeEventListener('mousedown', handleOutsideClick);
-            loadTableData(tableName); 
+            //loadTableData(tableName); 
         }
     };
 
