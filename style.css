@@ -354,57 +354,95 @@ main, #table-container, .inventory-table {
 }
 
 /* =========== PRINT TABLE =================== */
+/* style.css - CONSOLIDATED MASTER PRINT STYLING */
+
+/* Hidden by default on screen */
+.print-only-title { display: none; }
+
 @media print {
-    /* 1. THE NUCLEAR RESET: Kill all backgrounds for ink efficiency */
+    /* 1. LANDSCAPE & MARGINS */
+    @page {
+        size: landscape;
+        margin: 1cm;
+        /* Page X of Y logic (Standard browser support varies; 
+           ensure 'Headers & Footers' is checked in Print Dialog) */
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 10pt;
+        }
+    }
+
+    /* 2. THE NUCLEAR RESET: Kill all screen colors and UI */
     * {
         -webkit-print-color-adjust: economy !important;
         print-color-adjust: economy !important;
         background-color: transparent !important;
-        color: #000000 !important;
+        color: #000 !important;
         text-shadow: none !important;
         box-shadow: none !important;
     }
 
-    /* 2. FORCE BOLD BLACK HEADERS */
-    .inventory-table th {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 2px solid #000000 !important;
-        font-weight: bold !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* 3. ENSURE CELLS ARE CRISP */
-    .inventory-table td {
-        border: 1px solid #333333 !important;
-        color: #000000 !important;
-        background-color: #ffffff !important;
-    }
-
-    /* 4. LAYOUT: Landscape & Margins */
-    @page {
-        size: landscape;
-        margin: 1cm;
-    }
-
-    /* 5. VISIBILITY: Hide non-table items */
+    /* Hide Sidebar, Buttons, and UI elements */
     body * { visibility: hidden; }
     #table-container, #table-container *, .print-only-title, .print-only-title * {
         visibility: visible !important;
     }
-    .sidebar, .command-bar, .edit-only-cell, #auth-btn {
+    .sidebar, .command-bar, .edit-only-cell, #auth-btn, .loader {
         display: none !important;
     }
 
-    /* 6. TABLE POSITIONING */
+    /* 3. EXCEL-STYLE "FIT ALL COLUMNS" LOGIC */
     #table-container {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
+        overflow: visible !important;
     }
+
+    .inventory-table {
+        width: 100% !important;
+        table-layout: fixed !important; /* Forces columns to fit within the 100% width */
+        border-collapse: collapse !important;
+        border: 2px solid black !important;
+        word-wrap: break-word !important;
+    }
+
+    /* Repeating headers on every page */
     thead { display: table-header-group !important; }
+
+    .inventory-table th {
+        background-color: #eee !important; /* Subtle gray for header contrast */
+        color: #000 !important;
+        border: 2px solid black !important;
+        font-weight: bold !important;
+        font-size: 8pt !important; /* Smaller text fits more columns */
+        padding: 4px !important;
+        text-align: left;
+    }
+
+    .inventory-table td {
+        border: 1px solid black !important;
+        font-size: 8pt !important;
+        padding: 4px !important;
+        vertical-align: top;
+        word-break: break-all; /* Prevents long SKUs from breaking the layout */
+    }
+
+    /* 4. PROFESSIONAL TITLE & HEADER */
+    .print-only-title { 
+        display: block !important; 
+        text-align: center; 
+        margin-bottom: 20px;
+    }
+    
+    .print-only-title h1 {
+        font-size: 18pt;
+        margin: 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid black;
+    }
 }
 
 
