@@ -354,60 +354,86 @@ main, #table-container, .inventory-table {
 }
 
 /* =========== PRINT TABLE =================== */
-/* style.css - FINAL PRINT REFINEMENT */
-
 @media print {
-    /* 1. FORCE HIDE SCROLLBARS (Chrome/Edge/Safari) */
-    ::-webkit-scrollbar { display: none !important; }
-    
-    /* 2. PAGE SETUP */
+    /* 1. THE CLEAN SLATE: Remove all browser-specific graphics */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        transition: none !important;
+    }
+
     @page {
         size: landscape;
         margin: 0.5in;
     }
 
-    /* 3. LAYOUT RESET: Force the container to BE the table */
-    #table-container {
-        display: block !important;
-        overflow: visible !important; /* Forces the table to expand to its full width */
-        width: 100% !important;
-        position: static !important; /* Removes absolute positioning */
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-    }
-
-    /* 4. TABLE COMPRESSION: The "Fit to Page" Logic */
-    .inventory-table {
-        width: 100% !important;
-        max-width: 100% !important;
-        table-layout: fixed !important; /* Mandatory for fitting all columns */
-        border-collapse: collapse !important;
-        border: 2px solid black !important;
-    }
-
-    /* 5. TEXT WRAPPING: Prevents wide columns from bullying the page */
-    .inventory-table th, 
-    .inventory-table td {
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        word-break: break-all !important; /* Breaks long IDs/Serial Numbers */
-        font-size: 8pt !important;
-        padding: 4px !important;
-        border: 1px solid black !important;
-        color: black !important;
-        background: white !important;
-    }
-
-    /* 6. HIDE NON-PRINT ELEMENTS */
+    /* 2. HIDE EVERYTHING EXCEPT THE DATA */
     body * { visibility: hidden; }
     #table-container, #table-container *, .print-only-title, .print-only-title * {
         visibility: visible !important;
     }
+    
     .sidebar, .command-bar, .edit-only-cell, #auth-btn, .loader {
         display: none !important;
     }
-}
 
+    /* 3. FLATTEN THE CONTAINER: Removes the "Floating" effect */
+    #table-container {
+        display: block !important;
+        position: static !important; /* Forces it into the normal page flow */
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        overflow: visible !important;
+    }
+
+    /* 4. EXCEL-STYLE TABLE: Fit and Repeat */
+    .inventory-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+        margin-top: 10px; /* Space below the title */
+    }
+
+    thead { display: table-header-group !important; }
+
+    /* Remove the 'Safety Orange' 3px border from screen view */
+    .inventory-table th {
+        background-color: #f2f2f2 !important; 
+        color: #000 !important;
+        border: 1px solid #000 !important; /* Standard thin border */
+        font-weight: bold !important;
+        font-size: 8pt !important;
+        padding: 6px !important;
+        text-align: left;
+    }
+
+    /* Clean up the rows */
+    .inventory-table td {
+        border: 1px solid #000 !important; /* Consistent thin border */
+        font-size: 8pt !important;
+        padding: 5px !important;
+        background-color: #fff !important;
+        vertical-align: middle;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* 5. TITLE STYLING */
+    .print-only-title { 
+        display: block !important; 
+        text-align: center; 
+        width: 100%;
+    }
+    .print-only-title h1 {
+        font-size: 16pt;
+        margin: 0 0 5px 0;
+        color: #000 !important;
+    }
+}
 
 /*==== END PRINT TABLE ======*/
