@@ -178,7 +178,8 @@ export const UI = {
     // 1. Access the global config
     const config = window.maeSystemConfig; 
     if (!config) {
-        console.warn("MAE System: Config not found on window. Buttons cannot render.");
+        console.warn("MAE System: Config not ready, retrying....");
+        setTimeout(() => this.renderCommandBar(tableName), 50);
         return;
     }
 
