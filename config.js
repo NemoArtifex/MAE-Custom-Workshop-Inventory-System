@@ -8,7 +8,7 @@
  * Version xxxxxxx
  */
 
-const maeSystemConfig = {
+export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
     version: "1.2.3",
     
