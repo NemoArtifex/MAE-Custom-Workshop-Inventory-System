@@ -617,6 +617,39 @@ async function processInPlaceTableUpdate(tableName) {
 
 // =====  END  function processInPlaceTableUpdate   ==========
 
+// ========= Standalone Saving Single Row Update =======
+// app.js - Standalone Optimization Function
+async function saveSingleRowUpdate(tableName, rowIndex, rowValues) {
+    try {
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowValues] }) // Values must be in a nested array
+        });
+
+        if (response.ok) {
+            console.log(`MAE System: Row ${rowIndex} updated successfully.`);
+        } else {
+            const error = await response.json();
+            throw new Error(error.error.message);
+        }
+    } catch (err) {
+        console.error("Single Row Sync Error:", err);
+    }
+}
+
+// ======= END Saving Single Row Update ===========
+
 //======== FUNCTION delete Excel Row ==========
 
 // 1. The Wrapper (The button calls this)
@@ -696,9 +729,31 @@ function handleQuickUpdate(tableName) {
             `;
 
             const valSpan = cell.querySelector('.qty-value');
-            const adjust = (amt) => {
+            // NEW: Instant save when focus is lost (blur)
+            valSpan.onblur = () => {
+                // 1. Immediately extract the value
+                const newVal = valSpan.innerText.trim();
+    
+                // 2. Trigger the sync to OneDrive without waiting for a global click
+                processInPlaceTableUpdate(tableName);
+    
+                // 3. (Optional) Provide a small visual 'success' flash
+                valSpan.style.backgroundColor = "#d4edda"; // Light green
+                setTimeout(() => valSpan.style.backgroundColor = "transparent", 500);
+            };
+
+            const adjust = async (amt) => {
                 let val = parseInt(valSpan.innerText) || 0;
-                valSpan.innerText = Math.max(0, val + amt);
+                const newQty = Math.max(0, val + amt);
+                valSpan.innerText = newQty;
+
+                // RUGGED: Get all values for this row to satisfy the Excel API requirement
+                const rowValues = extractCurrentRowValues(cell.parentElement); 
+                const rowIndex = cell.parentElement.getAttribute("data-row-index");
+
+                // TRIGGER INSTANT SAVE
+                saveSingleRowUpdate(tableName, rowIndex, rowValues);
+
             };
 
             // Click Logic for Arrows
@@ -741,6 +796,22 @@ function handleQuickUpdate(tableName) {
 
 
 // ========END handleQuickUpdate ============
+
+// ==========  extract Current Row Values =======
+function extractCurrentRowValues(trElement) {
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
+    return sheetConfig.columns.map((col, index) => {
+        const cell = trElement.querySelector(`td[data-col-index="${index}"]`);
+        if (col.type === "formula") return null;
+        
+        // Use your existing logic to find the value (span vs plain text)
+        return cell.querySelector('.qty-value') ? 
+               cell.querySelector('.qty-value').innerText.trim() : 
+               cell.innerText.trim();
+    });
+}
+
+//======= extract Current Row Values ==========
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
