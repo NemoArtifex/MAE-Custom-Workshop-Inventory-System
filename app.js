@@ -334,11 +334,15 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         // Trigger Print Entire Table functionality
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
         UI.printTable(window.currentTable, sheetConfig);
+    } else if (btn.id === 'btn-manual-print'){
+        // Trigger Print Manual Log functionality
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
+        UI.printManualLog(window.currentTable, sheetConfig);
     }
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
 
-// handle ADD Click function
+//============= handle ADD Click function ===================
 async function handleAddClick(tableName) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
@@ -366,7 +370,7 @@ async function handleAddClick(tableName) {
 }
 
 
-// Handle EDIT CLICK function
+//========== Handle EDIT CLICK function ================
 
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");

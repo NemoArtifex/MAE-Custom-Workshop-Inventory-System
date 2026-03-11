@@ -425,6 +425,30 @@ main, #table-container, .inventory-table {
         padding-bottom: 5px;
         border-bottom: 2px solid black;
     }
+     /* When in Manual Log mode, make room for the extra column */
+    .manual-log-mode {
+        table-layout: auto !important; /* Allow columns to shift */
+    }
+
+    /* Add "Changes" header */
+    .manual-log-mode thead tr::after {
+        content: "Changes / New Count";
+        display: table-cell;
+        border: 1px solid black;
+        padding: 4px;
+        font-size: 8pt;
+        font-weight: bold;
+        background: #eee;
+        width: 120px; /* Space for handwriting */
+    }
+
+    /* Add empty boxes for each row */
+    .manual-log-mode tbody tr::after {
+        content: "";
+        display: table-cell;
+        border: 1px solid black;
+        height: 25px; /* Taller row for easier handwriting */
+    }
 }
 /*==== END PRINT TABLE ======*/
 

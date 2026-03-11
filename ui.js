@@ -172,17 +172,22 @@ export const UI = {
 //================RENDER COMMAND BAR==========
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
-
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
          // Define tables that should NOT show Add/Edit buttons
         const normalizedName = tableName.trim().toLowerCase();
         const dashboardTables = ["master_dashboard", "test_dashboard"];
+
+        // Check if this sheet needs a Manual Log (Quantity or Current Stock)
+        const hasManualField = sheetConfig.columns.some(col => 
+        col.header === "Quantity" || col.header === "Current Stock"
+        );
         
         // Define buttons based on the current context
-        let buttons = `
-            <button class="action-btn" id="btn-print">Print Table</button>
-            <button class="action-btn" id="btn-manual-print">Print Manual Log</button>
-        `;
-
+        let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
+        // Only show "Print Manual Log" if the keywords exist
+        if (hasManualField) {
+        buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
+        }          
         // Only show "Add" and "Edit" if the current table is NOT in the dashboard list
         if (!dashboardTables.includes(normalizedName)) {
             buttons += `
@@ -277,7 +282,29 @@ printTable(tableName, sheetConfig) {
 
     // 3. Clean up immediately so it doesn't show on the screen
     printHeader.remove();
+},
+//============ print MANUAL LOG =============
+// ui.js - New Function
+printManualLog(tableName, sheetConfig) {
+    const container = document.getElementById("app-content");
+    const table = document.getElementById("main-data-table");
+    if (!table || !container) return;
+
+    // 1. Mark the table for manual log styling
+    table.classList.add("manual-log-mode");
+
+    const printHeader = document.createElement("div");
+    printHeader.className = "print-only-title";
+    printHeader.innerHTML = `<h1>MANUAL INVENTORY LOG: ${sheetConfig.tabName}</h1>`;
+    
+    container.prepend(printHeader);
+    window.print();
+    
+    // 2. Clean up
+    printHeader.remove();
+    table.classList.remove("manual-log-mode");
 }
+
 
 
 };
