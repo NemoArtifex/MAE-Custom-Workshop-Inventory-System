@@ -292,25 +292,10 @@ async function loadTableData(tableName) {
         headers: {'Authorization' : `Bearer ${tokenResponse.accessToken}`}
     });
 
-    if (!response.ok){
-        // RUGGED DEBUG: Log the exact status code to the console
-        console.error(`MAE API Error: Status ${response.status} - ${response.statusText}`);
-        const errorBody = await response.json();
-        console.dir(errorBody); // Shows the full error object from Microsoft
-
-        throw new Error(`Graph API returned ${response.status}: ${response.statusText}`); 
-        
-        
-        
-        //throw new Error(`Failed to fetch table data: ${response.statusText}`);  
-    }
-
+    if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
     // Hand off to UI module
-    // Find the specific sheet config to pass along for column filtering
-    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
     UI.renderTable(data.value, tableName, sheetConfig);
 
@@ -319,7 +304,7 @@ async function loadTableData(tableName) {
 
    } catch (error) {
     console.error("MAE System: Error loading table data:", error);
-    UI.showError("Error: Could not load data.  Ensure spreadsheet is not open in another tab.");
+    UI.showError("Error: Could not load data.  Ensure spreadsheet is closed in Excel");
    }
 } 
 
@@ -677,15 +662,12 @@ async function deleteExcelRow(tableName, rowIndex) {
 //====== END delete Excel Row ============
 
 //======= FUNCTION handleQuickUpdate ================
-// app.js - New Function
 function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    
-    // Visual Cue: Use a different color (maybe a "safe" green or blue) to show it's a restricted edit
-    table.classList.add("is-quick-updating");
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    table.classList.add("is-editing", "is-quick-updating");
     
     const cells = table.querySelectorAll(".editable-cell");
 
@@ -693,43 +675,45 @@ function handleQuickUpdate(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // RUGGED RULE: ONLY allow editing if it's the specific inventory columns
-        if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
-            cell.contentEditable = "true";
-            cell.setAttribute('tabindex', '0');
-            cell.classList.add("quick-edit-focus");
+        // RUGGED RULE: ONLY allow editing for Quantity or Current Stock
+        const isInventoryCol = colDef.header === "Quantity" || colDef.header === "Current Stock";
 
-            // Arrow Key Logic (Up/Down)
+        if (isInventoryCol) {
+            cell.contentEditable = "true";
+            cell.classList.add("quick-edit-focus");
+            cell.setAttribute('tabindex', '0');
+            
+            // Arrow Key Logic
             cell.onkeydown = (e) => {
                 if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                     e.preventDefault();
                     let val = parseInt(cell.innerText) || 0;
                     cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
                 }
+                if (e.key === "Enter") { e.preventDefault(); cell.blur(); }
             };
         } else {
-            // Force everything else to be uneditable
+            // STEP 1 & 2: Lock and dim all other columns to prevent accidental changes
             cell.contentEditable = "false";
-            cell.style.color = "#888"; // Gray out non-editable text for clarity
+            cell.style.opacity = "0.4";
+            cell.style.backgroundColor = "#f9f9f9";
+            cell.style.pointerEvents = "none"; 
         }
-
-        cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    // Save on Click-Outside
     const handleOutsideClick = (e) => {
         if (table && !table.contains(e.target)) {
             processInPlaceTableUpdate(tableName); 
             table.classList.remove("is-quick-updating");
-            exitEditMode(); // Cleans up editable states
+            exitEditMode();
             document.removeEventListener('mousedown', handleOutsideClick);
+            loadTableData(tableName); // Refresh UI to clear manual styles
         }
     };
 
-    setTimeout(() => {
-        document.addEventListener('mousedown', handleOutsideClick);
-    }, 150);
+    setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 150);
 }
+
 
 
 // ========END handleQuickUpdate ============
