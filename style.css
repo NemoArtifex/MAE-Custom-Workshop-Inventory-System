@@ -496,10 +496,7 @@ main, #table-container, .inventory-table {
 }
 
 .qty-controls {
-    display: flex;
-    flex-direction: column;
-    margin-left: 5px;
-    border-left: 1px solid #ccc;
+    display: none; /* Hide arrows by default to keep the UI clean */
 }
 
 .qty-controls button {
@@ -516,6 +513,18 @@ main, #table-container, .inventory-table {
 .qty-controls button:hover {
     background: var(--accent);
     color: white;
+}
+
+/* ONLY show arrows when the table has this specific mode active */
+.is-quick-updating .qty-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the cell is wide enough to hold the new buttons */
+.is-quick-updating td.quick-edit-focus {
+    min-width: 100px;
+    padding-right: 5px !important;
 }
 
 /* ==== END Quick Update ===== */
