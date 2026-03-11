@@ -446,7 +446,7 @@ function handleEditClick(tableName) {
     // Global Click-Outside logic
     const handleOutsideClick = (e) => {
         if (e.target.closest('.delete-row-btn')) return;
-        if (table && !table.contains(e.target)) {
+        if (table && !table.contains(e.target) && e.target.id !== 'btn-inventory-update') {
             processInPlaceTableUpdate(tableName); 
             exitEditMode();
             document.removeEventListener('mousedown', handleOutsideClick);
@@ -669,10 +669,13 @@ function handleQuickUpdate(tableName) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     table.classList.add("is-editing", "is-quick-updating");
     
-    const cells = table.querySelectorAll(".editable-cell");
+    const cells = table.querySelectorAll("td");
 
     cells.forEach(cell => {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
+        // Safety check: skip cells without a data-col-index (like the delete column)
+        if (isNaN(colIdx)) return; 
+
         const colDef = sheetConfig.columns[colIdx];
 
         // RUGGED RULE: ONLY allow editing for Quantity or Current Stock
@@ -718,7 +721,7 @@ function handleQuickUpdate(tableName) {
 
 // ========END handleQuickUpdate ============
 
-
-
 window.handleEditClick = handleEditClick;
+window.handleQuickUpdate = handleQuickUpdate;
+window.handleAddClick = handleAddClick;
 window.requestDelete = requestDelete;
