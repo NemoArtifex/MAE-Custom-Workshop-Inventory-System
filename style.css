@@ -355,84 +355,69 @@ main, #table-container, .inventory-table {
 
 /* =========== PRINT TABLE =================== */
 @media print {
-    /* 1. THE CLEAN SLATE: Remove all browser-specific graphics */
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        box-shadow: none !important;
-        text-shadow: none !important;
-        transition: none !important;
-    }
-
+    /* 1. SCALE & ORIENTATION */
     @page {
         size: landscape;
         margin: 0.5in;
     }
 
-    /* 2. HIDE EVERYTHING EXCEPT THE DATA */
-    body * { visibility: hidden; }
-    #table-container, #table-container *, .print-only-title, .print-only-title * {
-        visibility: visible !important;
-    }
+    /* 2. THE RUGGED RESET: Remove everything from the flow */
+    body > * { display: none !important; } /* Hide all direct children of body */
     
-    .sidebar, .command-bar, .edit-only-cell, #auth-btn, .loader {
-        display: none !important;
-    }
-
-    /* 3. FLATTEN THE CONTAINER: Removes the "Floating" effect */
-    #table-container {
-        display: block !important;
-        position: static !important; /* Forces it into the normal page flow */
-        width: 100% !important;
+    /* 3. RE-ENABLE ONLY THE CONTENT ZONE */
+    #app-content, #app-content * { 
+        display: block !important; 
+        visibility: visible !important;
+        position: static !important;
         margin: 0 !important;
         padding: 0 !important;
-        border: none !important;
+    }
+
+    /* Hide individual UI pieces inside the main content */
+    .command-bar, .edit-only-cell, .loader, #current-view-title { 
+        display: none !important; 
+    }
+
+    /* 4. FIX THE TABLE POSITIONING */
+    #table-container {
+        display: block !important;
+        width: 100% !important;
         overflow: visible !important;
     }
 
-    /* 4. EXCEL-STYLE TABLE: Fit and Repeat */
     .inventory-table {
         width: 100% !important;
         table-layout: fixed !important;
         border-collapse: collapse !important;
         border: 1px solid #000 !important;
-        margin-top: 10px; /* Space below the title */
     }
 
+    /* Repeat Header on Every Page */
     thead { display: table-header-group !important; }
 
-    /* Remove the 'Safety Orange' 3px border from screen view */
-    .inventory-table th {
-        background-color: #f2f2f2 !important; 
+    /* Crisp text for paper */
+    .inventory-table th, .inventory-table td {
+        border: 1px solid #000 !important;
+        font-size: 8pt !important;
+        padding: 4px !important;
         color: #000 !important;
-        border: 1px solid #000 !important; /* Standard thin border */
-        font-weight: bold !important;
-        font-size: 8pt !important;
-        padding: 6px !important;
-        text-align: left;
-    }
-
-    /* Clean up the rows */
-    .inventory-table td {
-        border: 1px solid #000 !important; /* Consistent thin border */
-        font-size: 8pt !important;
-        padding: 5px !important;
-        background-color: #fff !important;
-        vertical-align: middle;
+        background: #fff !important;
         word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
     }
 
-    /* 5. TITLE STYLING */
+    /* 5. TITLE SCALING (Prevents the 'Very Large' issue) */
     .print-only-title { 
         display: block !important; 
-        text-align: center; 
+        text-align: center;
         width: 100%;
+        margin-bottom: 15px;
     }
     .print-only-title h1 {
-        font-size: 16pt;
-        margin: 0 0 5px 0;
+        font-size: 14pt !important; /* Fixed size to prevent blowing up */
+        margin: 0;
         color: #000 !important;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
     }
 }
 

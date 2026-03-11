@@ -169,7 +169,7 @@ export const UI = {
                 </div>`;
         }
     },
-//=RENDER COMMAND BAR==========
+//================RENDER COMMAND BAR==========
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
 
@@ -194,7 +194,7 @@ export const UI = {
 
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
     },
-// RENDER ENTRY FORM===============
+// ================RENDER ENTRY FORM===============
     renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");
     const isEdit = mode === 'edit';
@@ -254,20 +254,31 @@ export const UI = {
 },
 //=====PRINT TABLE ===========
 
+// ui.js - Updated printTable function
 printTable(tableName, sheetConfig) {
-    const table = document.getElementById("main-data-table");
-    if (!table) return;
+    // Target the main content area so the title stays aligned with the table
+    const container = document.getElementById("app-content");
+    if (!container) return;
 
-    // Create a temporary print title for the top of the sheet
-    const printTitle = document.createElement("div");
-    printTitle.className = "print-only-title";
-    printTitle.innerHTML = `<h1>MAE Workshop Inventory System: ${sheetConfig.tabName}</h1><hr>`;
+    // Create the temporary print header
+    const printHeader = document.createElement("div");
+    printHeader.className = "print-only-title";
     
-    // Inject and trigger
-    document.body.prepend(printTitle);
+    // RUGGED: Simple, clear branding for the hardcopy
+    printHeader.innerHTML = `
+        <h1>MAE Workshop Inventory System: ${sheetConfig.tabName}</h1>
+    `;
+    
+    // 1. Inject at the top of the content zone
+    container.prepend(printHeader);
+
+    // 2. Trigger the browser print dialog
     window.print();
-    printTitle.remove(); // Clean up after print dialog closes
+
+    // 3. Clean up immediately so it doesn't show on the screen
+    printHeader.remove();
 }
+
 
 };
 
