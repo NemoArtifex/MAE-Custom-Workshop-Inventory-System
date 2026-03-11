@@ -293,7 +293,16 @@ async function loadTableData(tableName) {
     });
 
     if (!response.ok){
-        throw new Error(`Failed to fetch table data: ${response.statusText}`);  
+        // RUGGED DEBUG: Log the exact status code to the console
+        console.error(`MAE API Error: Status ${response.status} - ${response.statusText}`);
+        const errorBody = await response.json();
+        console.dir(errorBody); // Shows the full error object from Microsoft
+
+        throw new Error(`Graph API returned ${response.status}: ${response.statusText}`); 
+        
+        
+        
+        //throw new Error(`Failed to fetch table data: ${response.statusText}`);  
     }
 
     const data = await response.json();
