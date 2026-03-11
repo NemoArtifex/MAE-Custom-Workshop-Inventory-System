@@ -354,94 +354,58 @@ main, #table-container, .inventory-table {
 }
 
 /* =========== PRINT TABLE =================== */
-/* style.css - CONSOLIDATED MASTER PRINT STYLING */
-
-/* Hidden by default on screen */
-.print-only-title { display: none; }
+/* style.css - FINAL PRINT REFINEMENT */
 
 @media print {
-    /* 1. LANDSCAPE & MARGINS */
+    /* 1. FORCE HIDE SCROLLBARS (Chrome/Edge/Safari) */
+    ::-webkit-scrollbar { display: none !important; }
+    
+    /* 2. PAGE SETUP */
     @page {
         size: landscape;
-        margin: 1cm;
-        /* Page X of Y logic (Standard browser support varies; 
-           ensure 'Headers & Footers' is checked in Print Dialog) */
-        @bottom-right {
-            content: "Page " counter(page) " of " counter(pages);
-            font-family: 'Segoe UI', sans-serif;
-            font-size: 10pt;
-        }
+        margin: 0.5in;
     }
 
-    /* 2. THE NUCLEAR RESET: Kill all screen colors and UI */
-    * {
-        -webkit-print-color-adjust: economy !important;
-        print-color-adjust: economy !important;
-        background-color: transparent !important;
-        color: #000 !important;
-        text-shadow: none !important;
+    /* 3. LAYOUT RESET: Force the container to BE the table */
+    #table-container {
+        display: block !important;
+        overflow: visible !important; /* Forces the table to expand to its full width */
+        width: 100% !important;
+        position: static !important; /* Removes absolute positioning */
+        margin: 0 !important;
+        padding: 0 !important;
         box-shadow: none !important;
     }
 
-    /* Hide Sidebar, Buttons, and UI elements */
+    /* 4. TABLE COMPRESSION: The "Fit to Page" Logic */
+    .inventory-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important; /* Mandatory for fitting all columns */
+        border-collapse: collapse !important;
+        border: 2px solid black !important;
+    }
+
+    /* 5. TEXT WRAPPING: Prevents wide columns from bullying the page */
+    .inventory-table th, 
+    .inventory-table td {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        word-break: break-all !important; /* Breaks long IDs/Serial Numbers */
+        font-size: 8pt !important;
+        padding: 4px !important;
+        border: 1px solid black !important;
+        color: black !important;
+        background: white !important;
+    }
+
+    /* 6. HIDE NON-PRINT ELEMENTS */
     body * { visibility: hidden; }
     #table-container, #table-container *, .print-only-title, .print-only-title * {
         visibility: visible !important;
     }
     .sidebar, .command-bar, .edit-only-cell, #auth-btn, .loader {
         display: none !important;
-    }
-
-    /* 3. EXCEL-STYLE "FIT ALL COLUMNS" LOGIC */
-    #table-container {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        overflow: visible !important;
-    }
-
-    .inventory-table {
-        width: 100% !important;
-        table-layout: fixed !important; /* Forces columns to fit within the 100% width */
-        border-collapse: collapse !important;
-        border: 2px solid black !important;
-        word-wrap: break-word !important;
-    }
-
-    /* Repeating headers on every page */
-    thead { display: table-header-group !important; }
-
-    .inventory-table th {
-        background-color: #eee !important; /* Subtle gray for header contrast */
-        color: #000 !important;
-        border: 2px solid black !important;
-        font-weight: bold !important;
-        font-size: 8pt !important; /* Smaller text fits more columns */
-        padding: 4px !important;
-        text-align: left;
-    }
-
-    .inventory-table td {
-        border: 1px solid black !important;
-        font-size: 8pt !important;
-        padding: 4px !important;
-        vertical-align: top;
-        word-break: break-all; /* Prevents long SKUs from breaking the layout */
-    }
-
-    /* 4. PROFESSIONAL TITLE & HEADER */
-    .print-only-title { 
-        display: block !important; 
-        text-align: center; 
-        margin-bottom: 20px;
-    }
-    
-    .print-only-title h1 {
-        font-size: 18pt;
-        margin: 0;
-        padding-bottom: 10px;
-        border-bottom: 2px solid black;
     }
 }
 
