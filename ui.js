@@ -172,47 +172,56 @@ export const UI = {
 //================RENDER COMMAND BAR==========
  
     renderCommandBar(tableName) {
-        const container = document.getElementById("action-bar-zone");
- 
-            // Look at the global window object instead of an import
-        const config = window.maeSystemConfig; 
-        if (!config) return;
-    
-    // 1. Get the specific config for this table to check headers
-        const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
-        if (!config) return;
+    const container = document.getElementById("action-bar-zone");
+    if (!container) return;
 
-        
-        if (!sheetConfig) return;
+    // 1. Access the global config
+    const config = window.maeSystemConfig; 
+    if (!config) {
+        console.warn("MAE System: Config not found on window. Buttons cannot render.");
+        return;
+    }
 
-        const normalizedName = tableName.trim().toLowerCase();
-        const dashboardTables = ["master_dashboard", "test_dashboard"];
-    
-    // 2. Scan the columns for your specific keywords
-        const hasManualField = sheetConfig.columns.some(col => 
-            col.header === "Quantity" || col.header === "Current Stock"
-        );
+    // 2. Find the specific sheet blueprint
+    const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
+    if (!sheetConfig) {
+        console.warn(`MAE System: No config found for table: ${tableName}`);
+        return;
+    }
 
-        let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
+    const normalizedName = tableName.trim().toLowerCase();
+    const dashboardTables = ["master_dashboard", "test_dashboard", "master dashboard", "test dashboard"];
 
-    // 3. Only add the Manual Log button if a match is found
+    // 3. Scan for "Manual" keywords (Quantity / Current Stock)
+    const hasManualField = sheetConfig.columns.some(col => 
+        col.header === "Quantity" || col.header === "Current Stock"
+    );
+
+    // 4. Build the Button HTML
+    let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
+
+    // Add Manual Log button if keywords match
+    if (hasManualField) {
+        buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
+    }
+
+    // Add Add/Edit/Quick Update for non-dashboard tables
+    if (!dashboardTables.includes(normalizedName)) {
+        buttons += `
+            <button class="action-btn" id="btn-add">Add Item</button>
+            <button class="action-btn" id="btn-edit">Edit Table</button>
+        `;
+
+        // Only show Quick Update if it's an inventory-style sheet
         if (hasManualField) {
-            buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
+            buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
+    }
 
-        if (!dashboardTables.includes(normalizedName)) {
-             buttons += `
-                <button class="action-btn" id="btn-add">Add Item</button>
-                <button class="action-btn" id="btn-edit">Edit Table</button>`;
+    // 5. Inject into the UI
+    container.innerHTML = `<div class="command-bar">${buttons}</div>`;
+},
 
-                // Only show Quick Update if the inventory columns exist
-            if (hasManualField) {
-                buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
-            }
-        }
-
-        container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-    },
 // ================RENDER ENTRY FORM===============
     renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");

@@ -328,27 +328,31 @@ async function loadTableData(tableName) {
 //=========== GLOBAL CLICK LISTENER FUNCTION===========
 // 1. GLOBAL CLICK LISTENER (Event Delegation)
 // This stays active even when buttons are deleted/recreated
+// app.js - Refined Global Listener
 document.getElementById('action-bar-zone').addEventListener('click', (event) => {
-    // We check the ID of what was actually clicked
     const btn = event.target.closest('button');
-    if (!btn) return;// Exit if they clicked the bar but not the button
+    if (!btn) return;
+
+    // Use the global window object for consistency
+    const config = window.maeSystemConfig;
+    const currentTable = window.currentTable;
 
     if (btn.id === 'btn-add') {
-        // Trigger the Add Item flow
-        handleAddClick(window.currentTable); 
-    } else if (btn.id === 'btn-edit') {
-        // Trigger the Edit Table functionality
-        handleEditClick(window.currentTable);
-    } else if (btn.id === 'btn-print') {
-        // Trigger Print Entire Table functionality
-        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
-        UI.printTable(window.currentTable, sheetConfig);
-    } else if (btn.id === 'btn-manual-print'){
-        // Trigger Print Manual Log functionality
-        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
-        UI.printManualLog(window.currentTable, sheetConfig);
-    } else if (btn.id === 'btn-inventory-update') {
-        handleQuickUpdate(window.currentTable);
+        handleAddClick(currentTable); 
+    } 
+    else if (btn.id === 'btn-edit') {
+        handleEditClick(currentTable);
+    } 
+    else if (btn.id === 'btn-print') {
+        const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
+        UI.printTable(currentTable, sheetConfig);
+    } 
+    else if (btn.id === 'btn-manual-print') {
+        const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
+        UI.printManualLog(currentTable, sheetConfig);
+    } 
+    else if (btn.id === 'btn-inventory-update') {
+        handleQuickUpdate(currentTable);
     }
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
