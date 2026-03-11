@@ -4,8 +4,6 @@
  * Philosophy: Practical, Functional, Simple, Rugged.
  */
 
-import { maeSystemConfig } from './config.js';
-
 // Helper to format numbers as currency $0.00; 
 //NOTE OUTSIDE of main UI object to keep it available to all functions
 // without cluttering the main UI object
@@ -175,9 +173,16 @@ export const UI = {
  
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
+ 
+            // Look at the global window object instead of an import
+        const config = window.maeSystemConfig; 
+        if (!config) return;
     
     // 1. Get the specific config for this table to check headers
-        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
+        if (!config) return;
+
+        
         if (!sheetConfig) return;
 
         const normalizedName = tableName.trim().toLowerCase();
