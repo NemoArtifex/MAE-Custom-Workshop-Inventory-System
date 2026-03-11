@@ -465,4 +465,21 @@ main, #table-container, .inventory-table {
 }
 /*==== END PRINT TABLE ======*/
 
+/* for Quick Update  */
+/* style.css */
+
+/* Distinct border for Quick Update */
+.is-quick-updating {
+    border: 3px solid #27ae60 !important; /* "Safe" Green */
+}
+
+/* Highlight the only cells that are actually changing */
+.quick-edit-focus[contenteditable="true"] {
+    background-color: #e8f8f5 !important; /* Soft Green */
+    font-weight: bold;
+    outline: 2px solid #27ae60;
+}
+
+/* ==== END Quick Update ===== */
+
 

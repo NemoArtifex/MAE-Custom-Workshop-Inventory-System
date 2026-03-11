@@ -203,9 +203,12 @@ export const UI = {
         if (!dashboardTables.includes(normalizedName)) {
              buttons += `
                 <button class="action-btn" id="btn-add">Add Item</button>
-                <button class="action-btn" id="btn-edit">Edit Table</button>
-                <button class="action-btn" id="btn-inventory-update">Quick Update</button>
-            `;
+                <button class="action-btn" id="btn-edit">Edit Table</button>`;
+
+                // Only show Quick Update if the inventory columns exist
+            if (hasManualField) {
+                buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
+            }
         }
 
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;

@@ -347,6 +347,8 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         // Trigger Print Manual Log functionality
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
         UI.printManualLog(window.currentTable, sheetConfig);
+    } else if (btn.id === 'btn-inventory-update') {
+        handleQuickUpdate(window.currentTable);
     }
     // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
@@ -669,5 +671,66 @@ async function deleteExcelRow(tableName, rowIndex) {
 }
 
 //====== END delete Excel Row ============
+
+//======= FUNCTION handleQuickUpdate ================
+// app.js - New Function
+function handleQuickUpdate(tableName) {
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
+
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // Visual Cue: Use a different color (maybe a "safe" green or blue) to show it's a restricted edit
+    table.classList.add("is-quick-updating");
+    
+    const cells = table.querySelectorAll(".editable-cell");
+
+    cells.forEach(cell => {
+        const colIdx = parseInt(cell.getAttribute('data-col-index'));
+        const colDef = sheetConfig.columns[colIdx];
+
+        // RUGGED RULE: ONLY allow editing if it's the specific inventory columns
+        if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
+            cell.contentEditable = "true";
+            cell.setAttribute('tabindex', '0');
+            cell.classList.add("quick-edit-focus");
+
+            // Arrow Key Logic (Up/Down)
+            cell.onkeydown = (e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    let val = parseInt(cell.innerText) || 0;
+                    cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
+                }
+            };
+        } else {
+            // Force everything else to be uneditable
+            cell.contentEditable = "false";
+            cell.style.color = "#888"; // Gray out non-editable text for clarity
+        }
+
+        cell.onmousedown = (e) => e.stopPropagation();
+    });
+
+    // Save on Click-Outside
+    const handleOutsideClick = (e) => {
+        if (table && !table.contains(e.target)) {
+            processInPlaceTableUpdate(tableName); 
+            table.classList.remove("is-quick-updating");
+            exitEditMode(); // Cleans up editable states
+            document.removeEventListener('mousedown', handleOutsideClick);
+        }
+    };
+
+    setTimeout(() => {
+        document.addEventListener('mousedown', handleOutsideClick);
+    }, 150);
+}
+
+
+// ========END handleQuickUpdate ============
+
+
+
 window.handleEditClick = handleEditClick;
 window.requestDelete = requestDelete;
