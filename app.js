@@ -445,23 +445,26 @@ function handleEditClick(tableName) {
 
     // Global Click-Outside logic
     const handleOutsideClick = (e) => {
-    // 1. Guards: Don't exit if they clicked a delete button or the start button
+    // Guards
     if (e.target.closest('.delete-row-btn')) return;
     const isStartBtn = e.target.id === 'btn-inventory-update';
 
     if (table && !table.contains(e.target) && !isStartBtn) {
-        // 2. THE CAPTURE: Grabs the span values and sends them to OneDrive
+        // STEP A: Send the data to Microsoft in the background
         processInPlaceTableUpdate(tableName); 
 
-        // 3. THE CLEANUP: Strips the spans/arrows but KEEPS the new text in the TD
+        // STEP B: Instantly move the span text into the cell (Instant Persistence)
         exitEditMode();
 
-        // 4. THE PERSISTENCE: We DO NOT call loadTableData here. 
-        // This keeps our "Local Truth" visible while the cloud syncs.
-
+        // STEP C: Remove the listener
         document.removeEventListener('mousedown', handleOutsideClick);
+        
+        // CRITICAL: We do NOT call loadTableData(). 
+        // By NOT calling it, the app never asks Excel for the "old" data.
+        console.log("MAE System: UI Updated locally. Syncing to OneDrive in background...");
     }
 };
+
 
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
@@ -478,14 +481,20 @@ function exitEditMode() {
     
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
-        // 1. Remove the "Editor" wrapper but KEEP the new value
+        // 1. Find our special Qty span
         const qtySpan = cell.querySelector('.qty-value');
+        
         if (qtySpan) {
+            // 2. CAPTURE the user's manual entry
             const newValue = qtySpan.innerText.trim();
-            cell.innerText = newValue; // Permanent record in the table cell
+            
+            // 3. LOCK IT IN: Replace the HTML with just the plain text
+            // This prevents the "revert" because the span is gone, 
+            // but the number remains.
+            cell.innerText = newValue; 
         }
 
-        // 2. Reset the "Rugged" styles
+        // 4. Remove all temporary "Edit Mode" styling
         cell.contentEditable = "false";
         cell.style.opacity = "";
         cell.style.backgroundColor = "";
@@ -493,6 +502,7 @@ function exitEditMode() {
         cell.classList.remove("quick-edit-focus");
     });
 }
+
 
 //=========  END Exit Edit Mode ===============
 
