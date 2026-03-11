@@ -355,24 +355,27 @@ main, #table-container, .inventory-table {
 
 
 /* =========== PRINT TABLE - RUGGED GRID RESTORE =================== */
+/* style.css - MASTER PRINT STYLING (Including Manual Log) */
+
 @media print {
     @page {
         size: landscape;
         margin: 0.5in;
     }
 
-    /* 1. THE NUCLEAR HIDE: Use display: none to remove all UI 'ghosts' */
+    /* 1. THE NUCLEAR HIDE: Remove all UI "ghosts" and interactive elements */
     body > *, 
     .sidebar, 
     .command-bar, 
     .edit-only-cell, 
     #current-view-title, 
     #auth-btn, 
-    button { 
+    button,
+    .loader { 
         display: none !important; 
     }
 
-    /* 2. RE-ENABLE CONTENT: Only show the app-content and title */
+    /* 2. RE-ENABLE CONTENT: Show only the data and the print title */
     #app-content, 
     .print-only-title, 
     .print-only-title * { 
@@ -383,26 +386,33 @@ main, #table-container, .inventory-table {
         padding: 0 !important;
     }
 
-    /* 3. RESTORE TABLE STRUCTURE: Prevents vertical stacking */
+    /* 3. RESTORE TABLE STRUCTURE: Prevents vertical stacking and scrollbars */
     #table-container {
         display: block !important;
         visibility: visible !important;
         overflow: visible !important;
+        width: 100% !important;
     }
 
     .inventory-table {
-        display: table !important; /* Forces it back into a grid */
+        display: table !important;
         width: 100% !important;
-        table-layout: fixed !important;
+        table-layout: fixed !important; /* Standard Table Fit */
         border-collapse: collapse !important;
         border: 2px solid black !important;
     }
 
+    /* Fix for Manual Log: Allow the table to breathe if the extra column is added */
+    .manual-log-mode.inventory-table {
+        table-layout: auto !important; 
+    }
+
     thead { display: table-header-group !important; }
     tbody { display: table-row-group !important; }
-    tr { display: table-row !important; } /* CRITICAL: Prevents vertical stack */
+    tr { display: table-row !important; } 
+    
     th, td { 
-        display: table-cell !important; /* CRITICAL: Prevents vertical stack */
+        display: table-cell !important; 
         border: 1px solid black !important;
         font-size: 8pt !important;
         padding: 4px !important;
@@ -413,41 +423,44 @@ main, #table-container, .inventory-table {
 
     th { background-color: #eee !important; font-weight: bold; }
 
-    /* 4. TITLE STYLING */
+    /* 4. MANUAL LOG INJECTION (The 'Changes' Column) */
+    
+    /* Add Header Column */
+    .manual-log-mode thead tr::after {
+        content: "Changes / New Count";
+        display: table-cell !important;
+        border: 1px solid black;
+        padding: 4px;
+        font-size: 8pt;
+        font-weight: bold;
+        background-color: #eee !important;
+        width: 150px; /* Specific width for handwriting */
+        text-align: center;
+    }
+
+    /* Add Empty Data Row Column */
+    .manual-log-mode tbody tr::after {
+        content: "";
+        display: table-cell !important;
+        border: 1px solid black;
+        background-color: white !important;
+        height: 35px; /* Taller for easier shop floor handwriting */
+    }
+
+    /* 5. PRINT TITLE STYLING */
     .print-only-title { 
         display: block !important; 
         text-align: center;
         margin-bottom: 20px;
+        width: 100%;
     }
+
     .print-only-title h1 {
         font-size: 16pt !important;
         margin: 0;
         padding-bottom: 5px;
         border-bottom: 2px solid black;
-    }
-     /* When in Manual Log mode, make room for the extra column */
-    .manual-log-mode {
-        table-layout: auto !important; /* Allow columns to shift */
-    }
-
-    /* Add "Changes" header */
-    .manual-log-mode thead tr::after {
-        content: "Changes / New Count";
-        display: table-cell;
-        border: 1px solid black;
-        padding: 4px;
-        font-size: 8pt;
-        font-weight: bold;
-        background: #eee;
-        width: 120px; /* Space for handwriting */
-    }
-
-    /* Add empty boxes for each row */
-    .manual-log-mode tbody tr::after {
-        content: "";
-        display: table-cell;
-        border: 1px solid black;
-        height: 25px; /* Taller row for easier handwriting */
+        color: black !important;
     }
 }
 /*==== END PRINT TABLE ======*/

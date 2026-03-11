@@ -170,27 +170,31 @@ export const UI = {
         }
     },
 //================RENDER COMMAND BAR==========
+ 
     renderCommandBar(tableName) {
         const container = document.getElementById("action-bar-zone");
+    
+    // 1. Get the specific config for this table to check headers
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-         // Define tables that should NOT show Add/Edit buttons
+        if (!sheetConfig) return;
+
         const normalizedName = tableName.trim().toLowerCase();
         const dashboardTables = ["master_dashboard", "test_dashboard"];
-
-        // Check if this sheet needs a Manual Log (Quantity or Current Stock)
+    
+    // 2. Scan the columns for your specific keywords
         const hasManualField = sheetConfig.columns.some(col => 
-        col.header === "Quantity" || col.header === "Current Stock"
+            col.header === "Quantity" || col.header === "Current Stock"
         );
-        
-        // Define buttons based on the current context
+
         let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
-        // Only show "Print Manual Log" if the keywords exist
+
+    // 3. Only add the Manual Log button if a match is found
         if (hasManualField) {
-        buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
-        }          
-        // Only show "Add" and "Edit" if the current table is NOT in the dashboard list
+            buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
+        }
+
         if (!dashboardTables.includes(normalizedName)) {
-            buttons += `
+             buttons += `
                 <button class="action-btn" id="btn-add">Add Item</button>
                 <button class="action-btn" id="btn-edit">Edit Table</button>
                 <button class="action-btn" id="btn-inventory-update">Quick Update</button>
