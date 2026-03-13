@@ -299,7 +299,7 @@ export const maeSystemConfig = {
                 { header: "Phone", type: "string", locked: false },
                 { header: "Email", type: "string", locked: false },
                 { header: "Website", type: "string", locked: false},
-                { header: "Notes/OtherInfo", type: "string", locked: false}
+                { header: "Notes/Other Info", type: "string", locked: false}
             ]
         }
     ]
