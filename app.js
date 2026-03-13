@@ -266,9 +266,30 @@ async function initializeSheetAndTable(accessToken) {
 
 //========END FUNCTION initializeSheetAndTable===========
 
+// ========== DATE CONVERSION HELPER ===============
+/**
+ * Converts an Excel serial date number to a formatted MM/DD/YYYY string.
+ * @param {number} serial - The Excel serial date (e.g., 44562).
+ * @returns {string} - The formatted date string.
+ */
+function excelSerialToDate(serial) {
+    if (!serial || isNaN(serial)) return serial; // Return as-is if not a valid number
+    
+    // Formula: (Serial - 25569) * milliseconds in a day
+    const jsDate = new Date(Math.round((serial - 25569) * 86400 * 1000));
+    
+    const mm = String(jsDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(jsDate.getDate()).padStart(2, '0');
+    const yyyy = jsDate.getFullYear();
+
+    return `${mm}/${dd}/${yyyy}`;
+}
+
+
+// ======= END DATE CONVERSION HELPER =========
+
 //========== FUNCTION  loadTableData ==================
 /**
- * REVISED loadTableData
  * Logic: Fetch from Microsoft Graph
  * UI: Hand off to UI.renderTable
  */
@@ -295,9 +316,21 @@ async function loadTableData(tableName) {
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
-    // Hand off to UI module
+    // Process rows to format dates before rendering
+    const formattedRows = data.value.map(row => {
+    return row.values[0].map((cellValue, index) => {
+        const colDef = sheetConfig.columns[index];
+        // Check if this column is marked as a date in your manifest
+        if (colDef && colDef.type === 'date') {
+            return excelSerialToDate(cellValue);
+        }
+        return cellValue;
+    });
+});
+
+    // Hand off cleaned data to to UI module
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
-    UI.renderTable(data.value, tableName, sheetConfig);
+    UI.renderTable(formattedRows, tableName, sheetConfig);
 
     // Draw command bar at the bottom
     UI.renderCommandBar(tableName);
