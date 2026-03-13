@@ -155,6 +155,7 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Log ID", type: "string", locked: false },
                 { header: "Asset ID", type: "string", locked: false },
+                { header: "Asset Description", type: "string", locked: false},
                 { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { 
                     header: "Service Type",
