@@ -316,17 +316,29 @@ async function loadTableData(tableName) {
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
+
+
     // Process rows to format dates before rendering
-    const formattedRows = data.value.map(row => {
-    return row.values[0].map((cellValue, index) => {
-        const colDef = sheetConfig.columns[index];
-        // Check if this column is marked as a date in your manifest
-        if (colDef && colDef.type === 'date') {
-            return excelSerialToDate(cellValue);
-        }
-        return cellValue;
+     // RUGGED: We update the values but keep the row object so UI.js 
+    // can still find the row index and metadata.
+    const formattedRows = data.value.map(rowObj => {
+        // Map the inner values array (Graph API returns values as a 2D array [[]])
+        const cleanValues = rowObj.values[0].map((cellValue, index) => {
+            const colDef = sheetConfig.columns[index];
+            if (colDef && colDef.type === 'date') {
+                return excelSerialToDate(cellValue);
+            }
+            return cellValue;
+        });
+
+        // Return the original object but with the formatted values
+        return {
+            ...rowObj,
+            values: [cleanValues] 
+        };
     });
-});
+
+
 
     // Hand off cleaned data to to UI module
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
