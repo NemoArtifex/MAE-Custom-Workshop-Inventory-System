@@ -5,12 +5,13 @@
  * Version 1.2.2: added two TEST worksheets in the beginning
  * Version 1.2.3: changed "locked: true" to "locked: false" to allow editing from app 
  *      [except for mae_id, formulas, Master Dashboard (should be read-only) ]
- * Version xxxxxxx
+ * Version 1.2.4: modified several worksheets, added columns/dropdowns
+ * Version xxxxxxx- 
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.3",
+    version: "1.2.4",
     
     worksheets: [
         {
@@ -249,7 +250,7 @@ export const maeSystemConfig = {
                   formula: "=[@[Current Stock]]*[@[Unit Cost]]",
                   format: "$#,##0.00",
                   locked: false
-                }.
+                },
                 { header: "Preferred Supplier", type: "string", locked: false }
             ]
         },
