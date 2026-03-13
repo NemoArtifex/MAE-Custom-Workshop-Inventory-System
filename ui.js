@@ -252,7 +252,7 @@ export const UI = {
                 if (col.type === "number") inputType = "number";
                 if (col.type === "date") inputType = "date";
 
-                const stepAttr = (col.type === "number" || (col.format && col.format.includes("$"))) ? 'step="0.01"' : '';
+                const stepAttr = '';
 
                 formHtml += `
                     <input type="${inputType}" ${stepAttr} id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
