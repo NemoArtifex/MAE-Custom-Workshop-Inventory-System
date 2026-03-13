@@ -131,7 +131,6 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset ID", type: "string", locked: false },
-                { header: "Asset Description", type: "string", locked: false},
                 { header: "Machine Name/Model", type: "string", locked: false },
                 { header: "Manufacturer/Brand", type: "string", locked: false },
                 { header: "Serial Number", type: "string", locked: false },
