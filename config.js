@@ -1,11 +1,13 @@
 /**
  * MAE Custom Digital Solutions - Master System Manifest
  * Philosophy: Practical, Functional, Simple, Rugged.
+ * THE MASTER SPREADSHEET MUST HAVE FORMULAS IN THE SPREADSHEET TO MATCH THIS
  * Version 1.2.1: added active:true to json file
  * Version 1.2.2: added two TEST worksheets in the beginning
  * Version 1.2.3: changed "locked: true" to "locked: false" to allow editing from app 
  *      [except for mae_id, formulas, Master Dashboard (should be read-only) ]
- * Version 1.2.4: modified several worksheets, added columns/dropdowns
+ * Version 1.2.4: modified several worksheets, added columns/dropdowns/added formulas
+ *      to spreadsheet itself to match this file
  * Version xxxxxxx- 
  */
 
