@@ -45,7 +45,7 @@ export const maeSystemConfig = {
         {
             tabName: "TEST Dashboard",
             tableName: "TEST_Dashboard",
-            active: true,
+            active: false,
             columns: [
                 {
                     header: "TEST calc from other table",
