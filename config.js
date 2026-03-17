@@ -8,18 +8,20 @@
  *      [except for mae_id, formulas, Master Dashboard (should be read-only) ]
  * Version 1.2.4: modified several worksheets, added columns/dropdowns/added formulas
  *      to spreadsheet itself to match this file
- * Version xxxxxxx- 
+ * Version 1.2.5: added Location_ID to Inv Sheets (to support future scannable tags), matched
+ *      dropdowns with excel, added "Location" Table/Worksheet for future scannable tag
+ * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.4",
+    version: "1.2.5",
     
     worksheets: [
         {
             tabName: "TEST Inventory",
             tableName: "TEST_Inventory",
-            active: true,
+            active: false,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "TEST String", type: "string", locked: false },
@@ -123,7 +125,8 @@ export const maeSystemConfig = {
                 },
                 { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Location", type: "string", locked: false }
+                { header: "Location", type: "string", locked: false },
+                { header: "Location_ID", type: "string", locked: false}
             ]
         },
         {
@@ -139,8 +142,9 @@ export const maeSystemConfig = {
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Location", type: "string", locked: false },
+                { header: "Location_ID", type: "string", locked: false},
                 { 
-                    header: "Status",
+                    header: "Condition",
                     type: "dropdown",
                     options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
                     locked: false 
@@ -156,7 +160,7 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Log ID", type: "string", locked: false },
                 { header: "Asset ID", type: "string", locked: false },
-                { header: "Asset Description", type: "string", locked: false},
+                { header: "Asset and Service Description", type: "string", locked: false},
                 { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { 
                     header: "Service Type",
@@ -180,12 +184,14 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Tool ID", type: "string", locked: false },
+                { header: "Asset_ID", type: "string", locked: false },
                 { header: "Tool Name/Model", type: "string", locked: false },
+                { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
+                { header: "Location_ID", type: "string", locked: false},
                 { 
                     header: "Functional Category",
                     type: "dropdown",
-                    options: ["Driling","Cutting","Grinding","Sanding","Fastening","Shaping/Routing","Other"],
+                    options: ["Drilling","Cutting","Grinding","Sanding","Fastening","Shaping/Routing","Other"],
                     locked: false
                 },
                 {
@@ -203,7 +209,7 @@ export const maeSystemConfig = {
                 { 
                     header: "Condition",
                     type: "dropdown",
-                    options: ["Operational","Needs Repair","Repair in Progress","Unusable/Junk"],
+                    options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
                     locked: false 
                 }
             ]
@@ -214,13 +220,21 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Tool ID", type: "string", locked: false },
+                { header: "Asset_ID", type: "string", locked: false },
                 { header: "Tool Name/Model", type: "string", locked: false },
+                { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
                     header: "Category",
                     type: "dropdown",
                     options: ["Fastening/Turning","Measuring/Layout","Striking/Hammering","Gripping/Holding","Cutting/Shaping","Other"],
                     locked: false 
+                },
+                { header: "Location_ID", type: "string", locked: false},
+                {
+                    header: "Condition",
+                    type: "dropdown",
+                    options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
+                    locked: false
                 },
                 { header: "Quantity", type: "number", format: "0", locked: false }
             ]
@@ -232,7 +246,7 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Item Name", type: "string", locked: false },
-                { header: "SKU/Item ID", type: "string", locked: false },
+                { header: "Asset_ID", type: "string", locked: false },
                 { 
                   header: "Category",
                   type: "dropdown",
@@ -253,6 +267,7 @@ export const maeSystemConfig = {
                   format: "$#,##0.00",
                   locked: false
                 },
+                { header: "Location_ID", type: "string", locked: false},
                 { header: "Preferred Supplier", type: "string", locked: false }
             ]
         },
@@ -301,6 +316,18 @@ export const maeSystemConfig = {
                 { header: "Email", type: "string", locked: false },
                 { header: "Website", type: "string", locked: false},
                 { header: "Notes/Other Info", type: "string", locked: false}
+            ]
+        },
+        {
+            tabName: "Location",
+            tableName: "Location",
+            active: true,
+            columns: [
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Location_ID", type: "string", locked: false },
+                { header: "Name", type: "string", locked: false },
+                { header: "Type", type: "string", locked: false },
+                { header: "Parent_Location", type: "string", locked: false}
             ]
         }
     ]
