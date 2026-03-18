@@ -515,14 +515,14 @@ function handleEditClick(tableName) {
         cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    const handleOutsideClick = (e) => {
+    const handleOutsideClick = async (e) => {
         // Guards
         if (e.target.closest('.delete-row-btn')) return;
         const isStartBtn = e.target.id === 'btn-inventory-update';
 
         if (table && !table.contains(e.target) && !isStartBtn) {
             // STEP A: Sync data
-            processInPlaceTableUpdate(tableName); 
+            await processInPlaceTableUpdate(tableName); 
 
             // STEP B: Reset UI
              UI.exitEditMode();
@@ -688,6 +688,7 @@ async function processInPlaceTableUpdate(tableName) {
         for (const update of updates) {
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${update.index})`;
             //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+            
             await fetch(url, {
                 method: 'PATCH',
                 headers: {
@@ -861,18 +862,20 @@ function handleQuickUpdate(tableName) {
 
         } else {
             cell.contentEditable = "false";
-            cell.style.opacity = "0.4";
+            //cell.style.opacity = "0.4";
             cell.style.backgroundColor = "#f9f9f9";
-            cell.style.pointerEvents = "none"; 
+            cell.style.color = "#999";
+            //cell.style.pointerEvents = "none";
+            cell.classList.remove("editable-cell"); 
         }
     });
 
-    const handleOutsideClick = (e) => {
+    const handleOutsideClick = async (e) => {
         // ADDED: Guard to ignore clicks on the Quick Update button itself
         const isBtn = e.target.id === 'btn-inventory-update';
         
         if (table && !table.contains(e.target) && !isBtn) {
-            processInPlaceTableUpdate(tableName); 
+            await processInPlaceTableUpdate(tableName); 
             table.classList.remove("is-quick-updating", "is-editing");
             exitEditMode();
             document.removeEventListener('mousedown', handleOutsideClick);
