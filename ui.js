@@ -294,43 +294,38 @@ export const UI = {
 //======= END RENDER ENTRY FORM ============
 
 //========== EXIT EDIT MODE ==============
-// ui.js
-export const UI = {
-    // ... other functions ...
-
     exitEditMode() {
-        const table = document.getElementById("main-data-table");
-        const entryForm = document.getElementById("entry-form");
+    // 1. DESTROY any active Add/Edit form from the DOM
+    const entryForm = document.getElementById("entry-form");
+    if (entryForm) {
+        entryForm.remove(); // Physically remove it, don't just hide it
+    }
 
-        // 1. Kill the Add/Edit Form if it's open
-        if (entryForm) entryForm.remove();
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
 
-        if (!table) return;
+    // 2. STRIP all mode-specific classes
+    table.classList.remove("is-editing", "is-quick-updating");
 
-        // 2. Strip all "Mode" classes from the table
-        table.classList.remove("is-editing", "is-quick-updating", "is-loading");
+    // 3. SANITIZE all cells to prevent "Ghost" interactivity
+    const cells = table.querySelectorAll("td");
+    cells.forEach(cell => {
+        // If a dropdown is stuck open, force-close it
+        const select = cell.querySelector('select');
+        if (select) {
+            cell.innerText = select.value; 
+        }
 
-        // 3. Scrub every cell to be "Read Only"
-        const cells = table.querySelectorAll("td");
-        cells.forEach(cell => {
-            // Check if a dropdown is currently open and lock its value
-            const select = cell.querySelector('select');
-            if (select) {
-                cell.innerText = select.value; 
-            }
-
-            // Kill all listeners and styles
-            cell.contentEditable = "false";
-            cell.onclick = null; 
-            cell.onkeydown = null;
-            cell.classList.remove("dropdown-edit-zone", "quick-edit-focus");
-            cell.style.opacity = "";
-            cell.style.backgroundColor = "";
-        });
+        cell.contentEditable = "false";
+        cell.onclick = null; // Kill the listener
+        cell.onkeydown = null;
+        cell.classList.remove("dropdown-edit-zone", "quick-edit-focus");
+        cell.style.opacity = "";
+        cell.style.backgroundColor = "";
+    });
 
         console.log("MAE System: UI Reset to Standard View.");
-    }
-},
+    },
 
 //===== END EXiT EDIT MODE ==========
 

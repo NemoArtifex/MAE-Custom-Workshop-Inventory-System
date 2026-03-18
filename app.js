@@ -429,6 +429,7 @@ function handleEditClick(tableName) {
         const colDef = sheetConfig.columns[colIdx];
 
         // --- RUGGED RULE: Dropdowns ---
+
         if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.setAttribute('tabindex', '0'); 
@@ -449,11 +450,18 @@ function handleEditClick(tableName) {
                 cell.innerHTML = selectHtml;
                 const select = cell.querySelector('select');
                 select.focus();
-
+       
                 const finishEdit = () => {
-                    cell.innerText = select.value;
+                   // 1. Explicitly grab the selected TEXT, not the entire HTML block
+                    const selectedText = select.options[select.selectedIndex].text;
+    
+                    // 2. NUCLEAR RESET: Wipe the cell and set it to just the text
+                    cell.innerHTML = selectedText; 
+    
+                    // 3. Clean up the cell's temporary edit classes
+                    cell.classList.remove("dropdown-edit-zone");  
                 };
-
+       
                 select.onchange = finishEdit;
                 select.onblur = finishEdit;
                 select.onkeydown = (k) => { if(k.key === 'Enter') finishEdit(); };
@@ -462,6 +470,7 @@ function handleEditClick(tableName) {
             cell.onclick = startDropdownEdit;
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
+
         // --- NUMBERS (Integer & Currency) ---
         else if (colDef.type === "number") {
             cell.contentEditable = "true";
