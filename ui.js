@@ -218,7 +218,7 @@ export const UI = {
 },
 
 // ================RENDER ENTRY FORM===============
-    renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
+   renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");
     const isEdit = mode === 'edit';
     
@@ -234,28 +234,43 @@ export const UI = {
         // RUGGED: Skip ID, Hidden, and Formulas
         if (!col.hidden && col.type !== "formula") {
             const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
-            // If editing, pull the value from existingData using the column index
             const val = (isEdit && existingData) ? existingData[index] : "";
 
             formHtml += `<div class="input-group"><label>${col.header}</label>`;
 
             if (col.type === "dropdown") {
+                // INVIOLATE: Forces user to pick from config options only
                 formHtml += `
-                    <select id="${fieldId}">
+                    <select id="${fieldId}" required>
                         <option value="">-- Select ${col.header} --</option>
                         ${col.options.map(opt => 
                             `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
                         ).join('')}
                     </select>`;
-            } else {
-                let inputType = "text";
-                if (col.type === "number") inputType = "number";
-                if (col.type === "date") inputType = "date";
-
-                const stepAttr = '';
-
-                formHtml += `
-                    <input type="${inputType}" ${stepAttr} id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
+            } 
+            else if (col.type === "number") {
+                const isCurrency = col.format && col.format.includes("$");
+                
+                if (isCurrency) {
+                    // CURRENCY: Allows decimals, forces 2-decimal format on blur
+                    formHtml += `
+                        <input type="number" step="0.01" id="${fieldId}" value="${val}" 
+                            placeholder="0.00" 
+                            onblur="if(this.value) this.value = parseFloat(this.value).toFixed(2)">`;
+                } else {
+                    // INTEGER (Rugged): Blocks decimal/scientific keys, floors any pasted values
+                    formHtml += `
+                        <input type="number" step="1" id="${fieldId}" value="${val}" 
+                            placeholder="Whole number only"
+                            onkeydown="if(['.', ',', 'e', 'E'].includes(event.key)) event.preventDefault();"
+                            onblur="if(this.value) this.value = Math.floor(this.value)">`;
+                }
+            } 
+            else if (col.type === "date") {
+                formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
+            } 
+            else {
+                formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
             }
             formHtml += `</div>`;
         }
@@ -270,11 +285,12 @@ export const UI = {
 
     container.insertAdjacentHTML('beforebegin', formHtml);
 
-    // Attach the logic trigger
     document.getElementById("submit-form-btn").onclick = () => {
         onSaveCallback(rowIndex, existingData); 
     };
 },
+//======= END RENDER ENTRY FORM ============
+
 //=====PRINT TABLE ===========
 
 // ui.js - Updated printTable function

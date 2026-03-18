@@ -130,11 +130,7 @@ function resetUI() {
 
 //======= FUNCTION Load Dynamic Menu ================
 async function loadDynamicMenu() {
-   //const menu = document.getElementById("menu");
-    //menu.innerHTML = ""; // Clear any existing menu items
-    
-    //console.log("Building dynamic menu from config...");
-    // We iterate through the CONFIG, not the Excel file. 
+    // Iterate through the CONFIG, not the Excel file. 
     // This ensures the App stays "Locked" to the business agreement.
 
     //FILTER: only show worksheets with active:true
@@ -142,10 +138,19 @@ async function loadDynamicMenu() {
 
     // UI handles the creation of buttons
     UI.renderMenu(activeWorksheets, (tableName) => {
+        // Force-close any active edit sessions before switching views
+        if (typeof exitEditMode === "function") {
+            exitEditMode();
+        }
+
+        // Ensure the table container loses any lingering edit-mode classes
+        const table = document.getElementById("main-data-table");
+        if (table) table.classList.remove("is-editing", "is-quick-editing");
+
         loadTableData(tableName);
     });
-    UI.renderCommandBar("");
 
+    UI.renderCommandBar("");
     verifySpreadsheetExists();
     
 }
@@ -416,7 +421,6 @@ async function handleAddClick(tableName) {
 
 
 //========== Handle EDIT CLICK function ================
-
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
@@ -430,16 +434,15 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // --- RUGGED RULE: NO contentEditable for Dropdowns ---
+        // --- RUGGED RULE: Dropdowns ---
         if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.setAttribute('tabindex', '0'); 
             cell.classList.add("dropdown-edit-zone");
 
-            // Event listener to inject the select menu
             const startDropdownEdit = (e) => {
                 e.stopPropagation();
-                if (cell.querySelector('select')) return; // Already editing
+                if (cell.querySelector('select')) return;
 
                 const currentVal = cell.innerText.trim();
                 let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
@@ -453,69 +456,82 @@ function handleEditClick(tableName) {
                 const select = cell.querySelector('select');
                 select.focus();
 
-                // Logic to finish editing
                 const finishEdit = () => {
-                    cell.innerText = select.value; // Store value as text for processInPlaceTableUpdate
+                    cell.innerText = select.value;
                 };
 
                 select.onchange = finishEdit;
                 select.onblur = finishEdit;
-                // Allow "Enter" to finish edit
                 select.onkeydown = (k) => { if(k.key === 'Enter') finishEdit(); };
             };
 
             cell.onclick = startDropdownEdit;
-            // Also trigger on 'Enter' key for keyboard accessibility (Rugged)
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
-        // --- STANDARD TEXT/NUMBERS ---
+        // --- NUMBERS (Integer & Currency) ---
+        else if (colDef.type === "number") {
+            cell.contentEditable = "true";
+            cell.setAttribute('tabindex', '0');
+            const isCurrency = colDef.format && colDef.format.includes("$");
+
+            cell.onkeydown = (e) => {
+                // 1. Strict Integer Guard: Block decimal keys if not currency
+                if (!isCurrency && (e.key === "." || e.key === ",")) {
+                    e.preventDefault();
+                }
+
+                // 2. Block scientific notation 'e' for all numbers
+                if (e.key.toLowerCase() === "e") {
+                    e.preventDefault();
+                }
+
+                // 3. Arrow keys for Quantity/Stock logic
+                const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
+                if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+                    e.preventDefault();
+                    let val = parseInt(cell.innerText) || 0;
+                    cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
+                }
+            };
+
+            // Scrub on Blur: Ensures format is clean before it hits the Graph API
+            cell.onblur = () => {
+                let raw = cell.innerText.replace(/[^0-9.-]+/g, "");
+                let num = parseFloat(raw);
+                if (isNaN(num)) {
+                    cell.innerText = "0";
+                } else {
+                    cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
+                }
+            };
+        }
+        // --- STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
             cell.setAttribute('tabindex', '0');
-
-            // Quick Update: Arrow keys
-            if (colDef.header === "Quantity" || colDef.header === "Current Stock") {
-                cell.onkeydown = (e) => {
-                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                        e.preventDefault();
-                        let val = parseInt(cell.innerText) || 0;
-                        cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
-                    }
-                };
-            }
         }
 
         cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    // Global Click-Outside logic
     const handleOutsideClick = (e) => {
-    // Guards
-    if (e.target.closest('.delete-row-btn')) return;
-    const isStartBtn = e.target.id === 'btn-inventory-update';
+        if (e.target.closest('.delete-row-btn')) return;
+        const isStartBtn = e.target.id === 'btn-inventory-update';
 
-    if (table && !table.contains(e.target) && !isStartBtn) {
-        // STEP A: Send the data to Microsoft in the background
-        processInPlaceTableUpdate(tableName); 
-
-        // STEP B: Instantly move the span text into the cell (Instant Persistence)
-        exitEditMode();
-
-        // STEP C: Remove the listener
-        document.removeEventListener('mousedown', handleOutsideClick);
-        
-        // CRITICAL: We do NOT call loadTableData(). 
-        // By NOT calling it, the app never asks Excel for the "old" data.
-        console.log("MAE System: UI Updated locally. Syncing to OneDrive in background...");
-    }
-};
-
+        if (table && !table.contains(e.target) && !isStartBtn) {
+            processInPlaceTableUpdate(tableName); 
+            exitEditMode();
+            document.removeEventListener('mousedown', handleOutsideClick);
+            console.log("MAE System: Local sync complete.");
+        }
+    };
 
     setTimeout(() => {
         document.addEventListener('mousedown', handleOutsideClick);
     }, 150);
 }
 
+// ====== END handleEditClick function =================
 
 // ===========   FUNCTION Exit Edit Mode ===========
 function exitEditMode() {
