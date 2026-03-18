@@ -478,17 +478,15 @@ function handleEditClick(tableName) {
             const isCurrency = colDef.format && colDef.format.includes("$");
 
             cell.onkeydown = (e) => {
-                // 1. Strict Integer Guard: Block decimal keys if not currency
+                    // Block scientific 'e' for all numbers
+                if (e.key.toLowerCase() === "e") e.preventDefault();
+
+                // Block decimals for whole-number fields (Qty/Stock)
                 if (!isCurrency && (e.key === "." || e.key === ",")) {
-                    e.preventDefault();
+                e.preventDefault();
                 }
-
-                // 2. Block scientific notation 'e' for all numbers
-                if (e.key.toLowerCase() === "e") {
-                    e.preventDefault();
-                }
-
-                // 3. Arrow keys for Quantity/Stock logic
+               
+                //  Arrow keys for Quantity/Stock logic
                 const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
                 if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
                     e.preventDefault();
@@ -499,11 +497,11 @@ function handleEditClick(tableName) {
 
             // Scrub on Blur: Ensures format is clean before it hits the Graph API
             cell.onblur = () => {
-                let raw = cell.innerText.replace(/[^0-9.-]+/g, "");
-                let num = parseFloat(raw);
+                let num = parseFloat(cell.innerText.replace(/[^0-9.-]+/g, ""));
                 if (isNaN(num)) {
                     cell.innerText = "0";
                 } else {
+                 // Re-format visually so the user sees the "Rugged" enforcement
                     cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
                 }
             };
@@ -518,14 +516,21 @@ function handleEditClick(tableName) {
     });
 
     const handleOutsideClick = (e) => {
+        // Guards
         if (e.target.closest('.delete-row-btn')) return;
         const isStartBtn = e.target.id === 'btn-inventory-update';
 
         if (table && !table.contains(e.target) && !isStartBtn) {
+            // STEP A: Sync data
             processInPlaceTableUpdate(tableName); 
-            exitEditMode();
+
+            // STEP B: Reset UI
+             UI.exitEditMode();
+
+            // STEP C: RUGGED CLEANUP - Kill this listener so it doesn't fire for other tables
             document.removeEventListener('mousedown', handleOutsideClick);
-            console.log("MAE System: Local sync complete.");
+        
+            console.log("MAE System: Listener detached. Save complete.");
         }
     };
 
@@ -535,40 +540,6 @@ function handleEditClick(tableName) {
 }
 
 // ====== END handleEditClick function =================
-
-// ===========   FUNCTION Exit Edit Mode ===========
-/*function exitEditMode() {
-    const table = document.getElementById("main-data-table");
-    if (!table) return;
-
-    table.classList.remove("is-editing", "is-quick-updating");
-    
-    const cells = table.querySelectorAll("td");
-    cells.forEach(cell => {
-        // 1. Find our special Qty span
-        const qtySpan = cell.querySelector('.qty-value');
-        
-        if (qtySpan) {
-            // 2. CAPTURE the user's manual entry
-            const newValue = qtySpan.innerText.trim();
-            
-            // 3. LOCK IT IN: Replace the HTML with just the plain text
-            // This prevents the "revert" because the span is gone, 
-            // but the number remains.
-            cell.innerText = newValue; 
-        }
-
-        // 4. Remove all temporary "Edit Mode" styling
-        cell.contentEditable = "false";
-        cell.style.opacity = "";
-        cell.style.backgroundColor = "";
-        cell.style.pointerEvents = "";
-        cell.classList.remove("quick-edit-focus");
-    });
-}
-*/
-
-//=========  END Exit Edit Mode ===============
 
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========
@@ -669,25 +640,40 @@ async function processInPlaceTableUpdate(tableName) {
 
         // Build the row array based on config order
         sheetConfig.columns.forEach((col, index) => {
-            // Find the cell in this row that matches the config column index
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            
+        
             if (col.type === "formula") {
-                rowValues.push(null); // Excel will recalculate formulas
+                rowValues.push(null); 
             } else if (cell) {
-                let val =   cell.querySelector('.qty-value') ?
-                            cell.querySelector('.qty-value').innerText.trim() :
-                            cell.innerText.trim();
-                // Rugged: Convert to numbers where required so Excel math doesn't break
+             // 1. RUGGED SCRUB: Prioritize UI elements over raw text
+                const select = cell.querySelector('select');
+                const qtySpan = cell.querySelector('.qty-value');
+            
+                let val = "";
+                if (select) {
+                    val = select.value;
+                } else if (qtySpan) {
+                    val = qtySpan.innerText.trim();
+                } else {
+                    val = cell.innerText.trim();
+                }
+
+                // 2. TYPE ENFORCEMENT (Step 4: Currency vs Integer)
                 if (col.type === "number") {
-                    val = val === "" ? null : parseFloat(val.replace(/[^0-9.-]+/g,""));
+                    const isCurrency = col.format && col.format.includes("$");
+                    // Strip all non-numeric characters except decimal/minus
+                    let cleanNum = parseFloat(val.replace(/[^0-9.-]+/g,""));
+                
+                    if (isNaN(cleanNum)) {
+                    val = 0; // Prevent Excel from rejecting a "blank" string
+                    } else {
+                    // Force whole numbers for Qty/Stock, 2-decimals for Currency
+                    val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
+                    }
                 }
                 rowValues.push(val);
-            } else {
-                rowValues.push(null);
             }
         });
-        
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
