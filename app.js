@@ -130,30 +130,24 @@ function resetUI() {
 
 //======= FUNCTION Load Dynamic Menu ================
 async function loadDynamicMenu() {
-    // Iterate through the CONFIG, not the Excel file. 
-    // This ensures the App stays "Locked" to the business agreement.
+    // 1. FILTER: only show worksheets with active:true
+    const activeWorksheets = maeSystemConfig.worksheets.filter(sheet => sheet.active !== false);
 
-    //FILTER: only show worksheets with active:true
-    const activeWorksheets = maeSystemConfig.worksheets.filter(sheet => sheet.active !==false);
-
-    // UI handles the creation of buttons
+    // 2. UI handles the creation of buttons
     UI.renderMenu(activeWorksheets, (tableName) => {
-        // Force-close any active edit sessions before switching views
-        if (typeof exitEditMode === "function") {
-            exitEditMode();
-        }
+        
+        // RUGGED RESET: Call the centralized UI cleanup
+        // This handles: Dropdowns, Edit Mode Classes, and the Add Item Form
+        UI.exitEditMode(); 
 
-        // Ensure the table container loses any lingering edit-mode classes
-        const table = document.getElementById("main-data-table");
-        if (table) table.classList.remove("is-editing", "is-quick-editing");
-
+        // 3. Load the new module
         loadTableData(tableName);
     });
 
     UI.renderCommandBar("");
     verifySpreadsheetExists();
-    
 }
+
 //=======END FUNCTION Load Dynamic Menu ================
 
 // ======= FUNCTION verifySpreadSheetExists =============
@@ -534,7 +528,7 @@ function handleEditClick(tableName) {
 // ====== END handleEditClick function =================
 
 // ===========   FUNCTION Exit Edit Mode ===========
-function exitEditMode() {
+/*function exitEditMode() {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
@@ -563,7 +557,7 @@ function exitEditMode() {
         cell.classList.remove("quick-edit-focus");
     });
 }
-
+*/
 
 //=========  END Exit Edit Mode ===============
 

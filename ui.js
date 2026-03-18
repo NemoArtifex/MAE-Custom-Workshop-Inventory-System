@@ -217,6 +217,8 @@ export const UI = {
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
 },
 
+//========== END RENDER COMMAND BAR ================
+
 // ================RENDER ENTRY FORM===============
    renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
     const container = document.getElementById("table-container");
@@ -291,6 +293,47 @@ export const UI = {
 },
 //======= END RENDER ENTRY FORM ============
 
+//========== EXIT EDIT MODE ==============
+// ui.js
+export const UI = {
+    // ... other functions ...
+
+    exitEditMode() {
+        const table = document.getElementById("main-data-table");
+        const entryForm = document.getElementById("entry-form");
+
+        // 1. Kill the Add/Edit Form if it's open
+        if (entryForm) entryForm.remove();
+
+        if (!table) return;
+
+        // 2. Strip all "Mode" classes from the table
+        table.classList.remove("is-editing", "is-quick-updating", "is-loading");
+
+        // 3. Scrub every cell to be "Read Only"
+        const cells = table.querySelectorAll("td");
+        cells.forEach(cell => {
+            // Check if a dropdown is currently open and lock its value
+            const select = cell.querySelector('select');
+            if (select) {
+                cell.innerText = select.value; 
+            }
+
+            // Kill all listeners and styles
+            cell.contentEditable = "false";
+            cell.onclick = null; 
+            cell.onkeydown = null;
+            cell.classList.remove("dropdown-edit-zone", "quick-edit-focus");
+            cell.style.opacity = "";
+            cell.style.backgroundColor = "";
+        });
+
+        console.log("MAE System: UI Reset to Standard View.");
+    }
+},
+
+//===== END EXiT EDIT MODE ==========
+
 //=====PRINT TABLE ===========
 
 // ui.js - Updated printTable function
@@ -317,6 +360,8 @@ printTable(tableName, sheetConfig) {
     // 3. Clean up immediately so it doesn't show on the screen
     printHeader.remove();
 },
+//====== END PRINT TABLE ============
+
 //============ print MANUAL LOG =============
 // ui.js - New Function
 printManualLog(tableName, sheetConfig) {
@@ -338,6 +383,8 @@ printManualLog(tableName, sheetConfig) {
     printHeader.remove();
     table.classList.remove("manual-log-mode");
 }
+
+//========== END PRINT MANUAL LOG ==============
 
 };
 
