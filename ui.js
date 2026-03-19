@@ -317,37 +317,45 @@ export const UI = {
 
 //========== EXIT EDIT MODE ==============
     exitEditMode() {
-    // 1. Clear any active forms
-    const entryForm = document.getElementById("entry-form");
-    if (entryForm) entryForm.remove();
-
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 2. THE FIX: Remove ALL operational classes
-    table.classList.remove("is-editing", "is-quick-updating", "manual-log-mode");
-    window.isEditMode = false;
+    // 1. Reset Global Table States
+    table.classList.remove("is-editing", "is-quick-updating", "saving-active");
+    table.style.opacity = "1";
+    table.style.pointerEvents = "auto";
 
-    // 3. Reset every cell
+    // 2. Clean up any active forms
+    const entryForm = document.getElementById("entry-form");
+    if (entryForm) entryForm.remove();
+
+    // 3. THE FIX: Process every cell to remove inputs and dropdowns
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
-        // If a Quick Update editor was open, extract the text and kill the HTML buttons
-        const qtyValue = cell.querySelector('.qty-value');
-        if (qtyValue) {
-            cell.innerText = qtyValue.innerText; 
+        // --- A. Handle Number Inputs (The "Sticky" Culprit) ---
+        const input = cell.querySelector('input');
+        if (input) {
+            cell.innerText = input.value; // Capture the final number
         }
 
+        // --- B. Handle Dropdowns ---
+        const select = cell.querySelector('select');
+        if (select) {
+            cell.innerText = select.value; // Capture the final choice
+        }
+
+        // --- C. Reset Visual & Functional States ---
         cell.contentEditable = "false";
-        cell.style = ""; // Wipe inline colors/opacities
-        cell.classList.remove("quick-edit-focus", "dropdown-edit-zone");
+        cell.style = ""; // Wipes all inline z-index, background-colors, etc.
+        cell.classList.remove("quick-edit-focus", "dropdown-edit-zone", "text-edit-focus");
         
-        // Kill temporary event listeners
+        // Remove all temporary listeners
         cell.onclick = null;
         cell.onkeydown = null;
         cell.onblur = null;
     });
 
-    console.log("MAE System: View Restored. Edit modes disabled.");
+    console.log("MAE System: UI Sanitized. All inputs removed.");
 },
 
 //===== END EXiT EDIT MODE ==========
