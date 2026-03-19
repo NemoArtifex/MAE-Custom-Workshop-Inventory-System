@@ -536,7 +536,7 @@ function handleEditClick(tableName) {
             const input = cell.querySelector('input');
             input.focus();
 
-    /       / 2. RE-APPLY YOUR PROTECTION LOGIC
+            // 2. RE-APPLY YOUR PROTECTION LOGIC
             input.onkeydown = (e) => {
             /   / Block scientific 'e'
                 if (e.key.toLowerCase() === "e") e.preventDefault();
