@@ -544,6 +544,21 @@ main, #table-container, .inventory-table {
     filter: grayscale(0.5);
     cursor: wait !important;
 }
+
+/* Ensure arrows are always visible */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    opacity: 1 !important; 
+    display: block !important;
+    cursor: pointer;
+}
+
+/* Give the input room for the arrows so they don't disappear */
+.edit-number-input {
+    padding-right: 20px !important;
+    box-sizing: border-box;
+}
+
 /*==== END progress state for clicking off ==== */
 
 

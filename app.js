@@ -418,36 +418,50 @@ async function handleAddClick(tableName) {
 // Centralized "Click-Off" handler for all edit modes
 async function globalClickOffHandler(e) {
     const table = document.getElementById("main-data-table");
-    if (!table) return;
+    const title = document.getElementById("current-view-title");
+    if (!table || !title) return;
 
-    // Guards: Don't close if clicking inside the table or on an action button
+    // 1. IDENTIFY SAFE ZONES
     const isInsideTable = table.contains(e.target);
     const isCommandBtn = e.target.closest('.action-btn');
     const isDeleteBtn = e.target.closest('.delete-row-btn');
 
+    // 2. TRIGGER SYNC ONLY ON BACKGROUND CLICK
     if (!isInsideTable && !isCommandBtn && !isDeleteBtn) {
+        // DETACH IMMEDIATELY: Prevents double-syncing if they click twice
+        document.removeEventListener('mousedown', globalClickOffHandler);
+        
         console.log("MAE System: Outside click detected. Syncing and Closing.");
         
-        // VISUAL FEEDBACK: Show "Saving" status
-        const title = document.getElementById("current-view-title");
+        // 3. CAPTURE ORIGINAL STATE
         const originalTitle = title.innerText;
+
+        // 4. SET VISUAL SAVING STATE
         title.innerText = "💾 Saving changes to OneDrive... Please wait.";
-        table.style.opacity = "0.5";
-        table.style.pointerEvents = "none"; // Block clicks during save
         title.classList.add("is-syncing");
         table.classList.add("saving-active");
+        table.style.opacity = "0.5";
+        table.style.pointerEvents = "none";
 
+        try {
+            // 5. ATTEMPT SYNC
+            await processInPlaceTableUpdate(window.currentTable); 
+            console.log("MAE System: Sync successful.");
+        } catch (err) {
+            // 6. ERROR HANDLING
+            console.error("MAE System: Sync failed, forcing UI reset.", err);
+        } finally {
+            // 7. THE SAFETY RESET: This runs NO MATTER WHAT (success or fail)
+            title.innerText = originalTitle;
+            title.classList.remove("is-syncing");
+            
+            // Force styles back to normal in case UI.exitEditMode misses them
+            table.style.opacity = "1";
+            table.style.pointerEvents = "auto";
+            table.classList.remove("saving-active");
 
-        // SYNC: Use the global window.currentTable so it knows what to save
-        await processInPlaceTableUpdate(window.currentTable); 
-
-        // Restore and Reset the UI
-        title.innerText = originalTitle;
-        title.classList.remove("is-syncing");
-        UI.exitEditMode(); 
-        
-        // Detach itself
-        document.removeEventListener('mousedown', globalClickOffHandler);
+            UI.exitEditMode(); 
+        }
     }
 }
 //=======END GLOBAL "CLICK OFF" HANDLER ===========
