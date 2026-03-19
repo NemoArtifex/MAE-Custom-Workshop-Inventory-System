@@ -471,7 +471,7 @@ function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    window.currentTable = tableName; // update global state
+    window.currentTable = tableName; 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     table.classList.add("is-editing");
     
@@ -481,44 +481,36 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // Ensure the cell is interactive and "on top"
+        // 1. RUGGED INTERACTION: Set layers and stop click-off
         cell.style.position = "relative";
         cell.style.zIndex = "100";
         cell.style.pointerEvents = "auto";
+        cell.setAttribute('tabindex', '0');
+        cell.onmousedown = (e) => e.stopPropagation();
 
+        // 2. LOGIC BRANCHING
+        // --- NUMBERS ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
 
-            // Inject the Number Input (Just like Quick Update)
             cell.contentEditable = "false"; 
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
     
             const input = cell.querySelector('input');
-
-            // APPLY PROTECTION LOGIC
             input.onkeydown = (e) => {
-            // Block scientific 'e'
                 if (e.key.toLowerCase() === "e") e.preventDefault();
+                if (!isCurrency && (e.key === "." || e.key === ",")) e.preventDefault();
+            };
 
-                // Block decimals for Integers (Qty/Stock)
-                if (!isCurrency && (e.key === "." || e.key === ",")) {
-                    e.preventDefault();
-            }
-        };
-
-            // CLEANUP ON BLUR
             input.onblur = () => {
                 let val = parseFloat(input.value) || 0;
                 cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
-                                
-        };
-
-        // --- RUGGED RULE: Dropdowns ---
-
-        if (colDef.type === "dropdown") {
+            };
+        } 
+        // --- DROPDOWNS ---
+        else if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
-            //cell.setAttribute('tabindex', '0'); 
             cell.classList.add("dropdown-edit-zone");
 
             const startDropdownEdit = (e) => {
@@ -527,7 +519,6 @@ function handleEditClick(tableName) {
 
                 const currentVal = cell.innerText.trim();
                 let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
-                
                 colDef.options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
                 });
@@ -538,13 +529,8 @@ function handleEditClick(tableName) {
                 select.focus();
        
                 const finishEdit = () => {
-                   // 1. Explicitly grab the selected TEXT, not the entire HTML block
                     const selectedText = select.options[select.selectedIndex].text;
-    
-                    // 2. NUCLEAR RESET: Wipe the cell and set it to just the text
                     cell.innerHTML = selectedText; 
-    
-                    // 3. Clean up the cell's temporary edit classes
                     cell.classList.remove("dropdown-edit-zone");  
                 };
        
@@ -556,19 +542,14 @@ function handleEditClick(tableName) {
             cell.onclick = startDropdownEdit;
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
-
-
         // --- STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
-            cell.classList.add("text-edit-focus"); // new class for CSS
-            //cell.setAttribute('tabindex', '0');
+            cell.classList.add("text-edit-focus"); 
         }
+    }); // This closes the cells.forEach
 
-        cell.onmousedown = (e) => e.stopPropagation();
-    });
-
-    // ATTACH THE CENTRAL LISTENER (Replace your internal handleOutsideClick)
+    // 3. ATTACH THE CENTRAL LISTENER
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
