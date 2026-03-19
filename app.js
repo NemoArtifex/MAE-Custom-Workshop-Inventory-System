@@ -920,61 +920,51 @@ async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    window.currentTable = tableName; //update global state
+    window.currentTable = tableName; 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    // 1. Set Visual States
     table.classList.add("is-editing", "is-quick-updating");
 
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
         const colIdxAttr = cell.getAttribute('data-col-index');
-        
-        // RUGGED: Skip the 'Delete' column or any cell without an index
         if (colIdxAttr === null) return; 
 
         const colIdx = parseInt(colIdxAttr);
         const colDef = sheetConfig.columns[colIdx];
-
-        // Safety check to prevent the 'undefined' crash
         if (!colDef) return; 
 
-        const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
+        // FIX 1: STRICT INVENTORY CHECK (Prevents arrows in Unit Cost/Price)
+        const isQtyField = (colDef.header === "Quantity" || colDef.header === "Current Stock") && colDef.type === "number";
         
         if (isQtyField) {
             cell.classList.add("quick-edit-focus");
             const currentVal = parseInt(cell.innerText.replace(/[^0-9.-]+/g, "")) || 0;
             
-            // 1. Lock the cell but inject the input
             cell.contentEditable = "false"; 
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="1" min="0">`;
             
             const input = cell.querySelector('input');
             
-            // 2. Immediate focus for rapid entry
-            setTimeout(() => input.focus(), 50);
+            // FIX 2: REMOVED the setTimeout focus from here to prevent the "Last Row Only" bug.
+            // All rows will now be editable at once.
 
-            // 3. Sync value back on blur
             input.onblur = () => {
                 cell.innerText = input.value;
             };
 
-            // 4. Keyboard Protection
             input.onkeydown = (e) => {
                 if (e.key.toLowerCase() === "e") e.preventDefault();
                 if (e.key === "." || e.key === ",") e.preventDefault();
             };
-            //cell.classList.add("quick-edit-focus");
-            //cell.contentEditable = "true";
-            // Note: Your existing Up/Down button injection logic should be called here
         } else {
+            // Visual lock for non-inventory columns
             cell.contentEditable = "false";
-            cell.style.backgroundColor = "#f9f9f9";
+            cell.style.backgroundColor = "#f4f4f4";
             cell.style.color = "#999";
         }
     });
     
-    // ATTACH THE CENTRAL LISTENER
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
