@@ -286,23 +286,32 @@ export const UI = {
     </div>`;
 
     container.insertAdjacentHTML('beforebegin', formHtml);
-    submitBtn.onclick = async () => {
-        // 1. RUGGED LOCK: Disable immediately to prevent double-clicks
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Saving to OneDrive...";
-        submitBtn.style.opacity = "0.5";
-        submitBtn.style.cursor = "not-allowed";
 
-        // 2. RUN THE SAVE: Call the callback from app.js
-        // We 'await' it so we know when the network request is finished
-        await onSaveCallback(rowIndex, existingData); 
+     // FIX: Define the button AFTER it is injected into the DOM
+    const submitBtn = document.getElementById("submit-form-btn");
 
-        // 3. UNLOCK: Re-enable the button so the user can add the next item
-        submitBtn.disabled = false;
-        submitBtn.innerText = isEdit ? 'Update to OneDrive' : 'Save to OneDrive';
-        submitBtn.style.opacity = "1";
-        submitBtn.style.cursor = "pointer";
-    };
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            // RUGGED LOCK
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Saving to OneDrive...";
+            submitBtn.style.opacity = "0.5";
+            submitBtn.style.cursor = "not-allowed";
+
+            // RUN THE SAVE: Call the callback from app.js
+            // We 'await' it so we know when the network request is finished
+            await onSaveCallback(rowIndex, existingData); 
+
+            // UNLOCK (If the form wasn't removed by the callback)
+            if (document.getElementById("submit-form-btn")) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = isEdit ? 'Update to OneDrive' : 'Save to OneDrive';
+                submitBtn.style.opacity = "1";
+                submitBtn.style.cursor = "pointer";
+            }
+            
+        }
+    }
 },
 //======= END RENDER ENTRY FORM ============
 
