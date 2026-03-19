@@ -554,9 +554,16 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 /* Give the input room for the arrows so they don't disappear */
+
 .edit-number-input {
-    padding-right: 20px !important;
-    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: inherit; /* Matches your cell alignment */
+    outline: none;
 }
 
 /*==== END progress state for clicking off ==== */

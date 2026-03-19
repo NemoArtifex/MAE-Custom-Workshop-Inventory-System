@@ -526,27 +526,73 @@ function handleEditClick(tableName) {
 
         // --- NUMBERS (Integer & Currency) ---
         else if (colDef.type === "number") {
-    cell.contentEditable = "true";
-    cell.setAttribute('tabindex', '0');
-    const isCurrency = colDef.format && colDef.format.includes("$");
-    const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock" || colDef.header === "Reorder Point";
+            const isCurrency = colDef.format && colDef.format.includes("$");
+            const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
 
-    cell.onkeydown = (e) => {
-        // 1. Block scientific 'e'
-        if (e.key.toLowerCase() === "e") e.preventDefault();
+            // 1. Inject the native input (This gives you the arrows)
+            cell.contentEditable = "false"; 
+            cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
+    
+            const input = cell.querySelector('input');
+            input.focus();
 
-        // 2. Block decimals for Integers
-        if (!isCurrency && (e.key === "." || e.key === ",")) {
-            e.preventDefault();
-        }
+    /       / 2. RE-APPLY YOUR PROTECTION LOGIC
+            input.onkeydown = (e) => {
+            /   / Block scientific 'e'
+                if (e.key.toLowerCase() === "e") e.preventDefault();
 
-        // 3. RUGGED ARROW LOGIC
-        if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-            e.preventDefault();
+                // Block decimals for Integers (Qty/Stock)
+                if (!isCurrency && (e.key === "." || e.key === ",")) {
+                    e.preventDefault();
+            }
+        };
+
+            // 3. CLEANUP ON BLUR
+            input.onblur = () => {
+                let val = parseFloat(input.value);
+                if (isNaN(val)) val = 0;
+
+                // Standardize the text in the cell for the Sync function
+                cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
+        };
+    }
+
+
+
+
+ /*       else if (colDef.type === "number") {
+            const isCurrency = colDef.format && colDef.format.includes("$");
+            const isInteger = !isCurrency; // Qty, Stock, Reorder Point
+
+                if (isInteger){
+
+                }
+
+
+
+
+
+            cell.contentEditable = "true";
+            cell.setAttribute('tabindex', '0');
+            const isCurrency = colDef.format && colDef.format.includes("$");
+            const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock" || colDef.header === "Reorder Point";
+
+            cell.onkeydown = (e) => {
+            // 1. Block scientific 'e'
+            if (e.key.toLowerCase() === "e") e.preventDefault();
+
+            // 2. Block decimals for Integers
+            if (!isCurrency && (e.key === "." || e.key === ",")) {
+                e.preventDefault();
+            }
+
+            // 3. RUGGED ARROW LOGIC
+            if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+             e.preventDefault();
             
-            // Clean the text of any whitespace/hidden chars before parsing
-            let currentText = cell.innerText.replace(/\s/g, '');
-            let val = parseInt(currentText) || 0;
+                // Clean the text of any whitespace/hidden chars before parsing
+                let currentText = cell.innerText.replace(/\s/g, '');
+                let val = parseInt(currentText) || 0;
             
             const newVal = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
             
@@ -575,7 +621,7 @@ function handleEditClick(tableName) {
             cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
         }
     };
-}
+}*/
         // --- STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
