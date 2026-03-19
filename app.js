@@ -790,103 +790,55 @@ async function deleteExcelRow(tableName, rowIndex) {
 //====== END delete Excel Row ============
 
 //======= FUNCTION handleQuickUpdate ================
-function handleQuickUpdate(tableName) {
+async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    table.classList.add("is-editing", "is-quick-updating");
     
-    const cells = table.querySelectorAll("td");
+    // 1. Set Visual States
+    table.classList.add("is-editing", "is-quick-updating");
+    window.isEditMode = true; // Global flag for safety
 
+    const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
-        if (isNaN(colIdx)) return; 
-
         const colDef = sheetConfig.columns[colIdx];
-        const isInventoryCol = colDef.header === "Quantity" || colDef.header === "Current Stock";
-
-        if (isInventoryCol) {
-            const currentVal = cell.innerText.trim();
+        const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
+        
+        if (isQtyField) {
+            // Apply your existing Qty Editor logic here...
             cell.classList.add("quick-edit-focus");
-            
-            // Inject Visible UI: Value + Up/Down Buttons
-            cell.innerHTML = `
-                <div class="qty-editor">
-                    <span class="qty-value" contenteditable="true" tabindex="0">${currentVal}</span>
-                    <div class="qty-controls">
-                        <button class="qty-up">▲</button>
-                        <button class="qty-down">▼</button>
-                    </div>
-                </div>
-            `;
-
-            const valSpan = cell.querySelector('.qty-value');
-            // NEW: Instant save when focus is lost (blur)
-            valSpan.onblur = () => {
-                // 1. Immediately extract the value
-                const newVal = valSpan.innerText.trim();
-    
-                // 2. Trigger the sync to OneDrive without waiting for a global click
-                processInPlaceTableUpdate(tableName);
-    
-                // 3. (Optional) Provide a small visual 'success' flash
-                valSpan.style.backgroundColor = "#d4edda"; // Light green
-                setTimeout(() => valSpan.style.backgroundColor = "transparent", 500);
-            };
-
-            const adjust = async (amt) => {
-                let val = parseInt(valSpan.innerText) || 0;
-                const newQty = Math.max(0, val + amt);
-                valSpan.innerText = newQty;
-
-                // RUGGED: Get all values for this row to satisfy the Excel API requirement
-                const rowValues = extractCurrentRowValues(cell.parentElement); 
-                const rowIndex = cell.parentElement.getAttribute("data-row-index");
-
-                // TRIGGER INSTANT SAVE
-                saveSingleRowUpdate(tableName, rowIndex, rowValues);
-
-            };
-
-            // Click Logic for Arrows
-            cell.querySelector('.qty-up').onclick = (e) => { e.stopPropagation(); adjust(1); };
-            cell.querySelector('.qty-down').onclick = (e) => { e.stopPropagation(); adjust(-1); };
-
-            // Keyboard Arrow Support
-            valSpan.onkeydown = (e) => {
-                if (e.key === "ArrowUp") { e.preventDefault(); adjust(1); }
-                if (e.key === "ArrowDown") { e.preventDefault(); adjust(-1); }
-                if (e.key === "Enter") { e.preventDefault(); valSpan.blur(); }
-            };
-
-            // Focus the number immediately for rapid entry
-            setTimeout(() => valSpan.focus(), 50);
-
+            cell.contentEditable = "true";
         } else {
             cell.contentEditable = "false";
-            //cell.style.opacity = "0.4";
             cell.style.backgroundColor = "#f9f9f9";
             cell.style.color = "#999";
-            //cell.style.pointerEvents = "none";
-            cell.classList.remove("editable-cell"); 
         }
     });
 
-    const handleOutsideClick = async (e) => {
-        // ADDED: Guard to ignore clicks on the Quick Update button itself
-        const isBtn = e.target.id === 'btn-inventory-update';
-        
-        if (table && !table.contains(e.target) && !isBtn) {
-            await processInPlaceTableUpdate(tableName); 
-            table.classList.remove("is-quick-updating", "is-editing");
-            exitEditMode();
-            document.removeEventListener('mousedown', handleOutsideClick);
-            //loadTableData(tableName); 
+    // 2. THE FIX: The "Immediate Cancel" Listener
+    // Use 'mousedown' on the DOCUMENT to catch clicks outside the table instantly
+    const cancelQuickUpdate = async (e) => {
+        const isInsideTable = table.contains(e.target);
+        const isCommandBtn = e.target.closest('.action-btn');
+
+        // If clicking anywhere that ISN'T the table or a command button:
+        if (!isInsideTable && !isCommandBtn) {
+            console.log("MAE System: Distraction detected. Cancelling Quick Update.");
+            
+            // Revert UI immediately
+            UI.exitEditMode(); 
+            
+            // Cleanup: Remove this specific listener so it doesn't stay in memory
+            document.removeEventListener('mousedown', cancelQuickUpdate);
         }
     };
 
-    setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 150);
+    // Timeout prevents the button click itself from triggering the cancel
+    setTimeout(() => {
+        document.addEventListener('mousedown', cancelQuickUpdate);
+    }, 100);
 }
 
 

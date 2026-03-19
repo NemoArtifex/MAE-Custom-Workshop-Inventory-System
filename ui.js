@@ -295,54 +295,37 @@ export const UI = {
 
 //========== EXIT EDIT MODE ==============
     exitEditMode() {
-    // 1. RUGGED CLEANUP: Destroy any active Add/Edit form
-    // Prevents ID conflicts and "ghost" forms in the DOM
+    // 1. Clear any active forms
     const entryForm = document.getElementById("entry-form");
-    if (entryForm) {
-        entryForm.remove(); 
-    }
+    if (entryForm) entryForm.remove();
 
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 2. STRIP all mode-specific classes
-    table.classList.remove("is-editing", "is-quick-updating");
+    // 2. THE FIX: Remove ALL operational classes
+    table.classList.remove("is-editing", "is-quick-updating", "manual-log-mode");
+    window.isEditMode = false;
 
-    // 3. SANITIZE all cells
+    // 3. Reset every cell
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
-        // If a dropdown is stuck open, preserve the selected value before wiping HTML
-        const select = cell.querySelector('select');
-        if (select) {
-            cell.innerText = select.value; 
-        }
-
-        // If a Quick Update editor is open, preserve the value
+        // If a Quick Update editor was open, extract the text and kill the HTML buttons
         const qtyValue = cell.querySelector('.qty-value');
         if (qtyValue) {
-            cell.innerText = qtyValue.innerText;
+            cell.innerText = qtyValue.innerText; 
         }
 
         cell.contentEditable = "false";
+        cell.style = ""; // Wipe inline colors/opacities
+        cell.classList.remove("quick-edit-focus", "dropdown-edit-zone");
         
-        // Remove temporary listeners to prevent memory leaks
-        cell.onclick = null; 
+        // Kill temporary event listeners
+        cell.onclick = null;
         cell.onkeydown = null;
         cell.onblur = null;
-
-        // NUCLEAR RESET: Wipes all inline styles (opacity, bg-color, pointer-events)
-        cell.style = ""; 
-
-        // Remove all temporary functional classes
-        cell.classList.remove(
-            "dropdown-edit-zone", 
-            "quick-edit-focus", 
-            "dropdown-zone", 
-            "quick-edit-mode"
-        );
     });
 
-    console.log("MAE System: Workspace reset to standard view.");
+    console.log("MAE System: View Restored. Edit modes disabled.");
 },
 
 //===== END EXiT EDIT MODE ==========
