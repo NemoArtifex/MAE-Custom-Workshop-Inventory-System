@@ -646,7 +646,14 @@ async function processInPlaceTableUpdate(tableName) {
             }
 
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            if (cell) {
+
+            if (!cell) {
+                const isNumeric = col.type === "number" || col.type === "date";
+                rowValues.push(isNumeric ? null : "");
+                return;
+            }
+
+
              // 1. RUGGED SCRUB: Prioritize UI elements over raw text
                 const select = cell.querySelector('select');
                 const qtySpan = cell.querySelector('.qty-value');
@@ -674,9 +681,7 @@ async function processInPlaceTableUpdate(tableName) {
                     }
                 }
                 rowValues.push(val);
-            } else {
-                rowValues.push(""); //Fallback for missing cell
-            }
+            
         });
         updates.push({ index: rowIndex, values: [rowValues] });
     });
@@ -810,6 +815,33 @@ async function handleQuickUpdate(tableName) {
 
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
+        const colIdxAttr = cell.getAttribute('data-col-index');
+        
+        // RUGGED: Skip the 'Delete' column or any cell without an index
+        if (colIdxAttr === null) return; 
+
+        const colIdx = parseInt(colIdxAttr);
+        const colDef = sheetConfig.columns[colIdx];
+
+        // Safety check to prevent the 'undefined' crash
+        if (!colDef) return; 
+
+        const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
+        
+        if (isQtyField) {
+            cell.classList.add("quick-edit-focus");
+            cell.contentEditable = "true";
+            // Note: Your existing Up/Down button injection logic should be called here
+        } else {
+            cell.contentEditable = "false";
+            cell.style.backgroundColor = "#f9f9f9";
+            cell.style.color = "#999";
+        }
+    });
+    
+    
+    /*const cells = table.querySelectorAll("td");
+    cells.forEach(cell => {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
         const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
@@ -823,7 +855,7 @@ async function handleQuickUpdate(tableName) {
             cell.style.backgroundColor = "#f9f9f9";
             cell.style.color = "#999";
         }
-    });
+    });*/
 
     // 2. THE FIX: The "Immediate Cancel & Save" Listener
     const cancelQuickUpdate = async (e) => {
