@@ -528,6 +528,22 @@ main, #table-container, .inventory-table {
 }
 
 /* ==== END Quick Update ===== */
+/* ==== Progress state when clicking off ======*/
+#current-view-title.is-syncing {
+    color: var(--accent);
+    animation: pulse 1.5s infinite;
+}
 
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.inventory-table.saving-active {
+    filter: grayscale(0.5);
+    cursor: wait !important;
+}
+/*==== END progress state for clicking off ==== */
 
 

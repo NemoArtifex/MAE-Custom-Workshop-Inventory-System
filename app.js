@@ -428,10 +428,22 @@ async function globalClickOffHandler(e) {
     if (!isInsideTable && !isCommandBtn && !isDeleteBtn) {
         console.log("MAE System: Outside click detected. Syncing and Closing.");
         
-        // Use the global window.currentTable so it knows what to save
+        // VISUAL FEEDBACK: Show "Saving" status
+        const title = document.getElementById("current-view-title");
+        const originalTitle = title.innerText;
+        title.innerText = "💾 Saving changes to OneDrive... Please wait.";
+        table.style.opacity = "0.5";
+        table.style.pointerEvents = "none"; // Block clicks during save
+        title.classList.add("is-syncing");
+        table.classList.add("saving-active");
+
+
+        // SYNC: Use the global window.currentTable so it knows what to save
         await processInPlaceTableUpdate(window.currentTable); 
 
-        // Reset the UI
+        // Restore and Reset the UI
+        title.innerText = originalTitle;
+        title.classList.remove("is-syncing");
         UI.exitEditMode(); 
         
         // Detach itself
@@ -500,39 +512,56 @@ function handleEditClick(tableName) {
 
         // --- NUMBERS (Integer & Currency) ---
         else if (colDef.type === "number") {
-            cell.contentEditable = "true";
-            cell.setAttribute('tabindex', '0');
-            const isCurrency = colDef.format && colDef.format.includes("$");
+    cell.contentEditable = "true";
+    cell.setAttribute('tabindex', '0');
+    const isCurrency = colDef.format && colDef.format.includes("$");
+    const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock" || colDef.header === "Reorder Point";
 
-            cell.onkeydown = (e) => {
-                    // Block scientific 'e' for all numbers
-                if (e.key.toLowerCase() === "e") e.preventDefault();
+    cell.onkeydown = (e) => {
+        // 1. Block scientific 'e'
+        if (e.key.toLowerCase() === "e") e.preventDefault();
 
-                // Block decimals for whole-number fields (Qty/Stock)
-                if (!isCurrency && (e.key === "." || e.key === ",")) {
-                e.preventDefault();
-                }
-               
-                //  Arrow keys for Quantity/Stock logic
-                const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
-                if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-                    e.preventDefault();
-                    let val = parseInt(cell.innerText) || 0;
-                    cell.innerText = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
-                }
-            };
-
-            // Scrub on Blur: Ensures format is clean before it hits the Graph API
-            cell.onblur = () => {
-                let num = parseFloat(cell.innerText.replace(/[^0-9.-]+/g, ""));
-                if (isNaN(num)) {
-                    cell.innerText = "0";
-                } else {
-                 // Re-format visually so the user sees the "Rugged" enforcement
-                    cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
-                }
-            };
+        // 2. Block decimals for Integers
+        if (!isCurrency && (e.key === "." || e.key === ",")) {
+            e.preventDefault();
         }
+
+        // 3. RUGGED ARROW LOGIC
+        if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            e.preventDefault();
+            
+            // Clean the text of any whitespace/hidden chars before parsing
+            let currentText = cell.innerText.replace(/\s/g, '');
+            let val = parseInt(currentText) || 0;
+            
+            const newVal = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
+            
+            // Update the UI
+            cell.innerText = newVal;
+
+            // IMPORTANT: Move cursor to the end so they can keep typing if they want
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(cell);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    };
+
+    cell.onblur = () => {
+        // Remove everything except numbers and decimals
+        let raw = cell.innerText.replace(/[^0-9.-]+/g, "");
+        let num = parseFloat(raw);
+        
+        if (isNaN(num)) {
+            cell.innerText = "0";
+        } else {
+            // Standardize format: Currency gets decimals, Qty gets rounded down
+            cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
+        }
+    };
+}
         // --- STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
