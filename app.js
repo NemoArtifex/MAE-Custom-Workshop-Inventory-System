@@ -481,15 +481,14 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // 1. RUGGED INTERACTION: Set layers and stop click-off
+        // RUGGED: Ensure EVERY cell is interactive and "on top"
         cell.style.position = "relative";
         cell.style.zIndex = "100";
         cell.style.pointerEvents = "auto";
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
-        // 2. LOGIC BRANCHING
-        // --- NUMBERS ---
+        // --- BRANCH 1: NUMBERS (Integer & Currency) ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
@@ -508,7 +507,7 @@ function handleEditClick(tableName) {
                 cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
             };
         } 
-        // --- DROPDOWNS ---
+        // --- BRANCH 2: DROPDOWNS ---
         else if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
@@ -542,14 +541,13 @@ function handleEditClick(tableName) {
             cell.onclick = startDropdownEdit;
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
-        // --- STANDARD TEXT ---
+        // --- BRANCH 3: STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
             cell.classList.add("text-edit-focus"); 
         }
-    }); // This closes the cells.forEach
+    }); // This correctly closes the cells.forEach
 
-    // 3. ATTACH THE CENTRAL LISTENER
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
