@@ -530,7 +530,7 @@ function handleEditClick(tableName) {
             // STEP C: RUGGED CLEANUP - Kill this listener so it doesn't fire for other tables
             document.removeEventListener('mousedown', handleOutsideClick);
         
-            console.log("MAE System: Listener detached. Save complete.");
+            console.log("MAE System: Edit mode closed.");
         }
     };
 
@@ -640,11 +640,13 @@ async function processInPlaceTableUpdate(tableName) {
 
         // Build the row array based on config order
         sheetConfig.columns.forEach((col, index) => {
-            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-        
             if (col.type === "formula") {
-                rowValues.push(null); 
-            } else if (cell) {
+                rowValues.push(null);
+                return; // Move to next column
+            }
+
+            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
+            if (cell) {
              // 1. RUGGED SCRUB: Prioritize UI elements over raw text
                 const select = cell.querySelector('select');
                 const qtySpan = cell.querySelector('.qty-value');
@@ -672,6 +674,8 @@ async function processInPlaceTableUpdate(tableName) {
                     }
                 }
                 rowValues.push(val);
+            } else {
+                rowValues.push(""); //Fallback for missing cell
             }
         });
         updates.push({ index: rowIndex, values: [rowValues] });
@@ -691,7 +695,7 @@ async function processInPlaceTableUpdate(tableName) {
             //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${update.index})`;
            
             
-            await fetch(url, {
+            const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${tokenResponse.accessToken}`,
@@ -699,6 +703,11 @@ async function processInPlaceTableUpdate(tableName) {
                 },
                 body: JSON.stringify({ values: update.values })
             });
+
+            if (!response.ok){
+                const errorBody = await response.json();
+                console.error("Microsoft Graph Error:", errorBody);
+            }
         }
         console.log("MAE System: All changes synced to OneDrive.");
     } catch (err) {
@@ -798,7 +807,6 @@ async function handleQuickUpdate(tableName) {
     
     // 1. Set Visual States
     table.classList.add("is-editing", "is-quick-updating");
-    window.isEditMode = true; // Global flag for safety
 
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
@@ -807,9 +815,9 @@ async function handleQuickUpdate(tableName) {
         const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
         
         if (isQtyField) {
-            // Apply your existing Qty Editor logic here...
             cell.classList.add("quick-edit-focus");
             cell.contentEditable = "true";
+            // Note: Your existing Up/Down button injection logic should be called here
         } else {
             cell.contentEditable = "false";
             cell.style.backgroundColor = "#f9f9f9";
@@ -817,28 +825,30 @@ async function handleQuickUpdate(tableName) {
         }
     });
 
-    // 2. THE FIX: The "Immediate Cancel" Listener
-    // Use 'mousedown' on the DOCUMENT to catch clicks outside the table instantly
+    // 2. THE FIX: The "Immediate Cancel & Save" Listener
     const cancelQuickUpdate = async (e) => {
         const isInsideTable = table.contains(e.target);
         const isCommandBtn = e.target.closest('.action-btn');
 
         // If clicking anywhere that ISN'T the table or a command button:
         if (!isInsideTable && !isCommandBtn) {
-            console.log("MAE System: Distraction detected. Cancelling Quick Update.");
+            console.log("MAE System: Distraction detected. Syncing and Closing.");
             
-            // Revert UI immediately
+            // STEP A: Sync the data before closing
+            await processInPlaceTableUpdate(tableName); 
+
+            // STEP B: Revert UI immediately using the UI prefix
             UI.exitEditMode(); 
             
-            // Cleanup: Remove this specific listener so it doesn't stay in memory
+            // STEP C: Cleanup listener
             document.removeEventListener('mousedown', cancelQuickUpdate);
         }
     };
 
-    // Timeout prevents the button click itself from triggering the cancel
+    // Timeout prevents the "Quick Update" button click from immediately closing the mode
     setTimeout(() => {
         document.addEventListener('mousedown', cancelQuickUpdate);
-    }, 100);
+    }, 150);
 }
 
 
