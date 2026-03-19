@@ -481,11 +481,44 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
+        // Ensure the cell is interactive and "on top"
+        cell.style.position = "relative";
+        cell.style.zIndex = "100";
+        cell.style.pointerEvents = "auto";
+
+        if (colDef.type === "number") {
+            const isCurrency = colDef.format && colDef.format.includes("$");
+            const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
+
+            // Inject the Number Input (Just like Quick Update)
+            cell.contentEditable = "false"; 
+            cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
+    
+            const input = cell.querySelector('input');
+
+            // APPLY PROTECTION LOGIC
+            input.onkeydown = (e) => {
+            // Block scientific 'e'
+                if (e.key.toLowerCase() === "e") e.preventDefault();
+
+                // Block decimals for Integers (Qty/Stock)
+                if (!isCurrency && (e.key === "." || e.key === ",")) {
+                    e.preventDefault();
+            }
+        };
+
+            // CLEANUP ON BLUR
+            input.onblur = () => {
+                let val = parseFloat(input.value) || 0;
+                cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
+                                
+        };
+
         // --- RUGGED RULE: Dropdowns ---
 
         if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
-            cell.setAttribute('tabindex', '0'); 
+            //cell.setAttribute('tabindex', '0'); 
             cell.classList.add("dropdown-edit-zone");
 
             const startDropdownEdit = (e) => {
@@ -524,108 +557,12 @@ function handleEditClick(tableName) {
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
 
-        // --- NUMBERS (Integer & Currency) ---
-        else if (colDef.type === "number") {
-            const isCurrency = colDef.format && colDef.format.includes("$");
-            const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
 
-            // Inject the native input (This gives you the arrows)
-            cell.contentEditable = "false"; 
-            cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
-    
-            const input = cell.querySelector('input');
-            input.focus();
-
-            // RE-APPLY YOUR PROTECTION LOGIC
-            input.onkeydown = (e) => {
-            // Block scientific 'e'
-                if (e.key.toLowerCase() === "e") e.preventDefault();
-
-                // Block decimals for Integers (Qty/Stock)
-                if (!isCurrency && (e.key === "." || e.key === ",")) {
-                    e.preventDefault();
-            }
-        };
-
-            // CLEANUP ON BLUR
-            input.onblur = () => {
-                let val = parseFloat(input.value);
-                if (isNaN(val)) val = 0;
-
-                // Standardize the text in the cell for the Sync function
-                cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
-        };
-    }
-
-
-
-
- /*       else if (colDef.type === "number") {
-            const isCurrency = colDef.format && colDef.format.includes("$");
-            const isInteger = !isCurrency; // Qty, Stock, Reorder Point
-
-                if (isInteger){
-
-                }
-
-
-
-
-
-            cell.contentEditable = "true";
-            cell.setAttribute('tabindex', '0');
-            const isCurrency = colDef.format && colDef.format.includes("$");
-            const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock" || colDef.header === "Reorder Point";
-
-            cell.onkeydown = (e) => {
-            // 1. Block scientific 'e'
-            if (e.key.toLowerCase() === "e") e.preventDefault();
-
-            // 2. Block decimals for Integers
-            if (!isCurrency && (e.key === "." || e.key === ",")) {
-                e.preventDefault();
-            }
-
-            // 3. RUGGED ARROW LOGIC
-            if (isQtyField && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-             e.preventDefault();
-            
-                // Clean the text of any whitespace/hidden chars before parsing
-                let currentText = cell.innerText.replace(/\s/g, '');
-                let val = parseInt(currentText) || 0;
-            
-            const newVal = (e.key === "ArrowUp") ? val + 1 : Math.max(0, val - 1);
-            
-            // Update the UI
-            cell.innerText = newVal;
-
-            // IMPORTANT: Move cursor to the end so they can keep typing if they want
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(cell);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    };
-
-    cell.onblur = () => {
-        // Remove everything except numbers and decimals
-        let raw = cell.innerText.replace(/[^0-9.-]+/g, "");
-        let num = parseFloat(raw);
-        
-        if (isNaN(num)) {
-            cell.innerText = "0";
-        } else {
-            // Standardize format: Currency gets decimals, Qty gets rounded down
-            cell.innerText = isCurrency ? num.toFixed(2) : Math.floor(num).toString();
-        }
-    };
-}*/
         // --- STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
-            cell.setAttribute('tabindex', '0');
+            cell.classList.add("text-edit-focus"); // new class for CSS
+            //cell.setAttribute('tabindex', '0');
         }
 
         cell.onmousedown = (e) => e.stopPropagation();
@@ -766,18 +703,6 @@ async function processInPlaceTableUpdate(tableName) {
                     val = cell.innerText.trim();
                 }
              
-             
-                /*const select = cell.querySelector('select');
-                const qtySpan = cell.querySelector('.qty-value');
-            
-                let val = "";
-                if (select) {
-                    val = select.value;
-                } else if (qtySpan) {
-                    val = qtySpan.innerText.trim();
-                } else {
-                    val = cell.innerText.trim();
-                }*/
 
                 // 2. TYPE ENFORCEMENT (Step 4: Currency vs Integer)
                 if (col.type === "number") {

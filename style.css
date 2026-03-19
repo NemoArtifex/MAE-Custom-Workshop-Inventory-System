@@ -81,6 +81,7 @@ main {
     background: white;
     border-radius: 8px;
     margin-bottom: 0; /* Space between table and buttons */
+    pointer-events: auto !important; /*Ensure table container doesn't "swallow" clicks */
 }
 
 /* Target the specific class used in JS */
@@ -588,6 +589,18 @@ input[type=number]::-webkit-outer-spin-button {
 td.quick-edit-focus {
     overflow: visible !important;
 }
+
+/*  Ensure text fields are easy to hit */
+.text-edit-focus {
+    background: #e8f6f3 !important; /* Light mint green */
+    outline: 2px solid #16a085;
+    cursor: text !important;
+    min-height: 25px;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+
 /*==== END progress state for clicking off ==== */
 
 
