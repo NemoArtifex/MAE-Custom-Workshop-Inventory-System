@@ -529,16 +529,16 @@ function handleEditClick(tableName) {
             const isCurrency = colDef.format && colDef.format.includes("$");
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
 
-            // 1. Inject the native input (This gives you the arrows)
+            // Inject the native input (This gives you the arrows)
             cell.contentEditable = "false"; 
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
     
             const input = cell.querySelector('input');
             input.focus();
 
-            // 2. RE-APPLY YOUR PROTECTION LOGIC
+            // RE-APPLY YOUR PROTECTION LOGIC
             input.onkeydown = (e) => {
-            /   / Block scientific 'e'
+            // Block scientific 'e'
                 if (e.key.toLowerCase() === "e") e.preventDefault();
 
                 // Block decimals for Integers (Qty/Stock)
@@ -547,7 +547,7 @@ function handleEditClick(tableName) {
             }
         };
 
-            // 3. CLEANUP ON BLUR
+            // CLEANUP ON BLUR
             input.onblur = () => {
                 let val = parseFloat(input.value);
                 if (isNaN(val)) val = 0;
