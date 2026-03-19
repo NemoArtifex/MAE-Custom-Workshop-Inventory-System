@@ -754,6 +754,20 @@ async function processInPlaceTableUpdate(tableName) {
 
              // 1. RUGGED SCRUB: Prioritize UI elements over raw text
                 const select = cell.querySelector('select');
+                const input = cell.querySelector('input'); // Look for your new arrow inputs
+
+                let val = "";
+                if (select) {
+                     val = select.value;
+                } else if (input) {
+                    val = input.value; // Get the live value from the number box
+                } else {
+                // Falls back to plain text for standard cells
+                    val = cell.innerText.trim();
+                }
+             
+             
+                /*const select = cell.querySelector('select');
                 const qtySpan = cell.querySelector('.qty-value');
             
                 let val = "";
@@ -763,7 +777,7 @@ async function processInPlaceTableUpdate(tableName) {
                     val = qtySpan.innerText.trim();
                 } else {
                     val = cell.innerText.trim();
-                }
+                }*/
 
                 // 2. TYPE ENFORCEMENT (Step 4: Currency vs Integer)
                 if (col.type === "number") {
@@ -929,7 +943,29 @@ async function handleQuickUpdate(tableName) {
         
         if (isQtyField) {
             cell.classList.add("quick-edit-focus");
-            cell.contentEditable = "true";
+            const currentVal = parseInt(cell.innerText.replace(/[^0-9.-]+/g, "")) || 0;
+            
+            // 1. Lock the cell but inject the input
+            cell.contentEditable = "false"; 
+            cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="1" min="0">`;
+            
+            const input = cell.querySelector('input');
+            
+            // 2. Immediate focus for rapid entry
+            setTimeout(() => input.focus(), 50);
+
+            // 3. Sync value back on blur
+            input.onblur = () => {
+                cell.innerText = input.value;
+            };
+
+            // 4. Keyboard Protection
+            input.onkeydown = (e) => {
+                if (e.key.toLowerCase() === "e") e.preventDefault();
+                if (e.key === "." || e.key === ",") e.preventDefault();
+            };
+            //cell.classList.add("quick-edit-focus");
+            //cell.contentEditable = "true";
             // Note: Your existing Up/Down button injection logic should be called here
         } else {
             cell.contentEditable = "false";

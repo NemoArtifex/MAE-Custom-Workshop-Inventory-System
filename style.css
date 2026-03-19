@@ -549,8 +549,9 @@ main, #table-container, .inventory-table {
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
     opacity: 1 !important; 
-    display: block !important;
-    cursor: pointer;
+    /*display: block !important;*/
+    cursor: pointer !important;
+    height: 30px; /*make big enough to hit on a tablet */
 }
 
 /* Give the input room for the arrows so they don't disappear */
@@ -558,12 +559,15 @@ input[type=number]::-webkit-outer-spin-button {
 .edit-number-input {
     width: 100%;
     height: 100%;
-    border: none;
-    background: transparent;
+    border: 2px solid var(--accent) !important; /* Visual confirmation */
+    background: #fffde7 !important; 
     font-family: inherit;
     font-size: inherit;
-    text-align: inherit; /* Matches your cell alignment */
-    outline: none;
+    position: relative;
+    z-index: 1000; /* Sit on top of everything */
+    pointer-events: auto !important; /* Ensure clicks work */
+    display: block;
+    box-sizing: border-box;
 }
 
 /*==== END progress state for clicking off ==== */
