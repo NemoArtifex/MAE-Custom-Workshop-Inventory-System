@@ -412,13 +412,40 @@ async function handleAddClick(tableName) {
         }
     });
 }
+// ========== END ADD Click Function ====================
 
+// ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
+// Centralized "Click-Off" handler for all edit modes
+async function globalClickOffHandler(e) {
+    const table = document.getElementById("main-data-table");
+    if (!table) return;
+
+    // Guards: Don't close if clicking inside the table or on an action button
+    const isInsideTable = table.contains(e.target);
+    const isCommandBtn = e.target.closest('.action-btn');
+    const isDeleteBtn = e.target.closest('.delete-row-btn');
+
+    if (!isInsideTable && !isCommandBtn && !isDeleteBtn) {
+        console.log("MAE System: Outside click detected. Syncing and Closing.");
+        
+        // Use the global window.currentTable so it knows what to save
+        await processInPlaceTableUpdate(window.currentTable); 
+
+        // Reset the UI
+        UI.exitEditMode(); 
+        
+        // Detach itself
+        document.removeEventListener('mousedown', globalClickOffHandler);
+    }
+}
+//=======END GLOBAL "CLICK OFF" HANDLER ===========
 
 //========== Handle EDIT CLICK function ================
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
+    window.currentTable = tableName; // update global state
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     table.classList.add("is-editing");
     
@@ -515,27 +542,9 @@ function handleEditClick(tableName) {
         cell.onmousedown = (e) => e.stopPropagation();
     });
 
-    const handleOutsideClick = async (e) => {
-        // Guards
-        if (e.target.closest('.delete-row-btn')) return;
-        const isStartBtn = e.target.id === 'btn-inventory-update';
-
-        if (table && !table.contains(e.target) && !isStartBtn) {
-            // STEP A: Sync data
-            await processInPlaceTableUpdate(tableName); 
-
-            // STEP B: Reset UI
-             UI.exitEditMode();
-
-            // STEP C: RUGGED CLEANUP - Kill this listener so it doesn't fire for other tables
-            document.removeEventListener('mousedown', handleOutsideClick);
-        
-            console.log("MAE System: Edit mode closed.");
-        }
-    };
-
+    // ATTACH THE CENTRAL LISTENER (Replace your internal handleOutsideClick)
     setTimeout(() => {
-        document.addEventListener('mousedown', handleOutsideClick);
+        document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
 }
 
@@ -808,6 +817,7 @@ async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
+    window.currentTable = tableName; //update global state
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
     // 1. Set Visual States
@@ -839,50 +849,11 @@ async function handleQuickUpdate(tableName) {
         }
     });
     
-    
-    /*const cells = table.querySelectorAll("td");
-    cells.forEach(cell => {
-        const colIdx = parseInt(cell.getAttribute('data-col-index'));
-        const colDef = sheetConfig.columns[colIdx];
-        const isQtyField = colDef.header === "Quantity" || colDef.header === "Current Stock";
-        
-        if (isQtyField) {
-            cell.classList.add("quick-edit-focus");
-            cell.contentEditable = "true";
-            // Note: Your existing Up/Down button injection logic should be called here
-        } else {
-            cell.contentEditable = "false";
-            cell.style.backgroundColor = "#f9f9f9";
-            cell.style.color = "#999";
-        }
-    });*/
-
-    // 2. THE FIX: The "Immediate Cancel & Save" Listener
-    const cancelQuickUpdate = async (e) => {
-        const isInsideTable = table.contains(e.target);
-        const isCommandBtn = e.target.closest('.action-btn');
-
-        // If clicking anywhere that ISN'T the table or a command button:
-        if (!isInsideTable && !isCommandBtn) {
-            console.log("MAE System: Distraction detected. Syncing and Closing.");
-            
-            // STEP A: Sync the data before closing
-            await processInPlaceTableUpdate(tableName); 
-
-            // STEP B: Revert UI immediately using the UI prefix
-            UI.exitEditMode(); 
-            
-            // STEP C: Cleanup listener
-            document.removeEventListener('mousedown', cancelQuickUpdate);
-        }
-    };
-
-    // Timeout prevents the "Quick Update" button click from immediately closing the mode
+    // ATTACH THE CENTRAL LISTENER
     setTimeout(() => {
-        document.addEventListener('mousedown', cancelQuickUpdate);
+        document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
 }
-
 
 // ========END handleQuickUpdate ============
 
