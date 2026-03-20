@@ -89,6 +89,8 @@ main {
     width: 100%; 
     border-collapse: collapse; 
     background: white;
+    table-layout: auto !important;/* Lets browser calculate best width per content */
+    min-width: 100%;
 }
 
 .inventory-table th { 
@@ -566,6 +568,7 @@ input[type=number]::-webkit-outer-spin-button {
     display: block;
     box-sizing: border-box;
     padding: 5px;
+    padding-right: 25px !important;
     
     /* 2. Visual Style - "MAE" Branded Highlight */
     background: #fffde7 !important; /* Soft yellow "Action" color */
@@ -577,7 +580,7 @@ input[type=number]::-webkit-outer-spin-button {
     font-size: 1rem;
     font-weight: bold;
     color: var(--primary);
-    text-align: center;
+    text-align: right;
 
     /* 4. Rugged Interaction - The "Click Fix" */
     position: relative !important;
@@ -605,7 +608,25 @@ td.quick-edit-focus {
     z-index: 101;
 }
 
+/*  Give currency columns a comfortable minimum width */
+/* This ensures the $0,000.00 + Arrows all fit on one line */
+td[data-col-index].editable-cell:has(.edit-number-input),
+.inventory-table td:contains("$") {
+    min-width: 120px !important; 
+}
 
 /*==== END progress state for clicking off ==== */
 
+/* ==== currency view alignment =======*/
+.col-type-currency {
+    min-width: 130px !important; /* Forces enough room for $0,000.00 + arrows */
+    text-align: right !important;
+    padding-right: 30px !important; /* Prevents arrows from overlapping the cents */
+}
 
+/* Ensure the number input inside doesn't shrink */
+.col-type-currency .edit-number-input {
+    text-align: right;
+    width: 100%;
+}
+/*======= END currency view alignment ==== */

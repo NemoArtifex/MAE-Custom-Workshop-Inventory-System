@@ -88,7 +88,7 @@ export const UI = {
         const visibleIndices = [];
         let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
         
-        // Add "Delete" Header (Hidden by default via .edit-only-cell CSS)
+        // Add "Delete" Header
         html += `<th class="edit-only-cell">Action</th>`;
         
         sheetConfig.columns.forEach((col, index) => {
@@ -101,15 +101,19 @@ export const UI = {
 
         // 2. Render Rows
         if (rows && rows.length > 0) {
-            rows.forEach((row, rowIndex) => {
-                html += `<tr data-row-index="${rowIndex}">`;
+            rows.forEach((row) => {
+                // RUGGED: Use the persistent 'index' from Graph API row object
+                // This ensures we always update the correct row in Excel
+                const persistentIndex = row.index; 
 
-                // Add Delete Icon Cell
+                html += `<tr data-row-index="${persistentIndex}">`;
+
+                // Add Delete Icon Cell using the persistent index
                 html += `<td class="edit-only-cell">
-                            <button class="delete-row-btn" onclick="requestDelete(${rowIndex})">🗑️</button>
+                            <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
                          </td>`;
                 
-                // Extract cell data (handles different Graph API response formats)
+                // Extract cell data
                 const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
 
                 visibleIndices.forEach(idx => {
@@ -117,24 +121,26 @@ export const UI = {
                     const isEditable = !colDef.locked && colDef.type !== 'formula';
                     const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
                     
-                    // Get raw value
+                    // RUGGED: Identify if this is a currency column for CSS styling
+                    const isCurrency = colDef.format && colDef.format.includes("$");
+                    
                     let displayValue = allCells[idx] ?? '';
 
-                    // APPLY FORMATTING: If config shows currency format, use helper
-                    if (colDef.format && colDef.format.includes("$")) {
+                    // Format visually for the UI
+                    if (isCurrency) {
                         displayValue = formatCurrency(displayValue);
                     }
 
-                    // 3. Build the Cell
-                    // We add 'col-type-qty' as a class to help the app.js Arrow Key logic
+                    // 3. Build the Cell with specific MAE classes
                     html += `<td 
-                            class="${isEditable ? 'editable-cell' : 'locked-cell'} ${isQuantity ? 'col-type-qty' : ''}" 
+                            class="${isEditable ? 'editable-cell' : 'locked-cell'} 
+                                   ${isQuantity ? 'col-type-qty' : ''} 
+                                   ${isCurrency ? 'col-type-currency' : ''}" 
                             data-col-index="${idx}">${displayValue}</td>`;
                 });
                 html += `</tr>`;
             });
         } else {
-            // Span across all visible columns + the hidden delete column
             const colSpan = visibleIndices.length + 1;
             html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
         }
