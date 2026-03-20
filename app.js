@@ -741,7 +741,8 @@ async function processInPlaceTableUpdate(tableName) {
 
 // ========= Standalone Saving Single Row Update =======
 // app.js - Standalone Optimization Function
-async function saveSingleRowUpdate(tableName, rowIndex, rowValues) {
+/* ====== THIS IS UNUSED; MAY NEED IN FUTURE???? ==============
+ async function saveSingleRowUpdate(tableName, rowIndex, rowValues) {
     try {
         const tokenResponse = await myMSALObj.acquireTokenSilent({
             scopes: ["Files.ReadWrite"],
@@ -770,7 +771,7 @@ async function saveSingleRowUpdate(tableName, rowIndex, rowValues) {
         console.error("Single Row Sync Error:", err);
     }
 }
-
+*/
 // ======= END Saving Single Row Update ===========
 
 //======== FUNCTION delete Excel Row ==========
@@ -798,9 +799,9 @@ async function deleteExcelRow(tableName, rowIndex) {
             account: account
         });
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-         //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-        const response = await fetch(url, {
+      //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+       
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
         });
@@ -876,21 +877,7 @@ async function handleQuickUpdate(tableName) {
 
 // ========END handleQuickUpdate ============
 
-// ==========  extract Current Row Values =======
-function extractCurrentRowValues(trElement) {
-    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === window.currentTable);
-    return sheetConfig.columns.map((col, index) => {
-        const cell = trElement.querySelector(`td[data-col-index="${index}"]`);
-        if (col.type === "formula") return null;
-        
-        // Use your existing logic to find the value (span vs plain text)
-        return cell.querySelector('.qty-value') ? 
-               cell.querySelector('.qty-value').innerText.trim() : 
-               cell.innerText.trim();
-    });
-}
 
-//======= extract Current Row Values ==========
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;

@@ -409,6 +409,7 @@ printManualLog(tableName, sheetConfig) {
     printHeader.innerHTML = `<h1>MANUAL INVENTORY LOG: ${sheetConfig.tabName}</h1>`;
     
     container.prepend(printHeader);
+    UI.exitEditMode(); //prevents extraneous css styling if print function called from Edit Table
     window.print();
     
     // 2. Clean up
