@@ -283,7 +283,7 @@ export const maeSystemConfig = {
                     options: [
                                "Facility Costs/Rent/Mortgage","Insurance","Debt/Leases on Equipment/Business Loans",
                                "Subscriptions","Salaries","Utilities","Maintenance/Repair","Marketing/Advertising",
-                              "Professional Fees","Travel/Vehicles","Depreciation"
+                              "Professional Fees","Travel/Vehicles","Depreciation","Other/Miscellaneous"
                             ],
                     locked: false 
                 },
