@@ -11,7 +11,6 @@ export const Dashboard = {
     },
     async getPreviewItems(accessToken, tableName, filterType) {
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
         const response = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         const data = await response.json();
         

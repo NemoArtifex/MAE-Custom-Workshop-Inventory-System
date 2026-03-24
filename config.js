@@ -16,7 +16,7 @@
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.2.5",
+    version: "1.3",
     
     worksheets: [
         {
