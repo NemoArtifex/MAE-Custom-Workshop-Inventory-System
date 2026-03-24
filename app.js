@@ -897,3 +897,5 @@ window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
 window.handleAddClick = handleAddClick;
 window.requestDelete = requestDelete;
+window.loadTableData = loadTableData;
+
