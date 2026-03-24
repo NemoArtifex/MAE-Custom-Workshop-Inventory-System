@@ -67,7 +67,7 @@ renderMenu(activeWorksheets, onClickCallback) {
         homeBtn.classList.add('active');
         
         // USE THE CALLBACK: This sends "Master_Dashboard" back to app.js
-        // where loadTableData is defined. No more ReferenceError!
+        // where loadTableData is defined.
         onClickCallback("Master_Dashboard"); 
     };
 
@@ -512,7 +512,8 @@ renderDashboard(row, config) {
 }
 
 
-//====END RENDER DASHBOARD =========
+
+//====END RENDER DASHBOARD =============
 
 };
 
