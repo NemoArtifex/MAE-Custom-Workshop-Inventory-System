@@ -6,5 +6,7 @@ export const Dashboard = {
         config.columns.forEach((col,index) => {
             data[col.header] = row[index];
         });
+
+        return data;
     }
 };

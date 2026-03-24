@@ -433,6 +433,9 @@ renderDashboard(row, config) {
     // 1. Convert the raw Excel row array into a keyed object using Dashboard.parseSummary
     const dashboardData = Dashboard.parseSummary(row, config);
 
+    //DEBUG: 
+    console.log("MAE Dashboard Keys found:", Object.keys(dashboardData));
+
     title.innerText = "Workshop Master Dashboard";
 
     // 2. Inject the Responsive Grid
