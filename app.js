@@ -86,6 +86,8 @@ function updateUIForLoggedInUser(userAccount) {
 
     UI.setConnected(userAccount.username, signOut);
     loadDynamicMenu();
+
+    loadTableData("Master_Dashboard");
 }
 
 //=====END UPDATE UI BASED ON LOGIN STATUS ========
@@ -316,9 +318,12 @@ async function loadTableData(tableName) {
     const data = await response.json();
 
     //==== DASHBOARD BRIDGE ==========
-    if(tableName === "Master Dashboard"){
-        //===first data row (under header) is index 0
-        const summaryValues = data.value[0].values[0];
+    if(tableName === "Master_Dashboard"){
+        // Did Graph API return any rows?
+        const hasData = data.value && data.value.length>0;
+
+        //===first data row (under header) data.value[0] is index 0
+        const summaryValues = hasData ? data.value[0].values[0] : [0,0,0,0,0,0,0];
 
         UI.renderDashboard(summaryValues, sheetConfig);
         UI.renderCommandBar(tableName);
