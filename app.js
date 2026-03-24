@@ -295,6 +295,7 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
+    
    window.currentTable = tableName;
    
    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
@@ -317,7 +318,7 @@ async function loadTableData(tableName, filterType = null) {
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
-    //==== DASHBOARD BRIDGE ==========
+    //==== DASHBOARD BRIDGE ===============
     if(tableName === "Master_Dashboard"){
         // Did Graph API return any rows?
         const hasData = data.value && data.value.length>0;
