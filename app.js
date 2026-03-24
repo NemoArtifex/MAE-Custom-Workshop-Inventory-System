@@ -248,7 +248,7 @@ async function initializeSheetAndTable(accessToken) {
 
         if (response.ok) {
             title.innerText = "System Ready: Select a Category";
-            container.innerHTML = `<p style="padding:20px;">Workbook verified. Use the sidebar to manage your ${maeSystemConfig.worksheets.length} workshop modules.</p>`;
+            container.innerHTML = `<p style="padding:20px;">Workbook verified. Use the sidebar to manage your workshop modules.</p>`;
         } else {
             // Error handling for the "Bowing Out" strategy
             title.innerText = "System Integrity Alert";
