@@ -57,15 +57,18 @@ renderMenu(activeWorksheets, onClickCallback) {
     const homeLi = document.createElement("li");
     const homeBtn = document.createElement("button");
     homeBtn.innerText = "🏠 Workshop Dashboard";
-    homeBtn.className = "menu-btn home-btn"; // Add home-btn for specific styling
+    
+    // RUGGED: We start with the dashboard as 'active' on login
+    homeBtn.className = "menu-btn home-btn active"; 
     
     homeBtn.onclick = () => {
-        // Set active visual state
+        // Handle visual state
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         homeBtn.classList.add('active');
         
-        // Call the dashboard directly
-        loadTableData("Master_Dashboard"); 
+        // USE THE CALLBACK: This sends "Master_Dashboard" back to app.js
+        // where loadTableData is defined. No more ReferenceError!
+        onClickCallback("Master_Dashboard"); 
     };
 
     homeLi.appendChild(homeBtn);
@@ -78,14 +81,16 @@ renderMenu(activeWorksheets, onClickCallback) {
         btn.innerText = sheet.tabName;
         btn.className = "menu-btn";
         
-         btn.onclick = () => {
-              document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-              btn.classList.add('active');
-              onClickCallback(sheet.tableName);
+        btn.onclick = () => {
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Standard inventory table loading
+             onClickCallback(sheet.tableName);
             };
 
-            li.appendChild(btn);
-            menu.appendChild(li);
+         li.appendChild(btn);
+         menu.appendChild(li);
         });
     },
 
