@@ -295,7 +295,7 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
-    
+
    window.currentTable = tableName;
    
    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
@@ -324,7 +324,7 @@ async function loadTableData(tableName, filterType = null) {
         const hasData = data.value && data.value.length>0;
 
         //===first data row (under header) data.value[0] is index 0
-        const summaryValues = hasData ? data.value[0].values[0] : [0,0,0,0,0,0,0];
+        const summaryValues = (hasData && data.value[0].values[0]) ? data.value[0].values[0] : [0,0,0,0,0,0,0];
 
         UI.renderDashboard(summaryValues, sheetConfig);
         UI.renderCommandBar(tableName);
@@ -334,7 +334,7 @@ async function loadTableData(tableName, filterType = null) {
     // Process rows to format dates before rendering
      // RUGGED: We update the values but keep the row object so UI.js 
     // can still find the row index and metadata.
-    const formattedRows = data.value.map(rowObj => {
+    let formattedRows = data.value.map(rowObj => {
         // Map the inner values array (Graph API returns values as a 2D array [[]])
         const cleanValues = rowObj.values[0].map((cellValue, index) => {
             const colDef = sheetConfig.columns[index];
