@@ -452,54 +452,59 @@ renderDashboard(row, config) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     
-    // 1. Convert the raw Excel row array into a keyed object using Dashboard.parseSummary
     const dashboardData = Dashboard.parseSummary(row, config);
-
-    //DEBUG: 
-    console.log("MAE Dashboard Keys found:", Object.keys(dashboardData));
-
     title.innerText = "Workshop Master Dashboard";
 
-    // 2. Inject the Responsive Grid
     container.innerHTML = `
         <div class="dashboard-grid">
             
-            <!-- Snapshot A: Resell Inventory (Prioritizing Sales vs Investment) -->
+            <!-- Snapshot A: Resell Inventory (Drill down to WIP/For Sale) -->
             <div class="dash-card" onclick="loadTableData('Resell_Inventory')">
                 <h4>Resell Inventory</h4>
                 <div class="hero-num">${formatCurrency(dashboardData["Total Actual Sales"])}</div>
                 <p>Total Actual Sales</p>
-                <small style="color: #7f8c8d;">Total Invested: ${formatCurrency(dashboardData["Total Resell Investment"])}</small>
+                <div class="card-sub-actions">
+                    <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Resell_Inventory', 'resell-active')">
+                        View WIP & For Sale
+                    </button>
+                    <small style="display:block; margin-top:5px; color: #7f8c8d;">
+                        Total Invested: ${formatCurrency(dashboardData["Total Resell Investment"])}
+                    </small>
+                </div>
             </div>
 
-            <!-- Snapshot B: Total Asset Value -->
+            <!-- Snapshot B: Total Asset Value (Drill down to all Assets) -->
             <div class="dash-card" onclick="loadTableData('Shop_Machinery')">
                 <h4>Total Shop Assets</h4>
                 <div class="hero-num">${formatCurrency(dashboardData["Total Shop Asset Value"])}</div>
                 <p>Machinery, Tools & Supplies</p>
+                <small style="color: #7f8c8d;">Click to view Machinery</small>
             </div>
 
-            <!-- Snapshot C: Low Stock Alerts (Dynamic Alert Class) -->
+            <!-- Snapshot C: Low Stock Alerts (Drill down to ONLY Low Stock) -->
             <div class="dash-card ${dashboardData["Low Stock Items Count"] > 0 ? 'alert' : ''}" 
-                 onclick="loadTableData('Shop_Consumables')">
+                 onclick="loadTableData('Shop_Consumables', 'low-stock')">
                 <h4>Low Stock Alerts</h4>
                 <div class="hero-num">${dashboardData["Low Stock Items Count"]}</div>
                 <p>Items below reorder point</p>
+                <small>Click to view shopping list</small>
             </div>
 
-            <!-- Snapshot E: Monthly Overhead -->
+            <!-- Snapshot E: Monthly Overhead (Drill down to Full Overhead) -->
             <div class="dash-card" onclick="loadTableData('Shop_Overhead')">
                 <h4>Monthly Overhead</h4>
                 <div class="hero-num">${formatCurrency(dashboardData["Total Monthly Overhead"])}</div>
                 <p>Total Fixed Costs</p>
+                <small style="color: #7f8c8d;">Click to manage expenses</small>
             </div>
 
-            <!-- Snapshot F: Equipment Repairs (Warning Class) -->
+            <!-- Snapshot F: Equipment Repairs (Drill down to ONLY broken tools) -->
             <div class="dash-card ${dashboardData["Equipment Needing Repair"] > 0 ? 'warning' : ''}" 
-                 onclick="loadTableData('Shop_Machinery')">
+                 onclick="loadTableData('Shop_Machinery', 'needs-repair')">
                 <h4>Repairs Needed</h4>
                 <div class="hero-num">${dashboardData["Equipment Needing Repair"]}</div>
                 <p>Out-of-Service Items</p>
+                <small>Click to view repair list</small>
             </div>
 
         </div>

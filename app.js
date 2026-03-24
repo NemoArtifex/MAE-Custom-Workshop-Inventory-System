@@ -294,7 +294,7 @@ function excelSerialToDate(serial) {
  * Logic: Fetch from Microsoft Graph
  * UI: Hand off to UI.renderTable
  */
-async function loadTableData(tableName) {
+async function loadTableData(tableName, filterType = null) {
    window.currentTable = tableName;
    
    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
@@ -350,7 +350,10 @@ async function loadTableData(tableName) {
         };
     });
 
-
+    //=Apply smart filters
+    if (filterType){
+        formattedRows = applyDashboardFilters(tableName, formattedRows,filterType);
+    }
 
     // Hand off cleaned data to to UI module
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
@@ -364,6 +367,41 @@ async function loadTableData(tableName) {
     UI.showError("Error: Could not load data.  Ensure spreadsheet is closed in Excel");
    }
 } 
+
+//=== helper for filtering logic====
+function applyDashboardFilters(tableName, rows, filterType) {
+    const now = new Date();
+    
+    return rows.filter(row => {
+        // RUGGED: Extract the inner array [cleanValues]
+        const values = row.values[0]; 
+        
+        switch (filterType) {
+            case 'low-stock':
+                // index 5 = Current Stock, index 6 = Reorder Point
+                return parseFloat(values[5]) <= parseFloat(values[6]);
+            
+            case 'needs-repair':
+                // Check if any cell in the row matches the status
+                // (Works across Machinery, Power Tools, and Hand Tools)
+                return values.some(val => val === "Needs Repair" || val === "Repair In-Progress");
+
+            case 'resell-active':
+                // Captures WIP, Complete, and For Sale as requested
+                const status = values[8]; // Current Status index for Resell
+                return ["In-Progress", "Complete", "For Sale"].includes(status);
+
+            case 'maint-30':
+                // index 8 = Next Service Date
+                const nextDate = new Date(values[8]);
+                const thirtyDays = new Date();
+                thirtyDays.setDate(now.getDate() + 30);
+                return nextDate >= now && nextDate <= thirtyDays;
+
+            default: return true;
+        }
+    });
+}
 
 //=========== END loadTableData ===================
 
