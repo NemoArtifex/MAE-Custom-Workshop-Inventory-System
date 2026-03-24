@@ -10,7 +10,8 @@
  *      to spreadsheet itself to match this file
  * Version 1.2.5: added Location_ID to Inv Sheets (to support future scannable tags), matched
  *      dropdowns with excel, added "Location" Table/Worksheet for future scannable tag
- * Version xxxxxx
+ * Version 1.3: FINALIZED Master Dashboard content and updated
+ * Version xxxxx
  */
 
 export const maeSystemConfig = {
@@ -66,31 +67,54 @@ export const maeSystemConfig = {
         {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
-            active: true,
+            active: false,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
+        // Snapshot A: Resell Inventory Summary
                 { 
-                    header: "Total Inventory Value", 
+                    header: "Total Resell Investment", 
                     type: "formula", 
                     formula: "=SUM(Resell_Inventory[Total Investment])",
                     format: "$#,##0.00", 
                     locked: true 
                 },
                 { 
-                    header: "Low Stock Alerts", 
-                    type: "formula",
-                    formula: "=COUNTIF(Shop_Consumables[Current Stock], \"<\"&Shop_Consumables[Reorder Point])",
+                    header: "Total Actual Sales", 
+                    type: "formula", 
+                    formula: "=SUM(Resell_Inventory[Actual Sale Price])",
+                    format: "$#,##0.00", 
                     locked: true 
                 },
-                { header: "Upcoming Maintenance", type: "string", locked: true },
+        // Snapshot B: Total Asset Value (Cross-Table Sum)
                 { 
-                    header: "Monthly Overhead Total", 
+                    header: "Total Shop Asset Value", 
+                    type: "formula", 
+                    formula: "=SUM(Shop_Machinery[Purchase Cost], Shop_Power_Tools[Purchase Price], Shop_Hand_Tools[Purchase Price], Shop_Consumables[Current Inventory Value])",
+                    format: "$#,##0.00", 
+                    locked: true 
+                },
+        // Snapshot C: Low Stock Alerts
+                { 
+                    header: "Low Stock Items Count", 
+                    type: "formula",
+                    formula: "=SUMPRODUCT(--(Shop_Consumables[Current Stock]<=Shop_Consumables[Reorder Point]))",
+                    locked: true 
+                },
+        // Snapshot E: Overhead Snapshot
+                { 
+                    header: "Total Monthly Overhead", 
                     type: "formula", 
                     formula: "=SUM(Shop_Overhead[Amount])",
                     format: "$#,##0.00", 
                     locked: true 
                 },
-                { header: "Supplier Performance", type: "string", locked: true }
+        // Snapshot F: Condition Alerts (Count of items needing repair)
+                { 
+                    header: "Equipment Needing Repair", 
+                    type: "formula", 
+                    formula: "=COUNTIFS(Shop_Machinery[Condition], \"Needs Repair\") + COUNTIFS(Shop_Power_Tools[Condition], \"Needs Repair\") + COUNTIFS(Shop_Hand_Tools[Condition], \"Needs Repair\")",
+                    locked: true 
+                }
             ]
         },
         {
