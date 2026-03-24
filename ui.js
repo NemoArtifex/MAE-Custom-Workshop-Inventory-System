@@ -48,22 +48,40 @@ export const UI = {
 
     // 2. DYNAMIC MENU RENDERING
     // Builds the sidebar buttons based on maeSystemConfig
-    renderMenu(activeWorksheets, onClickCallback) {
-        const menu = document.getElementById("menu");
-        menu.innerHTML = ""; // Clear existing
+    // ui.js - Updated renderMenu
+renderMenu(activeWorksheets, onClickCallback) {
+    const menu = document.getElementById("menu");
+    menu.innerHTML = ""; // Clear existing
+
+    // 1. ADD STATIC HOME/DASHBOARD BUTTON
+    const homeLi = document.createElement("li");
+    const homeBtn = document.createElement("button");
+    homeBtn.innerText = "🏠 Workshop Dashboard";
+    homeBtn.className = "menu-btn home-btn"; // Add home-btn for specific styling
+    
+    homeBtn.onclick = () => {
+        // Set active visual state
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        homeBtn.classList.add('active');
         
-        activeWorksheets.forEach(sheet => {
-            const li = document.createElement("li");
-            const btn = document.createElement("button");
-            btn.innerText = sheet.tabName;
-            btn.className = "menu-btn";
-            
-            // When clicked, app.js logic will run
-            btn.onclick = () => {
-                // Set active visual state
-                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                onClickCallback(sheet.tableName);
+        // Call the dashboard directly
+        loadTableData("Master_Dashboard"); 
+    };
+
+    homeLi.appendChild(homeBtn);
+    menu.appendChild(homeLi);
+
+    // 2. RENDER DYNAMIC INVENTORY LINKS
+    activeWorksheets.forEach(sheet => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.innerText = sheet.tabName;
+        btn.className = "menu-btn";
+        
+         btn.onclick = () => {
+              document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              onClickCallback(sheet.tableName);
             };
 
             li.appendChild(btn);
@@ -149,7 +167,6 @@ export const UI = {
         html += `</tbody></table>`;
         container.innerHTML = html;
     },
-
 
     // 4. STATUS HELPERS
     showLoading(tableName) {

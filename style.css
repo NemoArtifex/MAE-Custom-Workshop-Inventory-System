@@ -692,3 +692,18 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 }
 
 /* END DASHBOARD ==============*/
+
+/*===== HOME BUTTON ====*/
+/* style.css */
+.home-btn {
+    background: #1a252f !important; /* Slightly darker than other buttons */
+    border-bottom: 1px solid var(--accent); /* Subtle orange line */
+    margin-bottom: 15px !important; /* Space it out from inventory list */
+    font-weight: bold;
+}
+
+.home-btn:hover {
+    background: var(--accent) !important;
+}
+
+/*====END HOME BuTTON ====*/
