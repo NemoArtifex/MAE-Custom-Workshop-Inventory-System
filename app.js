@@ -315,7 +315,15 @@ async function loadTableData(tableName) {
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
+    //==== DASHBOARD BRIDGE ==========
+    if(tableName === "Master Dashboard"){
+        //===first data row (under header) is index 0
+        const summaryValues = data.value[0].values[0];
 
+        UI.renderDashboard(summaryValues, sheetConfig);
+        UI.renderCommandBar(tableName);
+        return; // EXIT HERE: stops rest of function from running
+    }
 
     // Process rows to format dates before rendering
      // RUGGED: We update the values but keep the row object so UI.js 

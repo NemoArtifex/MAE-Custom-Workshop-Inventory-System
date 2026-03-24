@@ -415,9 +415,73 @@ printManualLog(tableName, sheetConfig) {
     // 2. Clean up
     printHeader.remove();
     table.classList.remove("manual-log-mode");
-}
+},
 
 //========== END PRINT MANUAL LOG ==============
+
+//========== RENDER DASHBOARD ==========
+// Inside UI object in ui.js
+/**
+ * UI.renderDashboard - MAE Master Dashboard
+ * Mapping: Hero numbers pulled from the single-row Master_Dashboard table.
+ */
+renderDashboard(row, config) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    
+    // 1. Convert the raw Excel row array into a keyed object using Dashboard.parseSummary
+    const dashboardData = Dashboard.parseSummary(row, config);
+
+    title.innerText = "Workshop Master Dashboard";
+
+    // 2. Inject the Responsive Grid
+    container.innerHTML = `
+        <div class="dashboard-grid">
+            
+            <!-- Snapshot A: Resell Inventory (Prioritizing Sales vs Investment) -->
+            <div class="dash-card" onclick="loadTableData('Resell_Inventory')">
+                <h4>Resell Inventory</h4>
+                <div class="hero-num">${formatCurrency(dashboardData["Total Actual Sales"])}</div>
+                <p>Total Actual Sales</p>
+                <small style="color: #7f8c8d;">Total Invested: ${formatCurrency(dashboardData["Total Resell Investment"])}</small>
+            </div>
+
+            <!-- Snapshot B: Total Asset Value -->
+            <div class="dash-card" onclick="loadTableData('Shop_Machinery')">
+                <h4>Total Shop Assets</h4>
+                <div class="hero-num">${formatCurrency(dashboardData["Total Shop Asset Value"])}</div>
+                <p>Machinery, Tools & Supplies</p>
+            </div>
+
+            <!-- Snapshot C: Low Stock Alerts (Dynamic Alert Class) -->
+            <div class="dash-card ${dashboardData["Low Stock Items Count"] > 0 ? 'alert' : ''}" 
+                 onclick="loadTableData('Shop_Consumables')">
+                <h4>Low Stock Alerts</h4>
+                <div class="hero-num">${dashboardData["Low Stock Items Count"]}</div>
+                <p>Items below reorder point</p>
+            </div>
+
+            <!-- Snapshot E: Monthly Overhead -->
+            <div class="dash-card" onclick="loadTableData('Shop_Overhead')">
+                <h4>Monthly Overhead</h4>
+                <div class="hero-num">${formatCurrency(dashboardData["Total Monthly Overhead"])}</div>
+                <p>Total Fixed Costs</p>
+            </div>
+
+            <!-- Snapshot F: Equipment Repairs (Warning Class) -->
+            <div class="dash-card ${dashboardData["Equipment Needing Repair"] > 0 ? 'warning' : ''}" 
+                 onclick="loadTableData('Shop_Machinery')">
+                <h4>Repairs Needed</h4>
+                <div class="hero-num">${dashboardData["Equipment Needing Repair"]}</div>
+                <p>Out-of-Service Items</p>
+            </div>
+
+        </div>
+    `;
+}
+
+
+//====END RENDER DASHBOARD =========
 
 };
 
