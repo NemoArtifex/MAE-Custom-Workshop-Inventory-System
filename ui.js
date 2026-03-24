@@ -17,6 +17,7 @@ const formatCurrency = (value) => {
     }).format(num);
 };
 
+import { Dashboard } from './dashboard.js';
 
 export const UI = {
     
