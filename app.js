@@ -842,6 +842,7 @@ window.requestDelete = requestDelete;
 // API logic to delete an Excel Row
 async function deleteExcelRow(tableName, rowIndex) {
     try {
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
         const tokenResponse = await myMSALObj.acquireTokenSilent({
             scopes: ["Files.ReadWrite"],
             account: account
