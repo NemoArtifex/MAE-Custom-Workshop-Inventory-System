@@ -470,16 +470,26 @@ async function handleAddClick(tableName) {
 // Centralized "Click-Off" handler for all edit modes
 async function globalClickOffHandler(e) {
     const table = document.getElementById("main-data-table");
+    const container = document.getElementById("table-container");// scrollbar area
     const title = document.getElementById("current-view-title");
     if (!table || !title) return;
+ 
+    // SCROLLBAR DETECTION 
+    // If the click is inside the container but the clientX is in the scrollbar gutter
+    const rect = container.getBoundingClientRect();
+    const isScrollbarClick = 
+        (e.clientX > rect.left + container.clientWidth) || 
+        (e.clientY > rect.top + container.clientHeight);
+
 
     // 1. IDENTIFY SAFE ZONES
     const isInsideTable = table.contains(e.target);
     const isCommandBtn = e.target.closest('.action-btn');
     const isDeleteBtn = e.target.closest('.delete-row-btn');
+    const isEntryForm = e.target.closest('#entry-form');
 
     // 2. TRIGGER SYNC ONLY ON BACKGROUND CLICK
-    if (!isInsideTable && !isCommandBtn && !isDeleteBtn) {
+    if (!isInsideTable && !isCommandBtn && !isDeleteBtn &&!isScrollbarClick && !isEntryForm) {
         // DETACH IMMEDIATELY: Prevents double-syncing if they click twice
         document.removeEventListener('mousedown', globalClickOffHandler);
         
