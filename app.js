@@ -269,7 +269,7 @@ async function initializeSheetAndTable(accessToken) {
 
 // ========== DATE CONVERSION HELPER ===============
 /**
- * Converts an Excel serial date number to a formatted MM/DD/YYYY string.
+ * HELPER FUNCTION which Converts an Excel serial date number to a formatted MM/DD/YYYY string.
  * @param {number} serial - The Excel serial date (e.g., 44562).
  * @returns {string} - The formatted date string.
  */
@@ -649,7 +649,6 @@ async function submitNewRow(tableName, sheetConfig) {
 
         // 3. API CALL: Corrected URL path for Table Rows
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -765,9 +764,7 @@ async function processInPlaceTableUpdate(tableName) {
         for (const update of updates) {
             // NEW: Add the Worksheet segment between the Filename and the Table
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`;
-            //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${update.index})`;
-           
-            
+                       
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
@@ -802,7 +799,6 @@ async function processInPlaceTableUpdate(tableName) {
         });
 
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`;
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
        
         const response = await fetch(url, {
             method: 'PATCH',
@@ -851,7 +847,6 @@ async function deleteExcelRow(tableName, rowIndex) {
             account: account
         });
 
-      //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
        
         const response = await fetch(url, {
