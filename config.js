@@ -289,7 +289,7 @@ export const maeSystemConfig = {
                   type: "formula",
                   formula: "=[@[Current Stock]]*[@[Unit Cost]]",
                   format: "$#,##0.00",
-                  locked: false
+                  locked: true
                 },
                 { header: "Location_ID", type: "string", locked: false},
                 { header: "Preferred Supplier", type: "string", locked: false }
