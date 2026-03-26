@@ -405,10 +405,19 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 return ["needs repair", "repair in-progress", "unusable/junk"].includes(condition);
 
             case 'resell-active':
-                const statusIdx = sheetConfig.columns.findIndex(c=> c.header === "Current Status");
-                const status = (row.values[statusIdx] || "");
-                // Captures WIP, Complete, and For Sale 
-                return ["In-Progress", "Complete", "For Sale"].includes(status);
+                const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
+    
+                // Graph API rows store cell data in row.values[0] 
+                // row.values is a 2D array [["Item", "Status", ...]]
+                const rowCells = Array.isArray(row.values[0]) ? row.values[0] : row.values;
+                // 2. Clean the value to ensure NO hidden spaces break the match
+                 const rawStatus = (rowCells[statusIdx] || "").toString().trim();
+                // 3. Match against your exact dropdown options
+                const activeStatuses = ["In-Progress", "Complete", "For Sale"];
+                // DEBUG: This will show you exactly what the app is seeing in your browser console
+                console.log(`MAE System: Row status is [${rawStatus}]`); 
+
+                return activeStatuses.includes(rawStatus);
 
             case 'maint-30':
                 // index 8 = Next Service Date
