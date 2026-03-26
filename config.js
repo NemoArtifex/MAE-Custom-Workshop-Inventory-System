@@ -11,12 +11,13 @@
  * Version 1.2.5: added Location_ID to Inv Sheets (to support future scannable tags), matched
  *      dropdowns with excel, added "Location" Table/Worksheet for future scannable tag
  * Version 1.3: FINALIZED Master Dashboard content and updated
- * Version xxxxx
+ * Version 1.3.1: Updated Master Dashboard by adding 4 columns for calculations to support chart.js
+ * Version xxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3",
+    version: "1.3.1",
     
     worksheets: [
         {
@@ -86,10 +87,42 @@ export const maeSystemConfig = {
                     locked: true 
                 },
         // Snapshot B: Total Asset Value (Cross-Table Sum)
+                {
+                    header: "Total Machinery Value",
+                    type: "formula",
+                    formula: "=SUM(Shop_Machinery[Purchase Cost])",
+                    format: "$#,#00.00",
+                    locked: true,
+                    hidden: true
+                },
+                {
+                    header: "Total Power Tool Value",
+                    type: "formula",
+                    formula: "=SUM(Shop_Power_Tools[Purchase Price])",
+                    format: "$#,#00.00",
+                    locked: true,
+                    hidden: true
+                },
+                {
+                    header: "Total Hand Tool Value",
+                    type: "formula",
+                    formula: "=SUM(Shop_Hand_Tools[Purchase Price])",
+                    format: "$#,#00.00",
+                    locked: true,
+                    hidden: true
+                },
+                {
+                    header: "Total Consumables Value",
+                    type: "formula",
+                    formula: "=SUM(Shop_Consumables[Current Inventory Value])",
+                    format: "$#,#00.00",
+                    locked: true,
+                    hidden: true
+                },
                 { 
                     header: "Total Shop Asset Value", 
                     type: "formula", 
-                    formula: "=SUM(Shop_Machinery[Purchase Cost], Shop_Power_Tools[Purchase Price], Shop_Hand_Tools[Purchase Price], Shop_Consumables[Current Inventory Value])",
+                    formula: "=[@[Total Machinery Value]]+[@[Total Power Tool Value]]+[@[Total Hand Tool Value]]+[@[Total Consumables Value]]",
                     format: "$#,##0.00", 
                     locked: true 
                 },
