@@ -374,7 +374,14 @@ async function loadTableData(tableName, filterType = null) {
 
 //=== helper for filtering logic====
 function applyDashboardFilters(tableName, rows, filterType) {
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     const now = new Date();
+
+    // Safety check: if no config is found, return all rows to prevent a crash
+    if (!sheetConfig) {
+        console.warn(`MAE System: No config found for ${tableName}. Skipping filters.`);
+        return rows;
+    }
     
     return rows.filter(row => {
         // RUGGED: Extract the inner array [cleanValues]
@@ -382,13 +389,15 @@ function applyDashboardFilters(tableName, rows, filterType) {
         
         switch (filterType) {
             case 'low-stock':
-                // index 5 = Current Stock, index 6 = Reorder Point
-                return parseFloat(values[5]) <= parseFloat(values[6]);
+                const stockIdx = sheetConfig.columns.findIndex(c => c.header === "Current Stock");
+                const reorderIdx = sheetConfig.columns.findIndex(c => c.header === "Reorder Point");
+                return parseFloat(values[stockIdx]) <= parseFloat(values[reorderIdx]);
             
             case 'needs-repair':
-                // Check if any cell in the row matches the status
-                // (Works across Machinery, Power Tools, and Hand Tools)
-                return values.some(val => val === "Needs Repair" || val === "Repair In-Progress");
+                const conditionIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
+                const condition = (values[conditionIdx] || "").toLowerCase();
+                // MISSION: Sum of Needs Repair, Repair In-Progress, and Unusable/Junk
+                return ["needs repair", "repair in-progress", "unusable/junk"].includes(condition);
 
             case 'resell-active':
                 const statusIdx = sheetConfig.columns.findIndex(c=> c.header === "Current Status");
