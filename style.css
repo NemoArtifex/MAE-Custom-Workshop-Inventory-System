@@ -691,6 +691,16 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     color: #7f8c8d;
 }
 
+.card-sub-actions small {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.1rem !important; /* Larger font as requested */
+    color: #2c3e50; 
+    font-weight: bold;
+    border-top: 1px solid #eee;
+    padding-top: 5px;
+}
+
 /* END DASHBOARD ==============*/
 
 /*===== HOME BUTTON ====*/
@@ -707,3 +717,4 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 }
 
 /*====END HOME BuTTON ====*/
+

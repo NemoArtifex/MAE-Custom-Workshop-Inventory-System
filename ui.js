@@ -97,7 +97,7 @@ renderMenu(activeWorksheets, onClickCallback) {
     // 3. TABLE RENDERING (The "Worker" logic refactored from app.js)
     // Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
     // Rugged: Handles empty states and Microsoft Graph's row structure.
-    renderTable(rows, tableName, sheetConfig) {
+    renderTable(rows, tableName, sheetConfig, customTitle= null) {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
         
@@ -106,7 +106,7 @@ renderMenu(activeWorksheets, onClickCallback) {
             return;
         }
 
-        title.innerText = `View: ${sheetConfig.tabName}`;
+        title.innerText = customTitle || `View: ${sheetConfig.tabName}`;
 
         // 1. Identify visible columns from the Manifest (config.js)
         const visibleIndices = [];
@@ -479,7 +479,7 @@ renderDashboard(row, config) {
                 <p>Total Actual Sales</p>
                 <div class="card-sub-actions">
                     <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Resell_Inventory', 'resell-active')">
-                        View WIP & For Sale
+                        View WIP, Complete & For Sale
                     </button>
                     <small style="display:block; margin-top:5px; color: #7f8c8d;">
                         Total Invested: ${formatCurrency(dashboardData["Total Resell Investment"])}

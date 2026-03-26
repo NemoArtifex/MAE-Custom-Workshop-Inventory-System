@@ -352,10 +352,16 @@ async function loadTableData(tableName, filterType = null) {
     if (filterType){
         formattedRows = applyDashboardFilters(tableName, formattedRows,filterType);
     }
+    let displayTItle = null;
+    if (filterType === 'resell-active'){
+        displayTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
+    }
+
+
 
     // Hand off cleaned data to to UI module
     //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
-    UI.renderTable(formattedRows, tableName, sheetConfig);
+    UI.renderTable(formattedRows, tableName, sheetConfig, displayTitle);
 
     // Draw command bar at the bottom
     UI.renderCommandBar(tableName);
@@ -385,8 +391,9 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 return values.some(val => val === "Needs Repair" || val === "Repair In-Progress");
 
             case 'resell-active':
-                // Captures WIP, Complete, and For Sale as requested
-                const status = values[8]; // Current Status index for Resell
+                const statusIdx = sheetConfig.columns.findIndex(c=> c.header === "Current Status");
+                const status = (row.values[statusIdx] || "");
+                // Captures WIP, Complete, and For Sale 
                 return ["In-Progress", "Complete", "For Sale"].includes(status);
 
             case 'maint-30':
