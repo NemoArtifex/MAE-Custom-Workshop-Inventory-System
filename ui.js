@@ -472,7 +472,7 @@ renderDashboard(row, config) {
     container.innerHTML = `
         <div class="dashboard-grid">
             
-            <!-- Snapshot A: Resell Inventory (Drill down to WIP/For Sale) -->
+            <!-- Snapshot A: Resell Inventory (Drill down to WIP/For Sale/Complete) -->
             <div class="dash-card" onclick="loadTableData('Resell_Inventory')">
                 <h4>Resell Inventory</h4>
                 <div class="hero-num">${formatCurrency(dashboardData["Total Actual Sales"])}</div>
@@ -487,12 +487,15 @@ renderDashboard(row, config) {
                 </div>
             </div>
 
-            <!-- Snapshot B: Total Asset Value (Drill down to all Assets) -->
-            <div class="dash-card" onclick="loadTableData('Shop_Machinery')">
+            <!-- Snapshot B: Total Asset Value (Drill down pie chart of Assets) -->
+            <div class="dash-card">
                 <h4>Total Shop Assets</h4>
                 <div class="hero-num">${formatCurrency(dashboardData["Total Shop Asset Value"])}</div>
                 <p>Machinery, Tools & Supplies</p>
-                <small style="color: #7f8c8d;">Click to view Machinery</small>
+                <div class="card-sub-actions">
+                    <!-- New Button: Calls a function we will create in Step 3 -->
+                    <button class="action-btn" onclick="UI.showAssetBreakdown()">📊 View Asset Breakdown</button>
+                </div>
             </div>
 
             <!-- Snapshot C: Low Stock Alerts (Drill down to ONLY Low Stock) -->
