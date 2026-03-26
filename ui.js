@@ -493,7 +493,6 @@ renderDashboard(row, config) {
                 <div class="hero-num">${formatCurrency(dashboardData["Total Shop Asset Value"])}</div>
                 <p>Machinery, Tools & Supplies</p>
                 <div class="card-sub-actions">
-                    <!-- New Button: Calls a function we will create in Step 3 -->
                     <button class="action-btn" onclick="UI.showAssetBreakdown()">📊 View Asset Breakdown</button>
                 </div>
             </div>
@@ -526,11 +525,48 @@ renderDashboard(row, config) {
 
         </div>
     `;
-}
-
-
-
+},
 //====END RENDER DASHBOARD =============
+
+//==== FOR CHART.JS ===============
+showAssetBreakdown() {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    
+    title.innerText = "SHOP ASSETS: Value Distribution";
+    
+    // 1. Create a canvas element for Chart.js
+    container.innerHTML = `
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <canvas id="assetChart"></canvas>
+            <div style="text-align:center; margin-top:20px;">
+                <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
+            </div>
+        </div>`;
+
+    // 2. Setup the Data (Requires Excel/Config to have these columns)
+    // For now, we'll use placeholders. We need to verify these headers in your config!
+    const ctx = document.getElementById('assetChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
+            datasets: [{
+                data: [5000, 1200, 800, 1500], // Placeholder: We will map these to your Excel data next
+                backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 14 } } }
+            }
+        }
+    });
+}
+//========= END ASSET BREAKDOWN ==============
 
 };
 
