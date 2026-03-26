@@ -182,22 +182,36 @@ renderMenu(activeWorksheets, onClickCallback) {
         document.getElementById("table-container").innerHTML = `<p style="color:red; padding:20px;">${message}</p>`;
     },
 
+    //===== Updated setHealthStatus reflecting the "Read-Only Database" Policy========
     setHealthStatus(isHealthy, firstTableName) {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
 
-        if (isHealthy) {
-            title.innerText = "System Ready: Select a Category";
-            container.innerHTML = `<p style="padding:20px;">Workbook verified. Use the sidebar to manage your workshop modules.</p>`;
-        } else {
-            title.innerText = "System Integrity Alert";
-            container.innerHTML = `
-                <div style="padding:20px; color: #c0392b;">
-                    <p><strong>Warning:</strong> The spreadsheet structure has been modified outside the app.</p>
-                    <p>Please ensure the table <b>${firstTableName}</b> exists in Excel.</p>
-                </div>`;
-        }
-    },
+        if (isHealthy) return; 
+
+        title.innerText = "Database Connection Error";
+        container.innerHTML = `
+            <div style="padding:25px; border-left: 6px solid #e74c3c; background: #fff8f8; color: #2c3e50;">
+                <h3 style="margin-top:0; color: #c0392b;">⚠️ System Integrity Alert</h3>
+                <p>The application cannot connect to the required data structures. As per your <b>Operational Acknowledgement</b>, manual changes to the Excel file in OneDrive can break the system link.</p>
+            
+             <p><strong>Common causes for this error:</strong></p>
+                <ul style="line-height: 1.6;">
+                    <li>The file <b>${maeSystemConfig.spreadsheetName}</b> was renamed or moved out of the OneDrive root.</li>
+                    <li>A table header or name (specifically <b>${firstTableName}</b>) was modified manually.</li>
+                </ul>
+
+             <hr style="border:0; border-top: 1px solid #eccaca; margin: 20px 0;">
+            
+                <p><strong>Recovery Path:</strong></p>
+                <p>To restore functionality, you must revert any manual changes made to the spreadsheet. If the file is beyond repair, you may <b>Delete</b> it from your OneDrive and <b>Refresh</b> this page. The system will deploy a fresh, formatted database template.</p>
+            
+                <p style="font-size: 0.85rem; color: #7f8c8d; font-style: italic;">
+                    Warning: A "Fresh Start" deployment will permanently erase any inventory data previously stored in the broken file.
+                </p>
+            </div>`;
+},
+//======END setHealthStatus =========
 //================RENDER COMMAND BAR==========
  
     renderCommandBar(tableName) {

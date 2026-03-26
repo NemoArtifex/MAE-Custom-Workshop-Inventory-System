@@ -232,11 +232,7 @@ async function createInitialWorkbook(accessToken) {
 
 //=========FUNCTION initializeSheetAndTable =============
 async function initializeSheetAndTable(accessToken) {
-    const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
-
-    console.log("MAE System: Running Health Check...");
-    
+    console.log("MAE System: Running Health Check..."); 
     // Check the first table in config to see if the file is "healthy"
     const firstTableName = maeSystemConfig.worksheets[0].tableName;
     const checkUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${firstTableName}`;
@@ -247,21 +243,22 @@ async function initializeSheetAndTable(accessToken) {
         });
 
         if (response.ok) {
-            title.innerText = "System Ready: Select a Category";
-            container.innerHTML = `<p style="padding:20px;">Workbook verified. Use the sidebar to manage your workshop modules.</p>`;
+            console.log("MAE System: Health Check Passed. Loading Landing Page...");
+            const homeBtn = document.querySelector('.home-btn');
+            if (homeBtn) {
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+                homeBtn.classList.add('active');
+            }
+  
+            loadTableData("Master_Dashboard");
+            
         } else {
             // Error handling for the "Bowing Out" strategy
-            title.innerText = "System Integrity Alert";
-            container.innerHTML = `
-                <div style="padding:20px; color: #c0392b;">
-                    <p><strong>Warning:</strong> The spreadsheet structure has been modified outside the app.</p>
-                    <p>Please ensure the table <b>${firstTableName}</b> has not been renamed or deleted in Excel.</p>
-                    <hr>
-                    <p>To reset, you may delete the file from OneDrive and refresh this page to re-deploy the master template.</p>
-                </div>`;
+            UI.setHealthStatus(false, firstTableName);
         }
     } catch (error) {
         console.error("Health check error:", error);
+        UI.showError("Health check failed.  Check Internet connection.");
     }
 }
 
