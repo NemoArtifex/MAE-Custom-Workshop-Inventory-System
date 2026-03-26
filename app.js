@@ -315,6 +315,8 @@ async function loadTableData(tableName, filterType = null) {
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
     const data = await response.json();
 
+    let displayTitle = `View: ${sheetConfig.tabName}`;
+
     //==== DASHBOARD BRIDGE ===============
     if(tableName === "Master_Dashboard"){
         // Did Graph API return any rows?
@@ -355,8 +357,11 @@ async function loadTableData(tableName, filterType = null) {
     let displayTItle = null;
     if (filterType === 'resell-active'){
         displayTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
+    } else if (filterType === 'low-stock'){
+        displayTitle = "Shop Consumables Low Stock";
+    } else if (filterType === 'needs-repair'){
+        displayTitle = "Equipment With Operational Issues"
     }
-
 
 
     // Hand off cleaned data to to UI module
