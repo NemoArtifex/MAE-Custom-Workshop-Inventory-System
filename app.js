@@ -453,7 +453,16 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     } 
     else if (btn.id === 'btn-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
-        UI.printTable(currentTable, sheetConfig);
+        // check if currently viewing "Resell" dashboard
+        const currentTitle = document.getElementById("current-view-title").innerText;
+
+        let printTitle = sheetConfig.tabName; //Default
+
+        // if user arrived via DASHBOARD "WIP" button:
+        if (currentTitle.includes("RESELL INVENTORY")) {
+           printTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
+        }
+        UI.printTable(currentTable, sheetConfig, printTitle);
     } 
     else if (btn.id === 'btn-manual-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
@@ -825,39 +834,6 @@ async function processInPlaceTableUpdate(tableName) {
 
 // =====  END  function processInPlaceTableUpdate   ==========
 
-// ========= Standalone Saving Single Row Update =======
-// app.js - Standalone Optimization Function
-/* ====== THIS IS UNUSED; MAY NEED IN FUTURE???? ==============
- async function saveSingleRowUpdate(tableName, rowIndex, rowValues) {
-    try {
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`;
-       
-        const response = await fetch(url, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${tokenResponse.accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ values: [rowValues] }) // Values must be in a nested array
-        });
-
-        if (response.ok) {
-            console.log(`MAE System: Row ${rowIndex} updated successfully.`);
-        } else {
-            const error = await response.json();
-            throw new Error(error.error.message);
-        }
-    } catch (err) {
-        console.error("Single Row Sync Error:", err);
-    }
-}
-*/
-// ======= END Saving Single Row Update ===========
 
 //======== FUNCTION delete Excel Row ==========
 

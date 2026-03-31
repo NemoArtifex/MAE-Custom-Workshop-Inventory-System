@@ -686,9 +686,10 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 }
 
 .dash-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #7f8c8d;
+    margin-top: 5px;
+    font-size: 1.2 rem !important;
+    font-weight: 600;
+    color: var(--primary);
 }
 
 .card-sub-actions small {
@@ -699,6 +700,12 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     font-weight: bold;
     border-top: 1px solid #eee;
     padding-top: 5px;
+}
+
+/* Specific highlight for the Resell Card sub-text if needed */
+.dash-card .card-sub-actions small {
+    font-size: 1.1rem !important;
+    color: #34495e;
 }
 
 /* END DASHBOARD ==============*/

@@ -406,10 +406,14 @@ renderMenu(activeWorksheets, onClickCallback) {
 //=====PRINT TABLE ===========
 
 // ui.js - Updated printTable function
-printTable(tableName, sheetConfig) {
+printTable(tableName, sheetConfig, customTitle = null) {
     // Target the main content area so the title stays aligned with the table
     const container = document.getElementById("app-content");
     if (!container) return;
+
+    // Use custom title if provided, otherwise fallback to config
+    const finalTitle = customTitle || `MAE Workshop Inventory System: ${sheetConfig.tabName}`;
+
 
     // Create the temporary print header
     const printHeader = document.createElement("div");
@@ -417,7 +421,7 @@ printTable(tableName, sheetConfig) {
     
     // RUGGED: Simple, clear branding for the hardcopy
     printHeader.innerHTML = `
-        <h1>MAE Workshop Inventory System: ${sheetConfig.tabName}</h1>
+        <h1>${finalTitle}</h1>
     `;
     
     // 1. Inject at the top of the content zone
