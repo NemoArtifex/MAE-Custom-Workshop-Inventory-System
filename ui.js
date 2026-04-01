@@ -467,6 +467,9 @@ printManualLog(tableName, sheetConfig) {
  * Mapping: Hero numbers pulled from the single-row Master_Dashboard table.
  */
 renderDashboard(row, config) {
+    // save data to a temporary "state" so Chart function can see it
+    this.currentDashboardData = Dashboard.parseSummary(row, config);
+
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     
@@ -534,6 +537,9 @@ renderDashboard(row, config) {
 
 //==== FOR CHART.JS ===============
 showAssetBreakdown() {
+    const data = this.currentDashboardData;
+    if (!data) return;
+
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     
@@ -557,7 +563,13 @@ showAssetBreakdown() {
         data: {
             labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
             datasets: [{
-                data: [5000, 1200, 800, 1500], // Placeholder: We will map these to your Excel data next
+                // RUGGED: Pulling real numbers from your hidden Master_Dashboard columns
+                data: [
+                    data["Total Machinery Value"],
+                    data["Total Power Tool Value"],
+                    data["Total Hand Tool Value"],
+                    data["Total Consumables Value"]
+                ],
                 backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
                 borderWidth: 2
             }]
@@ -565,13 +577,13 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 14 } } }
+                legend: { position: 'bottom' }
             }
         }
     });
-}
 //========= END ASSET BREAKDOWN ==============
 
 };
 
+window.UI = UI;
 
