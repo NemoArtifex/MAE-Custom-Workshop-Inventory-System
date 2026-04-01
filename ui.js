@@ -561,6 +561,7 @@ showAssetBreakdown() {
     // register plugin so Chart.js knows to use it
     Chart.register(ChartDataLabels);
     new Chart(ctx, {
+        plugins: [ChartDataLabels],
         type: 'pie',
         data: {
             labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
@@ -581,10 +582,14 @@ showAssetBreakdown() {
             plugins: {
                 legend: { position: 'bottom' },
                 datalabels: {
+                    display: true,
                     color: '#fff', 
+                    anchor: 'center',
+                    align: 'center',
                     font: {weight: 'bold', size: 14},
                     formatter: (value, context) => {
-                        return context.chart.data.labels[context.dataIndex]+ '\n' + formatCurrency(value);
+                        const label = context.chart.data.labels[context.dataIndex];
+                        return label + '\n' + formatCurrency(value);
                     },
                     textAlign: 'center'
                 }
