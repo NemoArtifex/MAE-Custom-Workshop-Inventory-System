@@ -577,7 +577,7 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            aspect ratio: 1,
+            aspectRatio: 1,
             layout: {
                 padding: 45 
             },
