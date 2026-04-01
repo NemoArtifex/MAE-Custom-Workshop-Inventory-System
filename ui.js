@@ -545,12 +545,16 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
+    // 1. Fixed height for a massive "Hero" view
+    // The button is now absolutely positioned to the top-left
     container.innerHTML = `
-        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 10px;">
+        <div style="width: 100%; height: 500px; position: relative; padding: 10px;">
+            <button class="cancel-btn" 
+                    onclick="loadTableData('Master_Dashboard')" 
+                    style="position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 8px 15px;">
+                ← Back
+            </button>
             <canvas id="assetChart"></canvas>
-            <div style="text-align:center; margin-top:10px;">
-                <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
-            </div>
         </div>`;
 
     const ctx = document.getElementById('assetChart').getContext('2d');
@@ -575,23 +579,25 @@ showAssetBreakdown() {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: 20 // Minimal padding to keep the pie as large as possible
+                // 2. Padding only on the left to avoid hitting the new button
+                padding: {
+                    left: 80,
+                    right: 40,
+                    top: 20,
+                    bottom: 20
+                }
             },
             plugins: {
-                legend: { display: false }, // Keep legend hidden
+                legend: { display: false },
                 datalabels: {
-                    // 1. RIM POSITIONING: 
-                    // 'end' puts the anchor point on the outer edge
-                    // 'start' pushes the text back INTO the slice from that edge
+                    // 3. RIM POSITIONING: Keeps labels inside the outer edge
                     anchor: 'end',
                     align: 'start',
-                    offset: 10, // Distance from the outer rim (tweak this to move them deeper or shallower)
-                    
-                    color: '#ffffff', // White text for high contrast inside the slices
-                    font: { weight: 'bold', size: 13 },
+                    offset: 15,
+                    color: '#ffffff',
+                    font: { weight: 'bold', size: 14 },
                     textAlign: 'center',
                     display: true,
-                    
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
                         return label + '\n' + formatCurrency(value);
