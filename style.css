@@ -711,14 +711,14 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 /* ======= for LOW STOCK ALERT borders ========*/
 /* Red Border for Current Stock (The "Low" alert) */
 .col-type-stock-alert {
-    border: 2px solid #e74c3c !important; /* Red */
+    border: 5px solid #e74c3c !important; /* Red */
     font-weight: bold;
     color: #c0392b;
 }
 
 /* Green Border for Reorder Point (The "Safety" threshold) */
 .col-type-reorder-point {
-    border: 2px solid #27ae60 !important; /* Green */
+    border: 5px solid #27ae60 !important; /* Green */
     font-weight: bold;
     color: #1e8449;
 }
