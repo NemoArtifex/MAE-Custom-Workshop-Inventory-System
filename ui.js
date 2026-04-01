@@ -560,11 +560,13 @@ showAssetBreakdown() {
     
     // register plugin so Chart.js knows to use it
     Chart.register(ChartDataLabels);
+    Chart.register(PieChartOutLabels);
     new Chart(ctx, {
         plugins: [ChartDataLabels],
+        plugins: [PieChartOutLabels],
         type: 'pie',
         data: {
-            //labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
+            labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
             datasets: [{
                 // RUGGED: Pulling real numbers from your hidden Master_Dashboard columns
                 data: [
@@ -584,18 +586,15 @@ showAssetBreakdown() {
             },
             plugins: {
                 legend: { position: 'bottom' },
-                datalabels: {
-                    display: true,
-                    color: '#2c3e50', 
-                    anchor: 'end',
-                    align: 'end',
-                    offset: 20,
-                    font: {weight: 'bold', size: 13},
-                    formatter: (value, context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label + '\n' + formatCurrency(value);
-                    },
-                    textAlign: 'center'
+                outlabels: {
+                    text: '%l %p',
+                    color: '#2c3e50',
+                    stretch: 35,
+                    font: {
+                        resizable: true,
+                        minSize: 12,
+                        maxSize: 18
+                    }
                 }
             }
         }
