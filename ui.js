@@ -545,20 +545,20 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
-    
+    // 1. Adjusted height to 450px for a larger "Hero" view
     container.innerHTML = `
-    <div style="width: 100%; height: 350px; position: relative; margin: 0 auto; padding: 10px;">
-        <canvas id="assetChart"></canvas>
-        <div style="text-align:center; margin-top:10px;">
-            <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
-        </div>
-    </div>`;
+        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 10px;">
+            <canvas id="assetChart"></canvas>
+            <div style="text-align:center; margin-top:10px;">
+                <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
+            </div>
+        </div>`;
 
     const ctx = document.getElementById('assetChart').getContext('2d');
     
     new Chart(ctx, {
         type: 'pie',
-        plugins: [ChartDataLabels], // Only load the compatible plugin
+        plugins: [ChartDataLabels],
         data: {
             labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
             datasets: [{
@@ -569,38 +569,37 @@ showAssetBreakdown() {
                     data["Total Consumables Value"]
                 ],
                 backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
-                borderWidth: 2,
-                // RUGGED: This pushes the pie slightly inward to make room for labels
-                hoverOffset: 20 
+                borderWidth: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            aspectRatio: 1,
+            // 2. Reduced padding (from 60 to 30) lets the pie grow much larger
             layout: {
-                padding: 45 
+                padding: 30 
             },
             plugins: {
-                legend: { position: 'bottom' },
+                // 3. HIDE LEGEND to remove redundancy
+                legend: { display: false },
                 datalabels: {
-                    // POSITIONING: This spaces them out around the perimeter
+                    // 4. POSITIONING: 'end' / 'start' keeps them just inside/on the edge
+                    // This prevents them from overlapping in the tiny center
                     anchor: 'end',
-                    align: 'end',
-                    offset: 10,
+                    align: 'start',
+                    offset: 0,
                     
-                    color: '#2c3e50',
-                    font: { weight: 'bold', size: 12 },
+                    color: '#ffffff', // White text looks better inside the larger slices
+                    font: { weight: 'bold', size: 14 },
                     textAlign: 'center',
-                    
-                    // FORMATTER: Separates label and value with a newline
+                    display: true,
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
                         return label + '\n' + formatCurrency(value);
+                    }
                 }
             }
         }
-      }
     });
 //========= END ASSET BREAKDOWN ==============
   }
