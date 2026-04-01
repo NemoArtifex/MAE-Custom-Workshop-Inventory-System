@@ -708,6 +708,28 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     color: #34495e;
 }
 
+/* ======= for LOW STOCK ALERT borders ========*/
+/* Red Border for Current Stock (The "Low" alert) */
+.col-type-stock-alert {
+    border: 2px solid #e74c3c !important; /* Red */
+    font-weight: bold;
+    color: #c0392b;
+}
+
+/* Green Border for Reorder Point (The "Safety" threshold) */
+.col-type-reorder-point {
+    border: 2px solid #27ae60 !important; /* Green */
+    font-weight: bold;
+    color: #1e8449;
+}
+
+/* Optional: Ensure the borders don't look weird on hover */
+.inventory-table tr:hover .col-type-stock-alert,
+.inventory-table tr:hover .col-type-reorder-point {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+}
+/* =========== END LOW STOCK ALERT borders ==========*/
+
 /* END DASHBOARD ==============*/
 
 /*===== HOME BUTTON ====*/

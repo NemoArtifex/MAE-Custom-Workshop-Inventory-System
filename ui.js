@@ -143,6 +143,19 @@ renderMenu(activeWorksheets, onClickCallback) {
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
                     const isEditable = !colDef.locked && colDef.type !== 'formula';
+                    
+                    // define alert borders
+                    let customStyle = "";
+                    if (colDef.header === "Current Stock") {
+                        //red border on stock levels
+                        customStyle = "border: 2px solid #e74c3c !important; font-weight: bold; color: #c0392b;";  
+                    } else if (colDef.header === "Reorder Point") {
+                        // green border for low order point
+                        customStyle = "border: 2px solid #27ae60 !important; font-weight: bold; color: #1e8449;";
+                    }
+
+                    const isCurrentStock = colDef.header === "Current Stock";
+                    const isReorderPoint = colDef.header === "Reorder Point";
                     const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
                     
                     // RUGGED: Identify if this is a currency column for CSS styling
@@ -157,7 +170,9 @@ renderMenu(activeWorksheets, onClickCallback) {
 
                     // 3. Build the Cell with specific MAE classes
                     html += `<td 
-                            class="${isEditable ? 'editable-cell' : 'locked-cell'} 
+                            class="${isEditable ? 'editable-cell' : 'locked-cell'}
+                                   ${isCurrentStock ? 'col-type-stock-alert' : ''}
+                                   ${isReorderPoint ? 'col-type-reorder-point' : ''}
                                    ${isQuantity ? 'col-type-qty' : ''} 
                                    ${isCurrency ? 'col-type-currency' : ''}" 
                             data-col-index="${idx}">${displayValue}</td>`;
