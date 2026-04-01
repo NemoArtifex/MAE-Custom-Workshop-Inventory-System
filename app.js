@@ -567,7 +567,7 @@ async function globalClickOffHandler(e) {
 //========== Handle EDIT CLICK function ================
 function handleEditClick(tableName) {
     const table = document.getElementById("main-data-table");
-    if (!table) return;
+    if (!table || table.classList.contains("is-editing")) return;
 
     window.currentTable = tableName; 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
@@ -776,7 +776,7 @@ async function processInPlaceTableUpdate(tableName) {
                     val = input.value; // Get the live value from the number box
                 } else {
                 // Falls back to plain text for standard cells
-                    val = cell.innerText.trim();
+                    val = cell.innerText.replace(/[$,]/g,"").trim();
                 }
              
 
@@ -885,7 +885,7 @@ async function deleteExcelRow(tableName, rowIndex) {
 //======= FUNCTION handleQuickUpdate ================
 async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
-    if (!table) return;
+    if (!table || table.classList.contains("is.quick-updating")) return;
 
     window.currentTable = tableName; 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
