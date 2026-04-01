@@ -545,9 +545,9 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
-    // Fixed-height container to stop the "moving" screen issue
+    // 1. Container with specific height to prevent "scrolling/blank" issues
     container.innerHTML = `
-        <div style="width: 100%; height: 400px; position: relative; margin: 0 auto; padding: 20px;">
+        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 20px;">
             <canvas id="assetChart"></canvas>
             <div style="text-align:center; margin-top:10px;">
                 <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
@@ -575,24 +575,24 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            // LAYOUT PADDING: Provides room for labels so they don't hit the edges
             layout: {
-                padding: 60 
+                // 2. LARGE PADDING: Essential so external labels don't get cut off
+                padding: 80 
             },
             plugins: {
-                legend: { position: 'bottom' },
+                // 3. HIDE LEGEND: This MUST be false to remove the bottom labels
+                legend: { display: false },
+                
                 datalabels: {
-                    // SEPARATION STRATEGY: Forces labels to the outside perimeter
+                    // 4. RADIAL SEPARATION: Pushes labels to the outer perimeter
                     anchor: 'end',
                     align: 'end',
-                    offset: 20, // Distance from the pie slice edge
+                    offset: 25, // Creates physical distance between slice and text
                     
-                    color: '#2c3e50',
+                    color: '#2c3e50', // Use Dark Navy for labels outside the pie
                     font: { weight: 'bold', size: 13 },
                     textAlign: 'center',
-                    
-                    // Always show all four labels
-                    display: true,
+                    display: true, // Forces all 4 to show even if small
                     
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
