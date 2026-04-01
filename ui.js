@@ -582,7 +582,7 @@ showAssetBreakdown() {
         }
     });
 //========= END ASSET BREAKDOWN ==============
-
+  }
 };
 
 window.UI = UI;
