@@ -545,13 +545,14 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
+    
     container.innerHTML = `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <canvas id="assetChart"></canvas>
-            <div style="text-align:center; margin-top:20px;">
-                <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
-            </div>
-        </div>`;
+    <div style="width: 100%; height: 350px; position: relative; margin: 0 auto; padding: 10px;">
+        <canvas id="assetChart"></canvas>
+        <div style="text-align:center; margin-top:10px;">
+            <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
+        </div>
+    </div>`;
 
     const ctx = document.getElementById('assetChart').getContext('2d');
     
@@ -576,8 +577,9 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            aspect ratio: 1,
             layout: {
-                padding: 60 // Essential room for "floating" labels
+                padding: 45 
             },
             plugins: {
                 legend: { position: 'bottom' },
@@ -585,18 +587,16 @@ showAssetBreakdown() {
                     // POSITIONING: This spaces them out around the perimeter
                     anchor: 'end',
                     align: 'end',
-                    offset: 15,
+                    offset: 10,
                     
                     color: '#2c3e50',
-                    font: { weight: 'bold', size: 13 },
+                    font: { weight: 'bold', size: 12 },
                     textAlign: 'center',
                     
                     // FORMATTER: Separates label and value with a newline
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
-                        // Use your existing formatCurrency helper
-                        return label + '\n' + (typeof formatCurrency === 'function' ? formatCurrency(value) : '$' + value);
-                    }
+                        return label + '\n' + formatCurrency(value);
                 }
             }
         }
