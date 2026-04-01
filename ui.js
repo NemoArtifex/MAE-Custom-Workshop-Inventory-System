@@ -545,9 +545,9 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
-    // 1. Adjusted height to 450px for a larger "Hero" view
+    // Fixed-height container to stop the "moving" screen issue
     container.innerHTML = `
-        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 10px;">
+        <div style="width: 100%; height: 400px; position: relative; margin: 0 auto; padding: 20px;">
             <canvas id="assetChart"></canvas>
             <div style="text-align:center; margin-top:10px;">
                 <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
@@ -575,24 +575,25 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            // 2. Reduced padding (from 60 to 30) lets the pie grow much larger
+            // LAYOUT PADDING: Provides room for labels so they don't hit the edges
             layout: {
-                padding: 30 
+                padding: 60 
             },
             plugins: {
-                // 3. HIDE LEGEND to remove redundancy
-                legend: { display: false },
+                legend: { position: 'bottom' },
                 datalabels: {
-                    // 4. POSITIONING: 'end' / 'start' keeps them just inside/on the edge
-                    // This prevents them from overlapping in the tiny center
+                    // SEPARATION STRATEGY: Forces labels to the outside perimeter
                     anchor: 'end',
-                    align: 'start',
-                    offset: 0,
+                    align: 'end',
+                    offset: 20, // Distance from the pie slice edge
                     
-                    color: '#ffffff', // White text looks better inside the larger slices
-                    font: { weight: 'bold', size: 14 },
+                    color: '#2c3e50',
+                    font: { weight: 'bold', size: 13 },
                     textAlign: 'center',
+                    
+                    // Always show all four labels
                     display: true,
+                    
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
                         return label + '\n' + formatCurrency(value);
