@@ -600,6 +600,7 @@ showAssetBreakdown() {
                 }
             }
         }
+      }
     });
 //========= END ASSET BREAKDOWN ==============
   }
