@@ -564,7 +564,7 @@ showAssetBreakdown() {
         plugins: [ChartDataLabels],
         type: 'pie',
         data: {
-            labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
+            //labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
             datasets: [{
                 // RUGGED: Pulling real numbers from your hidden Master_Dashboard columns
                 data: [
@@ -589,7 +589,7 @@ showAssetBreakdown() {
                     color: '#2c3e50', 
                     anchor: 'end',
                     align: 'end',
-                    offset: 15,
+                    offset: 20,
                     font: {weight: 'bold', size: 13},
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
