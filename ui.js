@@ -536,16 +536,15 @@ renderDashboard(row, config) {
 //====END RENDER DASHBOARD =============
 
 //==== FOR CHART.JS ===============
+
 showAssetBreakdown() {
     const data = this.currentDashboardData;
     if (!data) return;
 
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
-    
     title.innerText = "SHOP ASSETS: Value Distribution";
     
-    // 1. Create a canvas element for Chart.js
     container.innerHTML = `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <canvas id="assetChart"></canvas>
@@ -554,21 +553,14 @@ showAssetBreakdown() {
             </div>
         </div>`;
 
-    // 2. Setup the Data (Requires Excel/Config to have these columns)
-    // For now, we'll use placeholders. We need to verify these headers in your config!
     const ctx = document.getElementById('assetChart').getContext('2d');
     
-    // register plugin so Chart.js knows to use it
-    Chart.register(ChartDataLabels);
-    Chart.register(PieChartOutLabels);
     new Chart(ctx, {
-        plugins: [ChartDataLabels],
-        plugins: [PieChartOutLabels],
         type: 'pie',
+        plugins: [ChartDataLabels], // Only load the compatible plugin
         data: {
             labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
             datasets: [{
-                // RUGGED: Pulling real numbers from your hidden Master_Dashboard columns
                 data: [
                     data["Total Machinery Value"],
                     data["Total Power Tool Value"],
@@ -576,24 +568,34 @@ showAssetBreakdown() {
                     data["Total Consumables Value"]
                 ],
                 backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
-                borderWidth: 2
+                borderWidth: 2,
+                // RUGGED: This pushes the pie slightly inward to make room for labels
+                hoverOffset: 20 
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             layout: {
-                padding: 50
+                padding: 60 // Essential room for "floating" labels
             },
             plugins: {
                 legend: { position: 'bottom' },
-                outlabels: {
-                    text: '%l %p',
+                datalabels: {
+                    // POSITIONING: This spaces them out around the perimeter
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 15,
+                    
                     color: '#2c3e50',
-                    stretch: 35,
-                    font: {
-                        resizable: true,
-                        minSize: 12,
-                        maxSize: 18
+                    font: { weight: 'bold', size: 13 },
+                    textAlign: 'center',
+                    
+                    // FORMATTER: Separates label and value with a newline
+                    formatter: (value, context) => {
+                        const label = context.chart.data.labels[context.dataIndex];
+                        // Use your existing formatCurrency helper
+                        return label + '\n' + (typeof formatCurrency === 'function' ? formatCurrency(value) : '$' + value);
                     }
                 }
             }
