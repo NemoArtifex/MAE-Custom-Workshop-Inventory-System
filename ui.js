@@ -558,6 +558,8 @@ showAssetBreakdown() {
     // For now, we'll use placeholders. We need to verify these headers in your config!
     const ctx = document.getElementById('assetChart').getContext('2d');
     
+    // register plugin so Chart.js knows to use it
+    Chart.register(ChartDataLabels);
     new Chart(ctx, {
         type: 'pie',
         data: {
@@ -577,7 +579,15 @@ showAssetBreakdown() {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'bottom' },
+                datalabels: {
+                    color: '#fff', 
+                    font: {weight: 'bold', size: 14},
+                    formatter: (value, context) => {
+                        return context.chart.data.labels[context.dataIndex]+ '\n' + formatCurrency(value);
+                    },
+                    textAlign: 'center'
+                }
             }
         }
     });
