@@ -545,9 +545,8 @@ showAssetBreakdown() {
     const title = document.getElementById("current-view-title");
     title.innerText = "SHOP ASSETS: Value Distribution";
     
-    // 1. Container with specific height to prevent "scrolling/blank" issues
     container.innerHTML = `
-        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 20px;">
+        <div style="width: 100%; height: 450px; position: relative; margin: 0 auto; padding: 10px;">
             <canvas id="assetChart"></canvas>
             <div style="text-align:center; margin-top:10px;">
                 <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')">Back to Dashboard</button>
@@ -576,23 +575,22 @@ showAssetBreakdown() {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                // 2. LARGE PADDING: Essential so external labels don't get cut off
-                padding: 80 
+                padding: 20 // Minimal padding to keep the pie as large as possible
             },
             plugins: {
-                // 3. HIDE LEGEND: This MUST be false to remove the bottom labels
-                legend: { display: false },
-                
+                legend: { display: false }, // Keep legend hidden
                 datalabels: {
-                    // 4. RADIAL SEPARATION: Pushes labels to the outer perimeter
+                    // 1. RIM POSITIONING: 
+                    // 'end' puts the anchor point on the outer edge
+                    // 'start' pushes the text back INTO the slice from that edge
                     anchor: 'end',
-                    align: 'end',
-                    offset: 25, // Creates physical distance between slice and text
+                    align: 'start',
+                    offset: 10, // Distance from the outer rim (tweak this to move them deeper or shallower)
                     
-                    color: '#2c3e50', // Use Dark Navy for labels outside the pie
+                    color: '#ffffff', // White text for high contrast inside the slices
                     font: { weight: 'bold', size: 13 },
                     textAlign: 'center',
-                    display: true, // Forces all 4 to show even if small
+                    display: true,
                     
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
