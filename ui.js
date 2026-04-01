@@ -579,14 +579,18 @@ showAssetBreakdown() {
         },
         options: {
             responsive: true,
+            layout: {
+                padding: 50
+            },
             plugins: {
                 legend: { position: 'bottom' },
                 datalabels: {
                     display: true,
-                    color: '#fff', 
-                    anchor: 'center',
-                    align: 'center',
-                    font: {weight: 'bold', size: 14},
+                    color: '#2c3e50', 
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 15,
+                    font: {weight: 'bold', size: 13},
                     formatter: (value, context) => {
                         const label = context.chart.data.labels[context.dataIndex];
                         return label + '\n' + formatCurrency(value);
