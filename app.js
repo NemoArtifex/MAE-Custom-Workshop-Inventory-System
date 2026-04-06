@@ -369,7 +369,16 @@ async function loadTableData(tableName, filterType = null) {
         };
         // If the filterType exists in our map, use that title
         if (titleMap[filterType]) {
-            displayTitle = titleMap[filterType];
+            // RUGGED NAVIGATION: Injects a compact back button next to the custom title
+            displayTitle = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="action-btn" 
+                            style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
+                            onclick="loadTableData('Shop_Overhead')">
+                        ← Back to All Bills
+                    </button>
+                    <span>${titleMap[filterType]}</span>
+                </div>`;       
         }
     }
 
