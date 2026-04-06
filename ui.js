@@ -691,7 +691,7 @@ async showAnnualOverhead() {
             type: 'bar',
             data: {
                 // Shorten labels for clean display; handles the split-view on the axis
-                labels: labels.map(l => l.split('/')), 
+                labels: labels.map(l => String(l || "").split('/')), 
                 datasets: [{
                     label: 'Annual Cost',
                     data: values,
