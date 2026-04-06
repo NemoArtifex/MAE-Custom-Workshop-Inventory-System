@@ -425,12 +425,37 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 const thirtyDays = new Date();
                 thirtyDays.setDate(now.getDate() + 30);
                 return nextDate >= now && nextDate <= thirtyDays;
+            // Filter logic for Shop Overhead Dashboard buttons
+            case 'due-7':   return isWithinDays(row, sheetConfig, 7);
+            case 'due-30':  return isWithinDays(row, sheetConfig, 30);
+            case 'due-90':  return isWithinDays(row, sheetConfig, 90);
+            case 'due-180': return isWithinDays(row, sheetConfig, 180);
 
             default: return true;
         }
     });
 }
 
+// WORKER function to check if a row's date is within a certain number of days
+function isWithinDays(rowValues, sheetConfig, days) {
+    const dateIdx = sheetConfig.columns.findIndex(c => c.header === "Due Date");
+    
+    // Safety check: if no "Due Date" column exists in this table, skip
+    if (dateIdx === -1 || !rowValues[dateIdx]) return false;
+
+    // Convert Excel serial to JS Date
+    const dueDate = new Date(excelSerialToDate(rowValues[dateIdx]));
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const limitDate = new Date();
+    limitDate.setDate(today.getDate() + days);
+    limitDate.setHours(23, 59, 59, 999);
+
+    return dueDate >= today && dueDate <= limitDate;
+}
+// ====== END WORKER FUNCTION ===============
 //=========== END loadTableData ===================
 
 //=========== GLOBAL CLICK LISTENER FUNCTION===========
@@ -458,7 +483,7 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
 
         let printTitle = sheetConfig.tabName; //Default
 
-        // RESELL Logicif user arrived via DASHBOARD "WIP" button:
+        // RESELL Logic if user arrived via DASHBOARD "WIP" button:
         if (currentTitle.includes("RESELL INVENTORY")) {
            printTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
         }
