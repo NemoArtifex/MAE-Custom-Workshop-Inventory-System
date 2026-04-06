@@ -294,10 +294,8 @@ function excelSerialToDate(serial) {
 async function loadTableData(tableName, filterType = null) {
 
    window.currentTable = tableName;
-   
    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
    UI.showLoading(tableName);
-
    try {
     //Get fresh token
     const tokenResponse = await myMSALObj.acquireTokenSilent({
@@ -307,7 +305,6 @@ async function loadTableData(tableName, filterType = null) {
 
     //API request to Microsoft Graph
     const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-
     const response = await fetch(url, {
         headers: {'Authorization' : `Bearer ${tokenResponse.accessToken}`}
     });
@@ -354,7 +351,7 @@ async function loadTableData(tableName, filterType = null) {
     if (filterType){
         formattedRows = applyDashboardFilters(tableName, formattedRows,filterType);
     }
-    let displayTItle = null;
+    //let displayTitle = null;
     if (filterType === 'resell-active'){
         displayTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
     } else if (filterType === 'low-stock'){
@@ -362,6 +359,20 @@ async function loadTableData(tableName, filterType = null) {
     } else if (filterType === 'needs-repair'){
         displayTitle = "Equipment With Operational Issues"
     }
+    // Overhead time periods
+      else if (tableName === 'Shop_Overhead' && filterType) {
+        const titleMap = {
+            'due-7': "Bills Due In The Next 7 Days",
+            'due-30': "Bills Due In The Next 30 Days",
+            'due-90': "Bills Due In The Next 90 Days",
+            'due-180': "Bills Due In The Next 180 Days"
+        };
+        // If the filterType exists in our map, use that title
+        if (titleMap[filterType]) {
+            displayTitle = titleMap[filterType];
+        }
+    }
+
 
 
     // Hand off cleaned data to to UI module
@@ -376,8 +387,10 @@ async function loadTableData(tableName, filterType = null) {
     UI.showError("Error: Could not load data.  Ensure spreadsheet is closed in Excel");
    }
 } 
+//=========== END loadTableData ===================
 
-//=== helper for filtering logic====
+
+//======= helper for filtering logic====
 function applyDashboardFilters(tableName, rows, filterType) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     const now = new Date();
@@ -435,6 +448,8 @@ function applyDashboardFilters(tableName, rows, filterType) {
         }
     });
 }
+//=========== END helper for filter logic ===================
+
 
 // WORKER function to check if a row's date is within a certain number of days
 function isWithinDays(rowValues, sheetConfig, days) {
@@ -456,7 +471,6 @@ function isWithinDays(rowValues, sheetConfig, days) {
     return dueDate >= today && dueDate <= limitDate;
 }
 // ====== END WORKER FUNCTION ===============
-//=========== END loadTableData ===================
 
 //=========== GLOBAL CLICK LISTENER FUNCTION===========
 // 1. GLOBAL CLICK LISTENER (Event Delegation)
