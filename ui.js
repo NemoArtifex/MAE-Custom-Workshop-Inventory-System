@@ -442,6 +442,9 @@ printTable(tableName, sheetConfig, customTitle = null) {
     // 1. Inject at the top of the content zone
     container.prepend(printHeader);
 
+     // Ensure we aren't in "Edit Mode" visuals during print
+    this.exitEditMode(); 
+
     // 2. Trigger the browser print dialog
     window.print();
 

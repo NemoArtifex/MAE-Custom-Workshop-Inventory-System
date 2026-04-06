@@ -458,10 +458,15 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
 
         let printTitle = sheetConfig.tabName; //Default
 
-        // if user arrived via DASHBOARD "WIP" button:
+        // RESELL Logicif user arrived via DASHBOARD "WIP" button:
         if (currentTitle.includes("RESELL INVENTORY")) {
            printTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
         }
+        // LOW STOCK Logic: if user arrived via Low Stock card press
+        else if (currentTitle.includes("Low Stock")) {
+            printTitle = "Shop Consumables Low Stock";
+        }
+
         UI.printTable(currentTable, sheetConfig, printTitle);
     } 
     else if (btn.id === 'btn-manual-print') {
