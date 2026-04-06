@@ -322,6 +322,12 @@ async function loadTableData(tableName, filterType = null) {
         //===first data row (under header) data.value[0] is index 0
         const summaryValues = (hasData && data.value[0].values[0]) ? data.value[0].values[0] : [0,0,0,0,0,0,0];
 
+        // RUGGED SIDEBAR RESET: Ensure "Home" button is highlighted
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        const homeBtn = document.querySelector('.home-btn');
+        if (homeBtn) homeBtn.classList.add('active');
+
+
         UI.renderDashboard(summaryValues, sheetConfig);
         UI.renderCommandBar(tableName);
         return; // EXIT HERE: stops rest of function from running
@@ -374,7 +380,7 @@ async function loadTableData(tableName, filterType = null) {
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <button class="action-btn" 
                             style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
-                            onclick="loadTableData('Shop_Overhead')">
+                            onclick="loadTableData('Master_Dashboard')">
                         ← Back to All Bills
                     </button>
                     <span>${titleMap[filterType]}</span>
