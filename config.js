@@ -12,12 +12,13 @@
  *      dropdowns with excel, added "Location" Table/Worksheet for future scannable tag
  * Version 1.3: FINALIZED Master Dashboard content and updated
  * Version 1.3.1: Updated Master Dashboard by adding 4 columns for calculations to support chart.js
- * Version xxxx
+ * Version 1.3.2: Updated Master Dashboard "Overhead Snapshot" to "Total Amount Due Next 30 Days" with new formula
+ * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3.1",
+    version: "1.3.2",
     
     worksheets: [
         {
@@ -135,9 +136,9 @@ export const maeSystemConfig = {
                 },
         // Snapshot E: Overhead Snapshot
                 { 
-                    header: "Total Monthly Overhead", 
+                    header: "Total Amount Due Next 30 Days", 
                     type: "formula", 
-                    formula: "=SUM(Shop_Overhead[Amount])",
+                    formula: "=SUMIFS(Shop_Overhead[Amount], Shop_Overhead[Due Date], "<="&TODAY()+30, Shop_Overhead[Due Date], ">="&TODAY())",
                     format: "$#,##0.00", 
                     locked: true 
                 },
