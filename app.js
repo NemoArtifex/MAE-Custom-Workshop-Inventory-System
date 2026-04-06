@@ -507,23 +507,25 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     } 
     else if (btn.id === 'btn-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
-        // check if currently viewing "Resell" dashboard
-        const currentTitle = document.getElementById("current-view-title").innerText;
+        const titleElement = document.getElementById("current-view-title");
+        
+        // RUGGED FIX: Look for a <span> inside the title first (the "Artificer" breadcrumb)
+        // If no span exists (standard view), fall back to the whole innerText
+        const spanElement = titleElement.querySelector("span");
+        const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
 
-        let printTitle = sheetConfig.tabName; //Default
-        const today = new Date().toLocaleDateString('en-US'); //MM/DD/YYYY
+        let printTitle = sheetConfig.tabName; // Default
+        const today = new Date().toLocaleDateString('en-US');
 
-
-        // RESELL Logic if user arrived via DASHBOARD "WIP" button:
-        if (currentTitle.includes("RESELL INVENTORY")) {
-           printTitle = `RESELL INVENTORY: Work In-Progress, Complete and For Sale (as of ${today})`;
+        if (currentTitleText.includes("RESELL INVENTORY")) {
+           printTitle = `RESELL INVENTORY: Work In-Progress (as of ${today})`;
         }
-        // LOW STOCK Logic: if user arrived via Low Stock card press
-        else if (currentTitle.includes("Low Stock")) {
+        else if (currentTitleText.includes("Low Stock")) {
             printTitle = `Shop Consumables Low Stock (as of ${today})`;
         }
-        else if (currentTitle.includes ("Bills Due")) {
-            printTitle = `${currentTitle} (as of ${today})`;
+        else if (currentTitleText.includes("Bills Due")) {
+            // Now this will ONLY be "Bills Due In The Next 30 Days"
+            printTitle = `${currentTitleText} (as of ${today})`;
         }
 
         UI.printTable(currentTable, sheetConfig, printTitle);
