@@ -575,52 +575,59 @@ showAssetBreakdown() {
     const ctx = document.getElementById('assetChart').getContext('2d');
     
     new Chart(ctx, {
-        type: 'pie',
-        plugins: [ChartDataLabels],
-        data: {
-            labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
-            datasets: [{
-                data: [
-                    data["Total Machinery Value"],
-                    data["Total Power Tool Value"],
-                    data["Total Hand Tool Value"],
-                    data["Total Consumables Value"]
-                ],
-                backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
-                borderWidth: 2
-            }]
+    type: 'pie',
+    plugins: [ChartDataLabels],
+    data: {
+        labels: ['Machinery', 'Power Tools', 'Hand Tools', 'Consumables'],
+        datasets: [{
+            data: [
+                data["Total Machinery Value"],
+                data["Total Power Tool Value"],
+                data["Total Hand Tool Value"],
+                data["Total Consumables Value"]
+            ],
+            backgroundColor: ['#2c3e50', '#d35400', '#27ae60', '#2980b9'],
+            borderWidth: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: { left: 10, right: 30, top: 20, bottom: 20 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                // 2. Padding only on the left to avoid hitting the new button
-                padding: {
-                    left: 80,
-                    right: 40,
-                    top: 20,
-                    bottom: 20
+        plugins: {
+            legend: {
+                display: true,
+                position: 'left', // Legend on left to maximize pie size
+                align: 'center',
+                labels: {
+                    font: { weight: 'bold', size: 14 },
+                    padding: 20,
+                    boxWidth: 20
                 }
             },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    // 3. RIM POSITIONING: Keeps labels inside the outer edge
-                    anchor: 'end',
-                    align: 'start',
-                    offset: 15,
-                    color: '#ffffff',
-                    font: { weight: 'bold', size: 14 },
-                    textAlign: 'center',
-                    display: true,
-                    formatter: (value, context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label + '\n' + formatCurrency(value);
-                    }
-                }
+            datalabels: {
+                color: '#fff',
+                font: { weight: 'bold', size: 12 },
+                // Use percentages + values for high-speed situational awareness
+                formatter: (value, ctx) => {
+                    let sum = 0;
+                    let dataArr = ctx.chart.data.datasets[0].data;
+                    dataArr.map(d => { sum += d; });
+                    let percentage = (value * 100 / sum).toFixed(0) + "%";
+                    // Only render labels for non-zero values to prevent overlap
+                    return value > 0 ? `${percentage}\n${formatCurrency(value)}` : null;
+                },
+                anchor: 'center',
+                align: 'center',
+                textAlign: 'center',
+                textShadowColor: 'rgba(0,0,0,0.6)',
+                textShadowBlur: 4
             }
         }
-    });
+    }
+});
 //========= END ASSET BREAKDOWN ==============
   }
 };
