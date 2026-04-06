@@ -439,10 +439,10 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 thirtyDays.setDate(now.getDate() + 30);
                 return nextDate >= now && nextDate <= thirtyDays;
             // Filter logic for Shop Overhead Dashboard buttons
-            case 'due-7':   return isWithinDays(row, sheetConfig, 7);
-            case 'due-30':  return isWithinDays(row, sheetConfig, 30);
-            case 'due-90':  return isWithinDays(row, sheetConfig, 90);
-            case 'due-180': return isWithinDays(row, sheetConfig, 180);
+            case 'due-7':   return isWithinDays(row.values[0], sheetConfig, 7);
+            case 'due-30':  return isWithinDays(row.values[0], sheetConfig, 30);
+            case 'due-90':  return isWithinDays(row.values[0], sheetConfig, 90);
+            case 'due-180': return isWithinDays(row.values[0], sheetConfig, 180);
 
             default: return true;
         }
