@@ -669,8 +669,19 @@ async showAnnualOverhead() {
         // 3. Extract labels and values (Graph API returns values in a nested array: values[0][index])
         //const labels = tableData.map(row => row.values[catIdx]);
         //const values = tableData.map(row => parseFloat(row.values[valIdx]) || 0);
-        const labels = tableData.map(row => String(row.values[0][catIdx] || ""));
-        const values = tableData.map(row => parseFloat(row.values[0][valIdx]) || 0);
+        //const labels = tableData.map(row => String(row.values[0][catIdx] || ""));
+        //const values = tableData.map(row => parseFloat(row.values[0][valIdx]) || 0);
+
+        // RUGGED: Check if row.values[0] exists before mapping to prevent empty bars
+        const labels = tableData
+            .filter(row => row.values && row.values[0]) 
+            .map(row => String(row.values[0][catIdx] || ""));
+
+        const values = tableData
+            .filter(row => row.values && row.values[0])
+            .map(row => parseFloat(row.values[0][valIdx]) || 0);
+
+
         container.innerHTML = `
             <div style="width: 100%; height: 500px; position: relative; padding: 20px;">
                 <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')" 
