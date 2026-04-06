@@ -106,8 +106,8 @@ renderMenu(activeWorksheets, onClickCallback) {
             return;
         }
 
-        title.innerText = customTitle || `View: ${sheetConfig.tabName}`;
-
+        //title.innerText = customTitle || `View: ${sheetConfig.tabName}`;
+        title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
         // 1. Identify visible columns from the Manifest (config.js)
         const visibleIndices = [];
         let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
@@ -187,6 +187,7 @@ renderMenu(activeWorksheets, onClickCallback) {
         html += `</tbody></table>`;
         container.innerHTML = html;
     },
+    // ============ END RENDER TABLE ============
 
     // 4. STATUS HELPERS
     showLoading(tableName) {
@@ -697,6 +698,8 @@ async showAnnualOverhead() {
         if (window.myChart) {
             window.myChart.destroy();
         }
+        
+
         
         // 5. THE ASSIGNMENT: Initialize and store the chart instance
         window.myChart = new Chart(ctx, {
