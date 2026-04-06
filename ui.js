@@ -641,12 +641,96 @@ showAssetBreakdown() {
                 textAlign: 'center',
                 textShadowColor: 'rgba(0,0,0,0.6)',
                 textShadowBlur: 4
+                }
             }
         }
-    }
-});
+    });
 //========= END ASSET BREAKDOWN ==============
-  }
+  },
+// ========= SHOW ANNUAL OVERHEAD =============
+async showAnnualOverhead() {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = "ANNUAL OVERHEAD: Expenses by Category";
+
+    UI.showLoading("Fetching Overhead Calculations...");
+
+    try {
+        const tableName = "Overhead_Summary";
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        
+        // 1. Fetch the rows directly from your new Excel Summary Table
+        const tableData = await Dashboard.getFullTableData(tableName); 
+
+        // 2. DYNAMIC INDEX DETECTION
+        const catIdx = sheetConfig.columns.findIndex(c => c.header === "Expense Category");
+        const valIdx = sheetConfig.columns.findIndex(c => c.header === "Annual Total");
+
+        // 3. Extract labels and values (Graph API returns values in a nested array: values[0][index])
+        const labels = tableData.map(row => row.values[0][catIdx]);
+        const values = tableData.map(row => parseFloat(row.values[0][valIdx]) || 0);
+
+        container.innerHTML = `
+            <div style="width: 100%; height: 500px; position: relative; padding: 20px;">
+                <button class="cancel-btn" onclick="loadTableData('Master_Dashboard')" 
+                        style="position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 8px 15px;">
+                    ← Back
+                </button>
+                <canvas id="overheadChart"></canvas>
+            </div>`;
+
+        const ctx = document.getElementById('overheadChart').getContext('2d');
+
+        // 4. THE RUGGED CLEANUP: Destroy existing chart to prevent "ghost" overlaps
+        if (window.myChart) {
+            window.myChart.destroy();
+        }
+        
+        // 5. THE ASSIGNMENT: Initialize and store the chart instance
+        window.myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                // Shorten labels for clean display; handles the split-view on the axis
+                labels: labels.map(l => l.split('/')), 
+                datasets: [{
+                    label: 'Annual Cost',
+                    data: values,
+                    backgroundColor: '#2c3e50', // Deep Navy
+                    borderColor: '#d35400',     // Safety Orange
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `Total: ${formatCurrency(context.raw)}`
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            callback: (value) => '$' + value.toLocaleString(),
+                            font: { weight: 'bold' } 
+                        } 
+                    },
+                    x: {
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("MAE System: Chart Load Error", error);
+        UI.showError("Could not load overhead breakdown. Ensure Excel formulas are intact.");
+    }
+}
+//===== END SHOW ANNUAL OVERHEAD ===========
 };
 
 window.UI = UI;
