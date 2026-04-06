@@ -511,14 +511,19 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         const currentTitle = document.getElementById("current-view-title").innerText;
 
         let printTitle = sheetConfig.tabName; //Default
+        const today = new Date().toLocaleDateString('en-US'); //MM/DD/YYYY
+
 
         // RESELL Logic if user arrived via DASHBOARD "WIP" button:
         if (currentTitle.includes("RESELL INVENTORY")) {
-           printTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
+           printTitle = `RESELL INVENTORY: Work In-Progress, Complete and For Sale (as of ${today})`;
         }
         // LOW STOCK Logic: if user arrived via Low Stock card press
         else if (currentTitle.includes("Low Stock")) {
-            printTitle = "Shop Consumables Low Stock";
+            printTitle = `Shop Consumables Low Stock (as of ${today})`;
+        }
+        else if (currentTitle.includes ("Bills Due")) {
+            printTitle = `${currentTitleText} (as of ${today})`;
         }
 
         UI.printTable(currentTable, sheetConfig, printTitle);
