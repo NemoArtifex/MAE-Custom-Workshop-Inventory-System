@@ -531,13 +531,27 @@ renderDashboard(row, config) {
                 <small>Click to view shopping list</small>
             </div>
 
-            <!-- Snapshot E: Monthly Overhead (Drill down to Full Overhead) -->
+            <!-- Snapshot E: Overhead Snapshot-->
             <div class="dash-card" onclick="loadTableData('Shop_Overhead')">
-                <h4>Monthly Overhead</h4>
-                <div class="hero-num">${formatCurrency(dashboardData["Total Monthly Overhead"])}</div>
-                <p>Total Fixed Costs</p>
-                <small style="color: #7f8c8d;">Click to manage expenses</small>
+                <h4>Total Amount Due Next 30 Days</h4>
+                <div class="hero-num">${formatCurrency(dashboardData["Total Amount Due Next 30 Days"])}</div>
+    
+                <div class="card-sub-actions">
+                    <!-- New Annual Breakdown Button -->
+                    <button class="action-btn" onclick="event.stopPropagation(); UI.showAnnualOverhead()">
+                        📊 Annual Overhead Breakdown
+                    </button>
+        
+                    <p style="margin-top:15px; font-weight:bold; font-size:0.9rem;">Upcoming Bills by Time Period:</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Overhead', 'due-7')">Next 7 Days</button>
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Overhead', 'due-30')">Next 30 Days</button>
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Overhead', 'due-90')">Next 90 Days</button>
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Overhead', 'due-180')">Next 180 Days</button>
+                    </div>
+                </div>
             </div>
+            
 
             <!-- Snapshot F: Equipment Repairs (Drill down to ONLY broken tools) -->
             <div class="dash-card ${dashboardData["Equipment Needing Repair"] > 0 ? 'warning' : ''}" 

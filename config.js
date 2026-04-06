@@ -13,12 +13,13 @@
  * Version 1.3: FINALIZED Master Dashboard content and updated
  * Version 1.3.1: Updated Master Dashboard by adding 4 columns for calculations to support chart.js
  * Version 1.3.2: Updated Master Dashboard "Overhead Snapshot" to "Total Amount Due Next 30 Days" with new formula
- * Version xxxxxx
+ * Version 1.3.3: Added new worksheet: OVerhead Summary to support Master Dashboard Overhead calculations and source for graph
+ * Version xxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3.2",
+    version: "1.3.3",
     
     worksheets: [
         {
@@ -148,6 +149,25 @@ export const maeSystemConfig = {
                     type: "formula", 
                     formula: "=COUNTIFS(Shop_Machinery[Condition], \"Needs Repair\") + COUNTIFS(Shop_Power_Tools[Condition], \"Needs Repair\") + COUNTIFS(Shop_Hand_Tools[Condition], \"Needs Repair\")",
                     locked: true 
+                }
+            ]
+        },
+        {
+            tabName: "Overhead Summary",
+            tableName: "Overhead_Summary",
+            active: false,
+            columns: [
+                {
+                    header: "Expense Category",
+                    type: "string",
+                    locked: true
+                },
+                {
+                    header: "Annual Total",
+                    type: "formula",
+                    formula: "=SUMIF(Shop_Overhead[Expense Category], [@[Expense Category]], Shop_Overhead[Amount])",
+                    format: "$#,##0.00",
+                    locked: true
                 }
             ]
         },
