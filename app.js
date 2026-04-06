@@ -523,7 +523,7 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
             printTitle = `Shop Consumables Low Stock (as of ${today})`;
         }
         else if (currentTitle.includes ("Bills Due")) {
-            printTitle = `${currentTitleText} (as of ${today})`;
+            printTitle = `${currentTitle} (as of ${today})`;
         }
 
         UI.printTable(currentTable, sheetConfig, printTitle);
