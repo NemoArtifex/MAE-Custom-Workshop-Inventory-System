@@ -14,12 +14,13 @@
  * Version 1.3.1: Updated Master Dashboard by adding 4 columns for calculations to support chart.js
  * Version 1.3.2: Updated Master Dashboard "Overhead Snapshot" to "Total Amount Due Next 30 Days" with new formula
  * Version 1.3.3: Added new worksheet: OVerhead Summary to support Master Dashboard Overhead calculations and source for graph
+ * Version 1.3.4: Modified header in Master Dashboard table "Equipment With Operational Issues" and changed formula
  * Version xxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3.3",
+    version: "1.3.4",
     
     worksheets: [
         {
@@ -133,6 +134,7 @@ export const maeSystemConfig = {
                     header: "Low Stock Items Count", 
                     type: "formula",
                     formula: "=SUMPRODUCT(--(Shop_Consumables[Current Stock]<=Shop_Consumables[Reorder Point]))",
+                    format: "0",       
                     locked: true 
                 },
         // Snapshot E: Overhead Snapshot
@@ -145,9 +147,17 @@ export const maeSystemConfig = {
                 },
         // Snapshot F: Condition Alerts (Count of items needing repair)
                 { 
-                    header: "Equipment Needing Repair", 
+                    header: "Equipment With Operational Issues", 
                     type: "formula", 
-                    formula: "=COUNTIFS(Shop_Machinery[Condition], \"Needs Repair\") + COUNTIFS(Shop_Power_Tools[Condition], \"Needs Repair\") + COUNTIFS(Shop_Hand_Tools[Condition], \"Needs Repair\")",
+                    // Backticks allow multi-line strings for better readability
+                    formula: `
+                        =SUM(
+                            COUNTIFS(Shop_Machinery[Condition], {"Needs Repair","Repair In-Progress","Unusable/Junk"}),
+                            COUNTIFS(Shop_Power_Tools[Condition], {"Needs Repair","Repair In-Progress","Unusable/Junk"}),
+                            COUNTIFS(Shop_Hand_Tools[Condition], {"Needs Repair","Repair In-Progress","Unusable/Junk"})
+                        )
+                    `.trim(), // .trim() removes the extra line breaks at the start/end
+                    format: "0",
                     locked: true 
                 }
             ]
