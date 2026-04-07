@@ -518,7 +518,7 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         const today = new Date().toLocaleDateString('en-US');
 
         if (currentTitleText.includes("RESELL INVENTORY")) {
-           printTitle = `RESELL INVENTORY: Work In-Progress (as of ${today})`;
+           printTitle = `RESELL INVENTORY: Work In-Progress,Complete and For Sale (as of ${today})`;
         }
         else if (currentTitleText.includes("Low Stock")) {
             printTitle = `Shop Consumables Low Stock (as of ${today})`;
