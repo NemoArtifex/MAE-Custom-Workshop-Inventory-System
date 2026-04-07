@@ -202,11 +202,11 @@ renderMenu(activeWorksheets, onClickCallback) {
     renderSubdividedRepairs(rows, tableName, sheetConfig) {
         const container = document.getElementById("table-container");
         const conditions = ["Needs Repair", "Repair In-Progress", "Unusable/Junk"];
-    
+
         const condIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
         const visibleIndices = sheetConfig.columns
-         .map((col, i) => col.hidden !== true ? i : -1)
-         .filter(i => i !== -1);
+            .map((col, i) => col.hidden !== true ? i : -1)
+            .filter(i => i !== -1);
 
         let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
         html += `<th class="edit-only-cell">Action</th>`;
@@ -214,11 +214,14 @@ renderMenu(activeWorksheets, onClickCallback) {
         html += `</tr></thead>`;
 
         conditions.forEach(status => {
-        // Filter rows for this specific condition
-            const groupRows = rows.filter(r => r.values[condIdx] === status);
-        
+            // RUGGED: Filter by piercing the [0] index created in app.js
+            const groupRows = rows.filter(r => {
+                const rowCells = r.values[0]; 
+                return rowCells && rowCells[condIdx] === status;
+            });
+
             if (groupRows.length > 0) {
-            // RUGGED SUB-HEADER: High contrast for situational awareness
+                // RUGGED SUB-HEADER: High contrast grouping
                 html += `
                     <tbody class="repair-group-header">
                         <tr>
@@ -231,14 +234,15 @@ renderMenu(activeWorksheets, onClickCallback) {
                     <tbody>`;
 
                 groupRows.forEach(row => {
+                    const rowData = row.values[0]; // Targeted the inner array for display
                     html += `<tr data-row-index="${row.index}">`;
                     html += `<td class="edit-only-cell"><button class="delete-row-btn" onclick="requestDelete(${row.index})">🗑️</button></td>`;
-                
+            
                     visibleIndices.forEach(idx => {
                         const colDef = sheetConfig.columns[idx];
                         const isEditable = !colDef.locked && colDef.type !== 'formula';
-                        const displayValue = row.values[idx] || '';
-                    
+                        const displayValue = rowData[idx] || ''; // Using the inner rowData
+                
                         html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'}" data-col-index="${idx}">${displayValue}</td>`;
                     });
                     html += `</tr>`;
@@ -250,13 +254,13 @@ renderMenu(activeWorksheets, onClickCallback) {
         html += `</table>`;
         container.innerHTML = html;
     },
-
     // Helper for high-visibility colors
     getRepairColor(status) {
         if (status === "Needs Repair") return "#e74c3c"; // Red
         if (status === "Repair In-Progress") return "#f1c40f"; // Yellow
         return "#2c3e50"; // Dark Navy for Junk
     },
+
     //=========== END RENDER SUBDIVIDED REPAIRS Specialized Renderer==============
 
     // 4. STATUS HELPERS
