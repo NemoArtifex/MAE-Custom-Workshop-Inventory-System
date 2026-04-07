@@ -15,12 +15,13 @@
  * Version 1.3.2: Updated Master Dashboard "Overhead Snapshot" to "Total Amount Due Next 30 Days" with new formula
  * Version 1.3.3: Added new worksheet: OVerhead Summary to support Master Dashboard Overhead calculations and source for graph
  * Version 1.3.4: Modified header in Master Dashboard table "Equipment With Operational Issues" and changed formula
- * Version xxxxx
+ * Version 1.3.5: Added header in Master Dashboard for Maintenance Items card
+ * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3.4",
+    version: "1.3.5",
     
     worksheets: [
         {
@@ -159,6 +160,17 @@ export const maeSystemConfig = {
                     `.trim(), // .trim() removes the extra line breaks at the start/end
                     format: "0",
                     locked: true 
+                },
+                {
+                    header: "Maintenance Items Due in Next 30 Days",
+                    type: "formula",
+                    formula:`
+                            =SUM(
+                                COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Next Service Date], ">="&TODAY())
+                        )
+                     `.trim(),
+                    format: "0",
+                    locked: true
                 }
             ]
         },
