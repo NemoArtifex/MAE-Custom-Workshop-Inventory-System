@@ -363,7 +363,25 @@ async function loadTableData(tableName, filterType = null) {
     } else if (filterType === 'low-stock'){
         displayTitle = "Shop Consumables Low Stock";
     } else if (filterType === 'needs-repair'){
-        displayTitle = "Equipment With Operational Issues"
+        // Map the technical table name to your specific "Operational Issues" title
+        const repairTitles = {
+            'Shop_Machinery': "Shop Machinery: Operational Issues",
+            'Shop_Power_Tools': "Shop Power Tools: Operational Issues",
+            'Shop_Hand_Tools': "Shop Hand Tools: Operational Issues"
+        };
+
+        const baseTitle = repairTitles[tableName] || "Equipment With Operational Issues";
+
+        // Add the "Back to Dashboard" button logic also used in Overhead
+        displayTitle = `
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="action-btn" 
+                    style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
+                    onclick="loadTableData('Master_Dashboard')">
+                ← Back to Dashboard
+            </button>
+            <span>${baseTitle}</span>
+        </div>`;        
     }
     // Overhead time periods
       else if (tableName === 'Shop_Overhead' && filterType) {

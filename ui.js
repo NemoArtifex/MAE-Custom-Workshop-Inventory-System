@@ -554,15 +554,26 @@ renderDashboard(row, config) {
             </div>
             
 
-            <!-- Snapshot F: Equipment Repairs (Drill down to ONLY broken tools) -->
-            <div class="dash-card ${dashboardData["Equipment Needing Repair"] > 0 ? 'warning' : ''}" 
-                 onclick="loadTableData('Shop_Machinery', 'needs-repair')">
-                <h4>Repairs Needed</h4>
-                <div class="hero-num">${dashboardData["Equipment Needing Repair"]}</div>
-                <p>Out-of-Service Items</p>
-                <small>Click to view repair list</small>
+            <!-- Snapshot F: Equipment Operational Issues -->
+            <div class="dash-card ${dashboardData["Equipment With Operational Issues"] > 0 ? 'warning' : ''}">
+                <h4>Equipment With Operational Issues</h4>
+                <div class="hero-num">${dashboardData["Equipment With Operational Issues"]}</div>
+                <p>Total Items Needing Attention</p>
+    
+                <div class="card-sub-actions" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                    <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Machinery', 'needs-repair')">
+                        Shop Machinery: Operational Issues
+                    </button>
+                    <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Power_Tools', 'needs-repair')">
+                        Shop Power Tools: Operational Issues
+                    </button>
+                    <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Shop_Hand_Tools', 'needs-repair')">
+                        Shop Hand Tools: Operational Issues
+                    </button>
+                    <small style="color: #7f8c8d; margin-top: 5px;">Click a category to view specific repair lists</small>
+                </div>
             </div>
-
+            
         </div>
     `;
 },
