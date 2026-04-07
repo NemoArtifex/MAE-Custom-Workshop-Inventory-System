@@ -747,3 +747,16 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 
 /*====END HOME BuTTON ====*/
 
+/* ==== Visual grouping for repairs==== */
+.repair-group-header td {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.9rem;
+    box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);
+}
+
+.repair-group-header tr:hover {
+    background: #34495e !important; /* Lock the header color on hover */
+}
+/* ==== END Visual Grouping for Repairs ====*/
+

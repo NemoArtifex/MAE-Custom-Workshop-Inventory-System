@@ -106,8 +106,17 @@ renderMenu(activeWorksheets, onClickCallback) {
             return;
         }
 
-        //title.innerText = customTitle || `View: ${sheetConfig.tabName}`;
+    
         title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
+
+        //  Check if this is an "Operational Issues" view
+        const isRepairsView = customTitle && customTitle.includes("Operational Issues");
+
+        if (isRepairsView) {
+            this.renderSubdividedRepairs(rows, tableName, sheetConfig);
+            return; // Hand off to specialized renderer
+        }
+
         // 1. Identify visible columns from the Manifest (config.js)
         const visibleIndices = [];
         let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
@@ -188,6 +197,67 @@ renderMenu(activeWorksheets, onClickCallback) {
         container.innerHTML = html;
     },
     // ============ END RENDER TABLE ============
+
+    //=========== RENDER SUBDIVIDED REPAIRS Specialized Renderer ==============
+    renderSubdividedRepairs(rows, tableName, sheetConfig) {
+        const container = document.getElementById("table-container");
+        const conditions = ["Needs Repair", "Repair In-Progress", "Unusable/Junk"];
+    
+        const condIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
+        const visibleIndices = sheetConfig.columns
+         .map((col, i) => col.hidden !== true ? i : -1)
+         .filter(i => i !== -1);
+
+        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
+        html += `<th class="edit-only-cell">Action</th>`;
+        visibleIndices.forEach(idx => html += `<th>${sheetConfig.columns[idx].header}</th>`);
+        html += `</tr></thead>`;
+
+        conditions.forEach(status => {
+        // Filter rows for this specific condition
+            const groupRows = rows.filter(r => r.values[condIdx] === status);
+        
+            if (groupRows.length > 0) {
+            // RUGGED SUB-HEADER: High contrast for situational awareness
+                html += `
+                    <tbody class="repair-group-header">
+                        <tr>
+                            <td colspan="${visibleIndices.length + 1}" 
+                                style="background: #34495e; color: white; font-weight: bold; padding: 10px; border-left: 10px solid ${this.getRepairColor(status)}">
+                                ${status.toUpperCase()} (${groupRows.length} Items)
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tbody>`;
+
+                groupRows.forEach(row => {
+                    html += `<tr data-row-index="${row.index}">`;
+                    html += `<td class="edit-only-cell"><button class="delete-row-btn" onclick="requestDelete(${row.index})">🗑️</button></td>`;
+                
+                    visibleIndices.forEach(idx => {
+                        const colDef = sheetConfig.columns[idx];
+                        const isEditable = !colDef.locked && colDef.type !== 'formula';
+                        const displayValue = row.values[idx] || '';
+                    
+                        html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'}" data-col-index="${idx}">${displayValue}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+                html += `</tbody>`;
+            }
+        });
+
+        html += `</table>`;
+        container.innerHTML = html;
+    },
+
+    // Helper for high-visibility colors
+    getRepairColor(status) {
+        if (status === "Needs Repair") return "#e74c3c"; // Red
+        if (status === "Repair In-Progress") return "#f1c40f"; // Yellow
+        return "#2c3e50"; // Dark Navy for Junk
+    },
+    //=========== END RENDER SUBDIVIDED REPAIRS Specialized Renderer==============
 
     // 4. STATUS HELPERS
     showLoading(tableName) {
@@ -573,7 +643,7 @@ renderDashboard(row, config) {
                     <small style="color: #7f8c8d; margin-top: 5px;">Click a category to view specific repair lists</small>
                 </div>
             </div>
-            
+
         </div>
     `;
 },
