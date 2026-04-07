@@ -334,7 +334,7 @@ async function loadTableData(tableName, filterType = null) {
     }
 
     // Process rows to format dates before rendering
-     // RUGGED: We update the values but keep the row object so UI.js 
+     //  We update the values but keep the row object so UI.js 
     // can still find the row index and metadata.
     let formattedRows = data.value.map(rowObj => {
         // Map the inner values array (Graph API returns values as a 2D array [[]])
@@ -383,7 +383,7 @@ async function loadTableData(tableName, filterType = null) {
             <span>${baseTitle}</span>
         </div>`;        
     }
-    // Overhead time periods
+    // Shop Overhead title logic
       else if (tableName === 'Shop_Overhead' && filterType) {
         const titleMap = {
             'due-7': "Bills Due In The Next 7 Days",
@@ -405,7 +405,9 @@ async function loadTableData(tableName, filterType = null) {
                 </div>`;       
         }
     }
+    //========== END Shop Overhead TItle logic ============
 
+    
 
 
     // Hand off cleaned data to to UI module
@@ -476,6 +478,11 @@ function applyDashboardFilters(tableName, rows, filterType) {
             case 'due-30':  return isWithinDays(row.values[0], sheetConfig, 30);
             case 'due-90':  return isWithinDays(row.values[0], sheetConfig, 90);
             case 'due-180': return isWithinDays(row.values[0], sheetConfig, 180);
+            // Filter logic for Shop Maintenance Dashboard buttons
+            case 'maint-7':   return isWithinDays(row.values[0], sheetConfig, 7, "Next Service Date");
+            case 'maint-30':  return isWithinDays(row.values[0], sheetConfig, 30, "Next Service Date");
+            case 'maint-90':  return isWithinDays(row.values[0], sheetConfig, 90, "Next Service Date");
+            case 'maint-180': return isWithinDays(row.values[0], sheetConfig, 180, "Next Service Date");
 
             default: return true;
         }
@@ -485,8 +492,8 @@ function applyDashboardFilters(tableName, rows, filterType) {
 
 
 // WORKER function to check if a row's date is within a certain number of days
-function isWithinDays(rowValues, sheetConfig, days) {
-    const dateIdx = sheetConfig.columns.findIndex(c => c.header === "Due Date");
+function isWithinDays(rowValues, sheetConfig, days, colName = "Due Date") {
+    const dateIdx = sheetConfig.columns.findIndex(c => c.header === colName);
     
     // Safety check: if no "Due Date" column exists in this table, skip
     if (dateIdx === -1 || !rowValues[dateIdx]) return false;

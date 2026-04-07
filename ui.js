@@ -567,7 +567,9 @@ renderDashboard(row, config) {
     const title = document.getElementById("current-view-title");
     
     const dashboardData = Dashboard.parseSummary(row, config);
+    const maintenanceDue = dashboardData["Maintenance Items Due in Next 30 Days"];
     title.innerText = "Workshop Master Dashboard";
+    
 
     container.innerHTML = `
         <div class="dashboard-grid">
@@ -596,6 +598,7 @@ renderDashboard(row, config) {
                     <button class="action-btn" onclick="UI.showAssetBreakdown()">📊 View Asset Breakdown</button>
                 </div>
             </div>
+
 
             <!-- Snapshot C: Low Stock Alerts (Drill down to ONLY Low Stock) -->
             <div class="dash-card ${dashboardData["Low Stock Items Count"] > 0 ? 'alert' : ''}" 
@@ -645,6 +648,23 @@ renderDashboard(row, config) {
                         Shop Hand Tools: Operational Issues
                     </button>
                     <small style="color: #7f8c8d; margin-top: 5px;">Click a category to view specific repair lists</small>
+                </div>
+            </div>
+      
+            <!-- Snapshot G: Maintenance Items -->
+            <div class="dash-card ${maintenanceDue > 0 ? 'warning' : ''}">
+                <h4>Upcoming Maintenance</h4>
+                <div class="hero-num">${maintenanceDue}</div>
+                <p>Items Due in Next 30 Days</p>
+                <div class="card-sub-actions">
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-7')">Next 7 Days</button>
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-90')">Next 90 Days</button>
+                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-180')">Next 180 Days</button>
+                    </div>
+                    <small style="display:block; margin-top:10px; color: #7f8c8d;">
+                        Stay ahead of shop downtime.
+                    </small>
                 </div>
             </div>
 
