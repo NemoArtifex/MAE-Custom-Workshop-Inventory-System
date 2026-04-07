@@ -508,12 +508,11 @@ function isWithinDays(rowValues, sheetConfig, days) {
 //=========== GLOBAL CLICK LISTENER FUNCTION===========
 // 1. GLOBAL CLICK LISTENER (Event Delegation)
 // This stays active even when buttons are deleted/recreated
-// app.js - Refined Global Listener
+// Updated Global Click Listener
 document.getElementById('action-bar-zone').addEventListener('click', (event) => {
     const btn = event.target.closest('button');
     if (!btn) return;
 
-    // Use the global window object for consistency
     const config = window.maeSystemConfig;
     const currentTable = window.currentTable;
 
@@ -523,39 +522,31 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
-    else if (btn.id === 'btn-print') {
+    // CONSOLIDATED PRINT LOGIC: Handles both Table and Manual Log
+    else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
         const titleElement = document.getElementById("current-view-title");
         
-        // RUGGED FIX: Look for a <span> inside the title first (the "Artificer" breadcrumb)
-        // If no span exists (standard view), fall back to the whole innerText
+        // RUGGED: Extract only the title text (ignores the "Back" button)
         const spanElement = titleElement.querySelector("span");
         const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
 
-        let printTitle = sheetConfig.tabName; // Default
+        // DATE GENERATION: MM/DD/YYYY
         const today = new Date().toLocaleDateString('en-US');
 
-        if (currentTitleText.includes("RESELL INVENTORY")) {
-           printTitle = `RESELL INVENTORY: Work In-Progress,Complete and For Sale (as of ${today})`;
-        }
-        else if (currentTitleText.includes("Low Stock")) {
-            printTitle = `Shop Consumables Low Stock (as of ${today})`;
-        }
-        else if (currentTitleText.includes("Bills Due")) {
-            // Now this will ONLY be "Bills Due In The Next 30 Days"
-            printTitle = `${currentTitleText} (as of ${today})`;
-        }
+        // Logic-Based Title Override
+        let finalPrintTitle = `${currentTitleText} (as of ${today})`;
 
-        UI.printTable(currentTable, sheetConfig, printTitle);
-    } 
-    else if (btn.id === 'btn-manual-print') {
-        const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
-        UI.printManualLog(currentTable, sheetConfig);
+        // Branch to appropriate UI function
+        if (btn.id === 'btn-print') {
+            UI.printTable(currentTable, sheetConfig, finalPrintTitle);
+        } else {
+            UI.printManualLog(currentTable, sheetConfig, finalPrintTitle);
+        }
     } 
     else if (btn.id === 'btn-inventory-update') {
         handleQuickUpdate(currentTable);
     }
-    // You can add more 'else if' blocks here later for Edit/Print/Delete
 });
 
 //============= handle ADD Click function ===================
