@@ -658,7 +658,6 @@ renderDashboard(row, config) {
                 <p>Items Due in Next 30 Days</p>
                 <div class="card-sub-actions">
                     <div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
-                        <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-30')">Next 30 Days</button>
                         <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-7')">Next 7 Days</button>
                         <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-30')">Next 30 Days</button>
                         <button class="mini-btn" onclick="event.stopPropagation(); loadTableData('Maintenance_Log', 'maint-90')">Next 90 Days</button>
