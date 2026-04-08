@@ -407,6 +407,29 @@ async function loadTableData(tableName, filterType = null) {
     }
     //========== END Shop Overhead TItle logic ============
 
+    //========== SHOP MAINTENANCE title logic ==============
+    else if (tableName === 'Maintenance_Log' && filterType?.startsWith('maint-')) {
+    const maintTitles = {
+        'maint-7': "Maintenance Due In Next 7 Days",
+        'maint-30': "Maintenance Due In Next 30 Days",
+        'maint-90': "Maintenance Due In Next 90 Days",
+        'maint-180': "Maintenance Due In Next 180 Days"
+    };
+    
+    const selectedTitle = maintTitles[filterType] || "Upcoming Maintenance Tasks";
+
+    displayTitle = `
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="action-btn" 
+                    style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
+                    onclick="loadTableData('Master_Dashboard')">
+                ← Back to Dashboard
+            </button>
+            <span>${selectedTitle}</span>
+        </div>`;        
+}
+    //====== END Shop Maintenance title logic ==============
+
     
 
 
