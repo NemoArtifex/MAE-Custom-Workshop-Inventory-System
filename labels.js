@@ -47,16 +47,10 @@ export const Labels = {
             aspectRatio: 1.0,
             videoConstraints: {
                 facingMode: "environment",   // Forces the back camera on phones
-                width: {ideal: 1920},
-                height: {ideal: 1080},
-                focusMode: {ideal: "continuous"},// Forces iphone to stay sharp
-                //whiteBalanceMode: {ideal: "continuous"}
+                width: {ideal: 1280},
+                height: {ideal: 720},
             },
-            //experimentalFeatures: {
-            //    useBarCodeDetectorIfSupported: true // Leverage native browser support if available
-            //},
             disableFlip: true,
-            // RUGGED: This helps the engine focus specifically on QR codes
             formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
         };
         
@@ -102,7 +96,7 @@ export const Labels = {
                     }).catch(e => console.warn("Flashlight failed:", e));
                 }, 500);
             }
-            
+
             console.log("MAE System: Camera feed active.");
         }).catch(err => {
             console.error("MAE System: Camera access failed.", err);
