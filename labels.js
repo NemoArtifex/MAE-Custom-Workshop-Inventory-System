@@ -47,14 +47,14 @@ export const Labels = {
             aspectRatio: 1.0,
             videoConstraints: {
                 facingMode: "environment",   // Forces the back camera on phones
-                width: {ideal: 1280},
-                height: {ideal: 720},
+                width: {ideal: 1920},
+                height: {ideal: 1080},
                 focusMode: {ideal: "continuous"},// Forces iphone to stay sharp
-                whiteBalanceMode: {ideal: "continuous"}
+                //whiteBalanceMode: {ideal: "continuous"}
             },
-            experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true // Leverage native browser support if available
-            },
+            //experimentalFeatures: {
+            //    useBarCodeDetectorIfSupported: true // Leverage native browser support if available
+            //},
             disableFlip: true,
             // RUGGED: This helps the engine focus specifically on QR codes
             formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
@@ -90,6 +90,19 @@ export const Labels = {
                 const loader = document.getElementById("loading-message");
                 if (loader) loader.style.display = "none";
             }
+
+            // RUGGED FLASH LIGHT FIX
+            // Check if the camera supports a torch (flashlight)
+            const tracks = html5QrCode.getRunningTrack();
+            if (tracks && tracks.getCapabilities().torch) {
+                    // We wait 500ms for the camera to fully stabilize before firing the flash
+                setTimeout(() => {
+                    tracks.applyConstraints({
+                        advanced: [{ torch: true }]
+                    }).catch(e => console.warn("Flashlight failed:", e));
+                }, 500);
+            }
+            
             console.log("MAE System: Camera feed active.");
         }).catch(err => {
             console.error("MAE System: Camera access failed.", err);

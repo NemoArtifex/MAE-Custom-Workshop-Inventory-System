@@ -837,8 +837,10 @@ async function submitNewRow(tableName, sheetConfig) {
 
         // 2. Handle mae_id logic (NOW it can see 'input')
         if (col.header === "mae_id") {
-            // Use the scanned/entered ID if present; otherwise, generate new
-            return (input && input.value.trim() !== "") ? input.value.trim() : `MAE-${Date.now()}`;
+           // RUGGED: If there's a scanned code in the input, USE IT. 
+            // Only if the input is totally empty do we generate a new MAE-timestamp.
+            const scannedValue = input ? input.value.trim() : "";
+            return (scannedValue !== "") ? scannedValue : `MAE-${Date.now()}`; 
         }
 
         // 3. Handle Formulas
