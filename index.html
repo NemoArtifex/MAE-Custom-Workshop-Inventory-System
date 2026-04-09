@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" 
-      content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; 
-               script-src * 'self' 'unsafe-inline' 'unsafe-eval'; 
-               connect-src * 'self' https://login.microsoftonline.com https://graph.microsoft.com; 
-               style-src * 'self' 'unsafe-inline';">
+      content="default-src  'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; 
+               script-src  'self' 'unsafe-inline' 'unsafe-eval' blob:; 
+               connect-src  'self' https://login.microsoftonline.com https://graph.microsoft.com; 
+               style-src 'self' 'unsafe-inline';">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <title>MAE Workshop Inventory Management</title>
     <script src="msal-browser.min.js"></script>
-    <script src="https://unpkg.com"></script>
-    <script src="https://cloudflare.com"></script>
+    <script src="html5-qrcode.min.js"></script>
+    <script src="chart.min.js"></script>
+    <script src="chartjs-plugin-datalabels.min.js"></script>
     <script type="module" src="./config.js"></script> <!-- Load this first -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script type="module" src="./labels.js"></script>
     <script type="module" src="./dashboard.js"></script>
     <script type="module" src="./ui.js"></script> 

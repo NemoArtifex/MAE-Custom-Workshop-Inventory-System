@@ -27,6 +27,14 @@ export const Labels = {
 
     // 2. START SCANNER: Opens the phone camera
     startScanner: function(onSuccessCallback) {
+
+        // Check if the library loaded from the CDN
+        if (typeof Html5Qrcode === 'undefined') {
+            UI.showError("Scanner engine not loaded. Check internet connection.");
+            console.error("MAE System: html5-qrcode library is missing.");
+            return;
+        }
+
         // 1. Prepare the UI
         UI.renderScannerUI(); 
 
