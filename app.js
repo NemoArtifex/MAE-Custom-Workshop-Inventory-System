@@ -634,6 +634,31 @@ async function handleAddClick(tableName) {
 }
 // ========== END ADD Click Function ====================
 
+//=========Helper to bridge Scan directly to an Add Form ====
+async function handleAddClickWithId(scannedId) {
+    // 1. Ask which table to add to
+    const tableName = prompt("Which category? (Shop_Machinery, Shop_Power_Tools, Shop_Hand_Tools, Shop_Consumables, Resell_Inventory)", "Shop_Machinery");
+    
+    // Safety check if they hit cancel on the prompt
+    if (!tableName) return;
+
+    // 2. Trigger your existing Add logic
+    await handleAddClick(tableName);
+
+    // 3. RUGGED AUTO-FILL: Finds the ID field and injects the scanned code
+    setTimeout(() => {
+        // This looks for any input where the ID contains "mae_id" 
+        const idInput = document.querySelector('input[id*="mae_id"]');
+        if (idInput) {
+            idInput.value = scannedId;
+            idInput.style.backgroundColor = "#e8f8f5"; // Visual confirmation (Light Green)
+            console.log(`MAE System: Injected Scanned ID [${scannedId}] into form.`);
+        }
+    }, 600); // Slight delay to ensure the UI.renderEntryForm has finished painting
+}
+
+//======= END Helper to bridge Scan to Add Form ===============
+
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
 // Centralized "Click-Off" handler for all edit modes
 async function globalClickOffHandler(e) {
@@ -1089,7 +1114,7 @@ async function handleUniversalLookup(scannedId) {
                 account: myMSALObj.getAllAccounts()[0]
             });
 
-            //const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+            
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
@@ -1113,8 +1138,22 @@ async function handleUniversalLookup(scannedId) {
         }
         
         // If we get here, no match was found
-        UI.showError(`Tag [${scannedId}] not found. Use 'Add Item' to link a new tag.`);
-        setTimeout(() => loadTableData("Master_Dashboard"), 3000);
+        UI.showError(`
+            <div style="text-align:center; padding: 20px;">
+                <h3 style="color:var(--primary);">New Tag Detected</h3>
+                <p style="font-size: 1.2rem; font-weight: bold; background: #eee; padding: 10px; border-radius: 4px;">
+                    ID: ${scannedId}
+                </p>
+                <p>This ID is not in your system yet.</p>
+                <button class="action-btn" onclick="handleAddClickWithId('${scannedId}')" style="width:100%; margin-bottom:10px;">
+                    ➕ Add This Item Now
+                </button>
+                <button class="action-btn cancel-btn" onclick="loadTableData('Master_Dashboard')" style="width:100%;">
+                    Cancel
+                </button>
+            </div> 
+        `);
+        
 
     } catch (error) {
         console.error("MAE System: Lookup failed", error);
@@ -1131,4 +1170,4 @@ window.handleQuickUpdate = handleQuickUpdate;
 window.handleAddClick = handleAddClick;
 window.requestDelete = requestDelete;
 window.loadTableData = loadTableData;
-
+window.handleAddClickWithId = handleAddClickWithId;

@@ -43,10 +43,15 @@ export const Labels = {
         
         const config = { 
             fps: 20,                       // Faster sampling for workshop movement
-            qrbox: { width: 250, height: 250 }, // Fixed square for stability
+            qrbox: 250, // Fixed square for stability
             aspectRatio: 1.0,
             videoConstraints: {
-                facingMode: "environment"   // Forces the back camera on phones
+                facingMode: "environment",   // Forces the back camera on phones
+                width: {min: 1280, ideal: 1920},
+                height: {min: 720, ideal: 1080}
+            },
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true // Leverage native browser support if available
             },
             disableFlip: true,
             // RUGGED: This helps the engine focus specifically on QR codes
