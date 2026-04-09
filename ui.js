@@ -315,9 +315,10 @@ renderCommandBar(tableName) {
     // 2. Find the specific sheet blueprint
     const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
     if (!sheetConfig) return; 
-        
+
+    // Normalize name for reliable comparison
     const normalizedName = tableName.trim().toLowerCase();
-    const dashboardTables = ["master_dashboard", "test_dashboard", "master dashboard", "test dashboard"];
+    const isDashboard = normalizedName.includes("dashboard");
 
     // 3. Scan for "Manual" keywords (Quantity / Current Stock)
     const hasManualField = sheetConfig.columns.some(col => 
@@ -327,32 +328,34 @@ renderCommandBar(tableName) {
     // 4. Build the Button HTML
     let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
 
+    // Add Manual Log button if keywords match
     if (hasManualField) {
         buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
     }
 
-    if (!dashboardTables.includes(normalizedName)) {
-        // === INSERTED LOGIC START ===
-        // Define the only five tables allowed to show the Scan button
+    // Only show "Action" buttons if we are NOT on a dashboard
+    if (!isDashboard) {
+        
+        // Define the specific five tables allowed to show the Scan button (in lowercase)
         const scannableTables = [
-            "Shop_Machinery", 
-            "Shop_Power_Tools", 
-            "Shop_Hand_Tools", 
-            "Shop_Consumables", 
-            "Resell_Inventory"
+            "shop_machinery", 
+            "shop_power_tools", 
+            "shop_hand_tools", 
+            "shop_consumables", 
+            "resell_inventory"
         ];
         
-        // Check if current table is in the list AND feature is enabled in config
-        if (scannableTables.includes(tableName) && config.features?.enableScanning) {
+        // Check if current table is scannable AND feature is enabled in config
+        if (scannableTables.includes(normalizedName) && config.features?.enableScanning) {
             buttons += `<button class="action-btn" id="btn-scan" style="background:#8e44ad;">📷 Scan Item</button>`;
         }
-        // === INSERTED LOGIC END ===
 
         buttons += `
             <button class="action-btn" id="btn-add">Add Item</button>
             <button class="action-btn" id="btn-edit">Edit Table</button>
         `;
 
+        // Only show Quick Update if it's an inventory-style sheet
         if (hasManualField) {
             buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
@@ -360,7 +363,7 @@ renderCommandBar(tableName) {
 
     // 5. Inject into the UI
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-},  
+},
 
 //========== END RENDER COMMAND BAR ================
 
