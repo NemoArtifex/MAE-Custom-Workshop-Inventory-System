@@ -455,6 +455,8 @@ async function loadTableData(tableName, filterType = null) {
     // Draw command bar at the bottom
     UI.renderCommandBar(tableName);
 
+    reattachScanListener();
+
    } catch (error) {
     console.error("MAE System: Error loading table data:", error);
     UI.showError("Error: Could not load data.  Ensure spreadsheet is closed in Excel");
@@ -1122,6 +1124,19 @@ async function handleUniversalLookup(scannedId) {
 
 // ===== END Universal Search logic for labels =====
 
+//======== reattachScanListener function =========
+function reattachScanListener() {
+    const scanBtn = document.getElementById('btn-scan');
+    if (scanBtn) {
+        scanBtn.onclick = () => {
+            console.log("MAE System: Scan initiated.");
+            Labels.startScanner((scannedId) => {
+                handleUniversalLookup(scannedId);
+            });
+        };
+    }
+}
+//====== END reattachScanListener function ==========
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
