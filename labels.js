@@ -47,8 +47,9 @@ export const Labels = {
             aspectRatio: 1.0,
             videoConstraints: {
                 facingMode: "environment",   // Forces the back camera on phones
-                width: {min: 1280, ideal: 1920},
-                height: {min: 720, ideal: 1080}
+                width: {ideal: 1920},
+                height: {ideal: 1080},
+                focusMode: "continuous" // Forces iphone to stay sharp
             },
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true // Leverage native browser support if available

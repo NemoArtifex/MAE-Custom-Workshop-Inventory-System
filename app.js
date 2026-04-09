@@ -635,28 +635,37 @@ async function handleAddClick(tableName) {
 // ========== END ADD Click Function ====================
 
 //=========Helper to bridge Scan directly to an Add Form ====
+
 async function handleAddClickWithId(scannedId) {
-    // 1. Ask which table to add to
-    const tableName = prompt("Which category? (Shop_Machinery, Shop_Power_Tools, Shop_Hand_Tools, Shop_Consumables, Resell_Inventory)", "Shop_Machinery");
+    const container = document.getElementById("table-container");
     
-    // Safety check if they hit cancel on the prompt
-    if (!tableName) return;
-
-    // 2. Trigger your existing Add logic
-    await handleAddClick(tableName);
-
-    // 3. RUGGED AUTO-FILL: Finds the ID field and injects the scanned code
-    setTimeout(() => {
-        // This looks for any input where the ID contains "mae_id" 
-        const idInput = document.querySelector('input[id*="mae_id"]');
-        if (idInput) {
-            idInput.value = scannedId;
-            idInput.style.backgroundColor = "#e8f8f5"; // Visual confirmation (Light Green)
-            console.log(`MAE System: Injected Scanned ID [${scannedId}] into form.`);
-        }
-    }, 600); // Slight delay to ensure the UI.renderEntryForm has finished painting
+    // 1. Create a "Shop-Ready" selector
+    container.innerHTML = `
+        <div style="padding:20px; text-align:center;">
+            <h3>Select Category for Tag: ${scannedId}</h3>
+            <select id="mobile-table-selector" class="edit-dropdown" style="margin-bottom:20px; height:50px; font-size:1.2rem;">
+                <option value="Shop_Machinery">Shop Machinery</option>
+                <option value="Shop_Power_Tools">Shop Power Tools</option>
+                <option value="Shop_Hand_Tools">Shop Hand Tools</option>
+                <option value="Shop_Consumables">Shop Consumables</option>
+                <option value="Resell_Inventory">Resell Inventory</option>
+            </select>
+            <button class="action-btn" onclick="confirmMobileAdd('${scannedId}')" style="width:100%; background:#27ae60;">
+                Continue to Form
+            </button>
+        </div>
+    `;
 }
 
+// Helper to bridge the selection
+window.confirmMobileAdd = async (scannedId) => {
+    const tableName = document.getElementById('mobile-table-selector').value;
+    await handleAddClick(tableName);
+    setTimeout(() => {
+        const idInput = document.querySelector('input[id*="mae_id"]');
+        if (idInput) idInput.value = scannedId;
+    }, 600);
+};
 //======= END Helper to bridge Scan to Add Form ===============
 
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
@@ -817,8 +826,10 @@ async function submitNewRow(tableName, sheetConfig) {
     // 1. MAP DATA: Order matches config.js exactly
     const rowData = sheetConfig.columns.map(col => {
         // Handle Auto-ID
-        if (col.header === "mae_id") return `MAE-${Date.now()}`;
-        
+        if (col.header === "mae_id"){
+             // Use the scanned ID if it's there; otherwise, make a new one.
+            return (input && input.value) ? input.value : `MAE-${Date.now()}`;
+        }
         // Handle Formulas (Excel must calculate these)
         if (col.type === "formula") return null;
 
