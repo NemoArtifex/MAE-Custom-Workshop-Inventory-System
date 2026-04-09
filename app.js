@@ -660,10 +660,17 @@ async function handleAddClickWithId(scannedId) {
 // Helper to bridge the selection
 window.confirmMobileAdd = async (scannedId) => {
     const tableName = document.getElementById('mobile-table-selector').value;
+
+    //  Clear the selector UI first so the Add Form has a clean stage
+    document.getElementById("table-container").innerHTML = ""; 
+
     await handleAddClick(tableName);
     setTimeout(() => {
         const idInput = document.querySelector('input[id*="mae_id"]');
-        if (idInput) idInput.value = scannedId;
+        if (idInput) {
+            idInput.value = scannedId;
+            idInput.style.backgroundColor = "#e8f8f5";
+        }
     }, 600);
 };
 //======= END Helper to bridge Scan to Add Form ===============
@@ -823,36 +830,36 @@ function handleEditClick(tableName) {
 //===========FUNCTION submitNewRow====to send data to Microsoft========
 
 async function submitNewRow(tableName, sheetConfig) {
-    // 1. MAP DATA: Order matches config.js exactly
     const rowData = sheetConfig.columns.map(col => {
-        // Handle Auto-ID
-        if (col.header === "mae_id"){
-             // Use the scanned ID if it's there; otherwise, make a new one.
-            return (input && input.value) ? input.value : `MAE-${Date.now()}`;
-        }
-        // Handle Formulas (Excel must calculate these)
-        if (col.type === "formula") return null;
-
-        // Find the input field by its cleaned ID
+        // 1. Identify the input field FIRST
         const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
         const input = document.getElementById(fieldId);
 
-        // RUGGED: Handle Empty Inputs
-        // Sending null for empty numbers/dates keeps Excel calculations accurate
+        // 2. Handle mae_id logic (NOW it can see 'input')
+        if (col.header === "mae_id") {
+            // Use the scanned/entered ID if present; otherwise, generate new
+            return (input && input.value.trim() !== "") ? input.value.trim() : `MAE-${Date.now()}`;
+        }
+
+        // 3. Handle Formulas
+        if (col.type === "formula") return null;
+
+        // 4. Handle Empty Inputs
         if (!input || input.value === "") {
             return (col.type === "number" || col.type === "date") ? null : "";
         }
 
-        // Handle Numbers & Currency
+        // 5. Handle Numbers & Currency
         if (col.type === "number" || (col.format && col.format.includes("$"))) {
             const num = parseFloat(input.value);
             return isNaN(num) ? null : num;
         }
 
-        // Handle Dates, Dropdowns, and Strings
-        // HTML5 date inputs (YYYY-MM-DD) are natively accepted by Excel
+        // 6. Handle Dates, Dropdowns, and Strings
         return input.value;
     });
+
+
 
     try {
         // 2. AUTH: Get fresh token

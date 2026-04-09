@@ -43,13 +43,14 @@ export const Labels = {
         
         const config = { 
             fps: 20,                       // Faster sampling for workshop movement
-            qrbox: 250, // Fixed square for stability
+            qrbox: {width:250, height: 250}, // Fixed square for stability
             aspectRatio: 1.0,
             videoConstraints: {
                 facingMode: "environment",   // Forces the back camera on phones
-                width: {ideal: 1920},
-                height: {ideal: 1080},
-                focusMode: "continuous" // Forces iphone to stay sharp
+                width: {ideal: 1280},
+                height: {ideal: 720},
+                focusMode: {ideal: "continuous"},// Forces iphone to stay sharp
+                whiteBalanceMode: {ideal: "continuous"}
             },
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true // Leverage native browser support if available
