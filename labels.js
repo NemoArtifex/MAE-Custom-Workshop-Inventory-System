@@ -59,6 +59,9 @@ export const Labels = {
             { facingMode: "environment" }, 
             config,
             (decodedText) => {
+                // RUGGED: Add a physical beep or console log here so you KNOW it saw it
+                console.log("!!! MAE SYSTEM: QR CODE DETECTED !!!", decodedText);
+                
                 // SUCCESS: Found a code
                 const cleanId = this.extractCleanId(decodedText);
                 
