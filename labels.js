@@ -42,12 +42,10 @@ export const Labels = {
         const html5QrCode = new Html5Qrcode("reader");
         
         const config = { 
-            fps: 10, 
-            qrbox: (viewfinderWidth, viewfinderHeight) => ({
-                 width: viewfinderWidth *0.7,
-                 height: viewfinderHeight * 0.7
-                }),
+            fps: 20, 
+            qrbox: {width: 250, height: 250},
             aspectRatio: 1.0,
+            disableFlip: true, //Ensures image is not reversed
             videoConstraints: {
                 facingMode: "environment" 
             }
