@@ -50,11 +50,21 @@ async function startup() {
 
         if (account) {
            updateUIForLoggedInUser(account); 
+
+        // Labels: Checks if app opened by QR code 
+        const urlParams = new URLSearchParams(window.location.search);
+        const lookupId = urlParams.get('lookup');
+
+        if (lookupId) {
+            console.log("MAE System: Scanned ID detected on startup:", lookupId);
+            // We delay slightly to ensure MSAL and Graph are fully ready
+            setTimeout(() => handleUniversalLookup(lookupId), 500);
+
         } else {
             const authButton = document.getElementById("auth-btn");
             authButton.addEventListener("click", signIn);
         }
-
+    }
     } catch (error) {
         console.error("Error during MSAL startup:", error);
     }
@@ -552,6 +562,16 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
+    
+    //  Button scan Logic
+    else if (btn.id === 'btn-scan') {
+        // Call your new Labels module
+        Labels.startScanner((cleanId) => {
+            // Once scanned, run the lookup
+            handleUniversalLookup(cleanId);
+        });
+    }
+
     // CONSOLIDATED PRINT LOGIC: Handles both Table and Manual Log
     else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
@@ -1044,6 +1064,58 @@ async function handleQuickUpdate(tableName) {
 
 // ========END handleQuickUpdate ============
 
+// ===== Universal Search logic for labels ====
+
+async function handleUniversalLookup(scannedId) {
+    UI.showLoading("Searching Shop Records...");
+    
+    // The specific tables that support scannable labels
+    const tables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+    
+    try {
+        for (const tableName of tables) {
+            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            
+            // Get fresh token and fetch data
+            const tokenResponse = await myMSALObj.acquireTokenSilent({
+                scopes: ["Files.ReadWrite"],
+                account: myMSALObj.getAllAccounts()[0]
+            });
+
+            //const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Find the row where mae_id (Column 0) matches the scanned ID
+                const matchedRow = data.value.find(row => {
+                    const rowId = row.values[0][0]; // mae_id is first column
+                    return rowId === scannedId;
+                });
+
+                if (matchedRow) {
+                    window.currentTable = tableName;
+                    UI.renderMobileScanCard(matchedRow.values[0], tableName, sheetConfig);
+                    return; // Stop searching once found
+                }
+            }
+        }
+        
+        // If we get here, no match was found
+        UI.showError(`Tag [${scannedId}] not found. Use 'Add Item' to link a new tag.`);
+        setTimeout(() => loadTableData("Master_Dashboard"), 3000);
+
+    } catch (error) {
+        console.error("MAE System: Lookup failed", error);
+        UI.showError("Network error during tag lookup.");
+    }
+}
+
+// ===== END Universal Search logic for labels =====
 
 
 window.handleEditClick = handleEditClick;

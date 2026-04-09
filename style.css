@@ -760,3 +760,60 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 }
 /* ==== END Visual Grouping for Repairs ====*/
 
+/*========= Mobile Card for Scanning Feature ========*/
+/* Scanner Styling */
+#reader {
+    width: 100%;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Mobile Card Layout */
+.mobile-scan-card {
+    padding: 20px;
+    background: #fff;
+    border-top: 5px solid var(--accent);
+}
+
+.mobile-field-group {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.mobile-field-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.mobile-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+/*==== END Mobile Card for Scanning Feature =======*/
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column; /* Stacks sidebar on top of content */
+        overflow-y: auto;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+    }
+    main {
+        padding: 10px;
+    }
+    .command-bar {
+        padding: 10px;
+        height: auto;
+        flex-wrap: wrap; /* Allows buttons to wrap to a second line */
+    }
+}

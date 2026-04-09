@@ -336,6 +336,7 @@ renderMenu(activeWorksheets, onClickCallback) {
     // Add Add/Edit/Quick Update for non-dashboard tables
     if (!dashboardTables.includes(normalizedName)) {
         buttons += `
+            <button class="action-btn" id="btn-scan" style="background:#8e44ad;">📷 Scan Item</button>
             <button class="action-btn" id="btn-add">Add Item</button>
             <button class="action-btn" id="btn-edit">Edit Table</button>
         `;
@@ -850,8 +851,88 @@ async showAnnualOverhead() {
         console.error("MAE System: Chart Load Error", error);
         UI.showError("Could not load overhead breakdown. Ensure Excel formulas are intact.");
     }
-}
+},
 //===== END SHOW ANNUAL OVERHEAD ===========
+
+//============ LABEL LOGIC: Scanner Viewfinder and Mobile Card View  =============
+// Renders the camera viewfinder
+renderScannerUI() {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+        
+    title.innerText = "Scanning Tag... Center code in box";
+        
+    container.innerHTML = `
+        <div class="scanner-wrapper">
+            <div id="reader"></div>
+            <div class="scanner-instructions">
+                <p>Align the QR code within the frame.</p>
+                <button class="action-btn cancel-btn" onclick="location.reload()">Cancel Scan</button>
+            </div>
+        </div>
+    `;
+},
+
+// Renders the specialized vertical card for mobile scans
+renderMobileScanCard(rowData, tableName, sheetConfig) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+        
+    // MAE System Blueprint: Define which headers show on mobile for each table
+    const mobileManifest = {
+        "Resell_Inventory": ["Asset_ID", "Item Name", "Current Status", "Target Sale Price", "Actual Sale Price"],
+        "Shop_Machinery": ["Asset_ID", "Machine Name/Model", "Manufacturer/Brand", "Serial Number", "Condition"],
+        "Shop_Power_Tools": ["Asset_ID", "Tool Name/Model", "Functional Category", "Operational Category", "Power Source", "Condition"],
+        "Shop_Hand_Tools": ["Asset_ID", "Tool Name/Model", "Category", "Condition", "Quantity"],
+        "Shop_Consumables": ["Item Name", "Asset_ID", "Category", "Unit of Measure", "Current Stock", "Reorder Point"]
+    };
+
+    const allowedHeaders = mobileManifest[tableName] || [];
+    title.innerText = `Update: ${sheetConfig.tabName}`;
+
+    let html = `<div class="mobile-scan-card">`;
+        
+    sheetConfig.columns.forEach((col, index) => {
+        if (allowedHeaders.includes(col.header)) {
+            let displayVal = rowData[index] ?? "---";
+                
+            // Use your existing formatCurrency helper for prices
+            if (col.format && col.format.includes("$")) {
+                displayVal = formatCurrency(displayVal);
+            }
+
+            html += `
+                <div class="mobile-field-group">
+                    <label>${col.header}</label>
+                    <div class="mobile-value">${displayVal}</div>
+                </div>`;
+        }
+    });
+
+    // ACTION BUTTONS: Built large for "Shop Hands"
+    html += `
+        <div class="mobile-card-actions">
+            <button class="action-btn" id="btn-edit" 
+                    style="width: 100%; margin-bottom: 10px; background: var(--accent);">
+                ✏️ Edit Item
+            </button>
+            <button class="action-btn cancel-btn" 
+                    style="width: 100%;" 
+                    onclick="loadTableData('Master_Dashboard')">
+                Back to Dashboard
+            </button>
+        </div>
+    </div>`;
+
+    container.innerHTML = html;
+        
+    // Inject the command bar to keep the app flow consistent
+    this.renderCommandBar(tableName);
+},
+
+//========= END LABEL LOGIC =============
+
+
 };
 
 window.UI = UI;
