@@ -817,3 +817,57 @@ td[data-col-index].editable-cell:has(.edit-number-input),
         flex-wrap: wrap; /* Allows buttons to wrap to a second line */
     }
 }
+
+/*====== Mobile phone specific adjustments ======*/
+/* RUGGED MOBILE OVERRIDE */
+@media (max-width: 768px) {
+    html, body {
+        overflow: auto !important; /* Unlock the "Nuclear Lock" */
+        height: auto;
+    }
+
+    body {
+        flex-direction: column; /* Stack Sidebar above Main content */
+    }
+
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    main {
+        padding: 10px;
+        height: auto;
+        overflow: visible !important;
+    }
+
+    #table-container {
+        overflow-x: auto; /* Allow horizontal swiping for the Excel table */
+        overflow-y: hidden; 
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 100px; /* Space for the Command Bar at the bottom */
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr; /* Stack dashboard cards in one vertical column */
+    }
+
+    .command-bar {
+        position: fixed; /* Keep buttons stuck to the bottom of the phone screen */
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        flex-wrap: wrap; /* Let buttons wrap to 2 lines if needed */
+        justify-content: center;
+    }
+
+    .action-btn {
+        padding: 12px 15px; /* Bigger touch targets for shop hands */
+        font-size: 0.9rem;
+    }
+}
+/*====== END Mobile phone specific adjustments ======*/
