@@ -43,10 +43,10 @@ export const Labels = {
         
         const config = { 
             fps: 10, 
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
+            qrbox: (viewfinderWidth, viewfinderHeight) => ({
                  width: viewfinderWidth *0.7,
                  height: viewfinderHeight * 0.7
-                },
+                }),
             aspectRatio: 1.0,
             videoConstraints: {
                 facingMode: "environment" 
