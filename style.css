@@ -761,12 +761,16 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 /* ==== END Visual Grouping for Repairs ====*/
 
 /*========= Mobile Card for Scanning Feature ========*/
-/* Scanner Styling */
+/* Scanner Viewport Styling */
 #reader {
     width: 100%;
-    background: #000;
+    max-width: 500px;
+    margin: 0 auto;
+    background: #000; /* Black background like a camera lens */
+    border: 4px solid var(--primary); /* MAE Navy frame */
     border-radius: 8px;
     overflow: hidden;
+    min-height: 300px; /* Forces the 'box' to appear even before camera loads */
 }
 
 /* Mobile Card Layout */
@@ -794,6 +798,28 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     font-size: 1.2rem;
     font-weight: 600;
     color: #333;
+}
+
+/* Container to center everything on the mobile screen */
+.scanner-wrapper {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.scanner-instructions {
+    text-align: center;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+/* Ensure the camera video fills the MAE frame */
+#reader video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover;
 }
 /*==== END Mobile Card for Scanning Feature =======*/
 
@@ -870,4 +896,6 @@ td[data-col-index].editable-cell:has(.edit-number-input),
         font-size: 0.9rem;
     }
 }
+
+
 /*====== END Mobile phone specific adjustments ======*/
