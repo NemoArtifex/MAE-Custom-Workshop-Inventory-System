@@ -16,12 +16,17 @@
  * Version 1.3.3: Added new worksheet: OVerhead Summary to support Master Dashboard Overhead calculations and source for graph
  * Version 1.3.4: Modified header in Master Dashboard table "Equipment With Operational Issues" and changed formula
  * Version 1.3.5: Added header in Master Dashboard for Maintenance Items card
- * Version xxxxxx
+ * Version 1.4:  Added features: enableScanning: true to support label scanning
+ * Version xxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.3.5",
+    version: "1.4",
+
+    features: {
+        enableScanning: true
+    },
     
     worksheets: [
         {
