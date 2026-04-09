@@ -34,41 +34,46 @@ let account = null;
 
 async function startup() {
     try {
-        //Intialize the PublicClientApplication
+        // Initialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
         myMSALObj = new window.msal.PublicClientApplication(msalConfig);
 
         const response = await myMSALObj.handleRedirectPromise();
     
         if (response) {
-        account = response.account;
-        console.log("Login successful via redirect. Account:", account.username);
+            account = response.account;
+            console.log("Login successful via redirect. Account:", account.username);
         } else {
             const accounts = myMSALObj.getAllAccounts();
             if (accounts.length > 0) account = accounts[0];
         }
 
         if (account) {
-           updateUIForLoggedInUser(account); 
+            // SCENARIO 1: USER IS LOGGED IN
+            updateUIForLoggedInUser(account); 
 
-        // Labels: Checks if app opened by QR code 
-        const urlParams = new URLSearchParams(window.location.search);
-        const lookupId = urlParams.get('lookup');
+            // Labels: Check if app opened by QR code 
+            const urlParams = new URLSearchParams(window.location.search);
+            const lookupId = urlParams.get('lookup');
 
-        if (lookupId) {
-            console.log("MAE System: Scanned ID detected on startup:", lookupId);
-            // We delay slightly to ensure MSAL and Graph are fully ready
-            setTimeout(() => handleUniversalLookup(lookupId), 500);
-
+            if (lookupId) {
+                console.log("MAE System: Scanned ID detected on startup:", lookupId);
+                setTimeout(() => handleUniversalLookup(lookupId), 500);
+            }
         } else {
+            // SCENARIO 2: USER IS NOT LOGGED IN
+            // The button listener must be attached here
             const authButton = document.getElementById("auth-btn");
-            authButton.addEventListener("click", signIn);
+            if (authButton) {
+                authButton.addEventListener("click", signIn);
+                console.log("MAE System: Auth button ready.");
+            }
         }
-    }
     } catch (error) {
         console.error("Error during MSAL startup:", error);
     }
 }
+
 //========END STARTUP LOGIC ===========
 startup();
 
