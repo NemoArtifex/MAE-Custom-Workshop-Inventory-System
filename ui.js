@@ -304,7 +304,7 @@ renderMenu(activeWorksheets, onClickCallback) {
 //======END setHealthStatus =========
 //================RENDER COMMAND BAR==========
  
-    renderCommandBar(tableName) {
+renderCommandBar(tableName) {
     const container = document.getElementById("action-bar-zone");
     if (!container) return;
 
@@ -316,7 +316,6 @@ renderMenu(activeWorksheets, onClickCallback) {
     const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
     if (!sheetConfig) return; 
         
-
     const normalizedName = tableName.trim().toLowerCase();
     const dashboardTables = ["master_dashboard", "test_dashboard", "master dashboard", "test dashboard"];
 
@@ -328,20 +327,32 @@ renderMenu(activeWorksheets, onClickCallback) {
     // 4. Build the Button HTML
     let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
 
-    // Add Manual Log button if keywords match
     if (hasManualField) {
         buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
     }
 
-    // Add Add/Edit/Quick Update for non-dashboard tables
     if (!dashboardTables.includes(normalizedName)) {
+        // === INSERTED LOGIC START ===
+        // Define the only five tables allowed to show the Scan button
+        const scannableTables = [
+            "Shop_Machinery", 
+            "Shop_Power_Tools", 
+            "Shop_Hand_Tools", 
+            "Shop_Consumables", 
+            "Resell_Inventory"
+        ];
+        
+        // Check if current table is in the list AND feature is enabled in config
+        if (scannableTables.includes(tableName) && config.features?.enableScanning) {
+            buttons += `<button class="action-btn" id="btn-scan" style="background:#8e44ad;">📷 Scan Item</button>`;
+        }
+        // === INSERTED LOGIC END ===
+
         buttons += `
-            <button class="action-btn" id="btn-scan" style="background:#8e44ad;">📷 Scan Item</button>
             <button class="action-btn" id="btn-add">Add Item</button>
             <button class="action-btn" id="btn-edit">Edit Table</button>
         `;
 
-        // Only show Quick Update if it's an inventory-style sheet
         if (hasManualField) {
             buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
@@ -349,7 +360,7 @@ renderMenu(activeWorksheets, onClickCallback) {
 
     // 5. Inject into the UI
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-},
+},  
 
 //========== END RENDER COMMAND BAR ================
 
