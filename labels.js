@@ -42,14 +42,17 @@ export const Labels = {
         const html5QrCode = new Html5Qrcode("reader");
         
         const config = { 
-            fps: 20, 
-            qrbox: {width: 250, height: 250},
+            fps: 20,                       // Faster sampling for workshop movement
+            qrbox: { width: 250, height: 250 }, // Fixed square for stability
             aspectRatio: 1.0,
-            disableFlip: true, //Ensures image is not reversed
             videoConstraints: {
-                facingMode: "environment" 
-            }
+                facingMode: "environment"   // Forces the back camera on phones
+            },
+            disableFlip: true,
+            // RUGGED: This helps the engine focus specifically on QR codes
+            formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
         };
+        
 
         // 3. Start the Camera
         html5QrCode.start(
