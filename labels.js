@@ -27,33 +27,51 @@ export const Labels = {
 
     // 2. START SCANNER: Opens the phone camera
     startScanner: function(onSuccessCallback) {
-        // We'll create this UI element in ui.js next
+        // 1. Prepare the UI
         UI.renderScannerUI(); 
 
-        // Initialize the library you added to index.html
+        // 2. Initialize the scanner instance
         const html5QrCode = new Html5Qrcode("reader");
         
         const config = { 
             fps: 10, 
             qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0 
+            aspectRatio: 1.0,
+            videoConstraints: {
+                facingMode: "environment" 
+            }
         };
 
+        // 3. Start the Camera
         html5QrCode.start(
-            { facingMode: "environment" }, // Use back camera
+            { facingMode: "environment" }, 
             config,
             (decodedText) => {
+                // SUCCESS: Found a code
                 const cleanId = this.extractCleanId(decodedText);
                 
-                // Stop camera to save battery/resources
                 html5QrCode.stop().then(() => {
                     console.log(`MAE System: Scan successful. ID: ${cleanId}`);
                     onSuccessCallback(cleanId);
-                });
+                }).catch(err => console.warn("MAE System: Error stopping scanner", err));
             }
-        ).catch(err => {
+        ).then(() => {
+            // RUGGED IOS FIX: Once camera starts, force the video to play inline 
+            // inside your Navy box instead of going full-screen or staying black.
+            const videoElement = document.querySelector('#reader video');
+            if (videoElement) {
+                videoElement.setAttribute('playsinline', 'true');
+                videoElement.setAttribute('webkit-playsinline', 'true');
+                videoElement.style.display = "block";
+                
+                // Remove the "Initializing" message from ui.js once video is live
+                const loader = document.getElementById("loading-message");
+                if (loader) loader.style.display = "none";
+            }
+            console.log("MAE System: Camera feed active.");
+        }).catch(err => {
             console.error("MAE System: Camera access failed.", err);
-            UI.showError("Camera error. Please ensure permissions are granted.");
+            UI.showError("Camera error. Please ensure Safari permissions are granted.");
         });
     }
 };
