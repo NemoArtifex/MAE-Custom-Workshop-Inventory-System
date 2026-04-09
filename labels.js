@@ -26,83 +26,78 @@ export const Labels = {
     },
 
     // 2. START SCANNER: Opens the phone camera
-    startScanner: function(onSuccessCallback) {
+startScanner: function(onSuccessCallback) {
+    // Check if the library loaded (now locally)
+    if (typeof Html5Qrcode === 'undefined') {
+        UI.showError("Scanner engine not loaded.");
+        return;
+    }
 
-        // Check if the library loaded from the CDN
-        if (typeof Html5Qrcode === 'undefined') {
-            UI.showError("Scanner engine not loaded. Check internet connection.");
-            console.error("MAE System: html5-qrcode library is missing.");
-            return;
+    // 1. Prepare the UI
+    UI.renderScannerUI(); 
+
+    // 2. Initialize the scanner instance
+    const html5QrCode = new Html5Qrcode("reader");
+    
+    // RUGGED CONFIG: Keep it simple for the initial start to avoid Safari crashes
+    const config = { 
+        fps: 20,                       
+        qrbox: { width: 250, height: 250 }, 
+        aspectRatio: 1.0,
+        disableFlip: true
+    };
+
+    // 3. Start the Camera
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {  
+            const cleanId = this.extractCleanId(decodedText);              
+            html5QrCode.stop().then(() => onSuccessCallback(cleanId));
+        }
+    ).then(() => {
+        // RUGGED IOS FIX: Prevent full-screen hijacking
+        const videoElement = document.querySelector('#reader video');
+        if (videoElement) {
+            videoElement.setAttribute('playsinline', 'true');
+            videoElement.setAttribute('webkit-playsinline', 'true');
+            videoElement.style.display = "block";
         }
 
-        // 1. Prepare the UI
-        UI.renderScannerUI(); 
+        // 4. THE HARDWARE UPGRADE (Resolution & Torch)
+        // We wait a full 1000ms for Safari to stabilize before "tuning" the lens
+        setTimeout(async () => {
+            try {
+                const track = html5QrCode.getRunningTrack();
+                if (track) {
+                    const capabilities = track.getCapabilities();
+                    
+                    const constraints = { advanced: [] };
 
-        // 2. Initialize the scanner instance
-        const html5QrCode = new Html5Qrcode("reader");
-        
-        const config = { 
-            fps: 20,                       // Faster sampling for workshop movement
-            qrbox: {width:250, height: 250}, // Fixed square for stability
-            aspectRatio: 1.0,
-            videoConstraints: {
-                facingMode: "environment",   // Forces the back camera on phones
-                width: {ideal: 1280},
-                height: {ideal: 720},
-            },
-            disableFlip: true,
-            formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
-        };
-        
+                    // Enable Flashlight if supported (Essential for paper contrast)
+                    if (capabilities.torch) {
+                        constraints.advanced.push({ torch: true });
+                    }
 
-        // 3. Start the Camera
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            config,
-            (decodedText) => {
-                // RUGGED: Add a physical beep or console log here so you KNOW it saw it
-                console.log("!!! MAE SYSTEM: QR CODE DETECTED !!!", decodedText);
-                
-                // SUCCESS: Found a code
-                const cleanId = this.extractCleanId(decodedText);
-                
-                html5QrCode.stop().then(() => {
-                    console.log(`MAE System: Scan successful. ID: ${cleanId}`);
-                    onSuccessCallback(cleanId);
-                }).catch(err => console.warn("MAE System: Error stopping scanner", err));
+                    // Force HD for sharp paper scanning
+                    constraints.advanced.push({ width: 1280, height: 720 });
+
+                    await track.applyConstraints(constraints);
+                    console.log("MAE System: Hardware optimized (HD + Torch).");
+                }
+            } catch (e) {
+                console.warn("MAE System: Hardware optimization ignored by Safari.", e);
             }
-        ).then(() => {
-            // RUGGED IOS FIX: Once camera starts, force the video to play inline 
-            // inside your Navy box instead of going full-screen or staying black.
-            const videoElement = document.querySelector('#reader video');
-            if (videoElement) {
-                videoElement.setAttribute('playsinline', 'true');
-                videoElement.setAttribute('webkit-playsinline', 'true');
-                videoElement.style.display = "block";
-                
-                // Remove the "Initializing" message from ui.js once video is live
-                const loader = document.getElementById("loading-message");
-                if (loader) loader.style.display = "none";
-            }
+        }, 1000); 
 
-            // RUGGED FLASH LIGHT FIX
-            // Check if the camera supports a torch (flashlight)
-            const tracks = html5QrCode.getRunningTrack();
-            if (tracks && tracks.getCapabilities().torch) {
-                    // We wait 500ms for the camera to fully stabilize before firing the flash
-                setTimeout(() => {
-                    tracks.applyConstraints({
-                        advanced: [{ torch: true }]
-                    }).catch(e => console.warn("Flashlight failed:", e));
-                }, 500);
-            }
+        console.log("MAE System: Camera feed active.");
 
-            console.log("MAE System: Camera feed active.");
-        }).catch(err => {
-            console.error("MAE System: Camera access failed.", err);
-            UI.showError("Camera error. Please ensure Safari permissions are granted.");
-        });
-    }
+    }).catch(err => {
+        console.error("MAE System: Safari Handshake Failed:", err);
+        // This clears the "Initialization" state and lets the user try again
+        UI.showError("Camera error. Please refresh the page and ensure Safari permissions are granted.");
+    });
+}
 };
 
 window.Labels = Labels; 
