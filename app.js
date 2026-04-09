@@ -1,5 +1,6 @@
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
+import { Labels } from './labels.js';
 const fileName = maeSystemConfig.spreadsheetName;
 window.currentTable = "";
 // =============CONFIGURATION: The "Blueprint"  ======================
@@ -455,7 +456,6 @@ async function loadTableData(tableName, filterType = null) {
     // Draw command bar at the bottom
     UI.renderCommandBar(tableName);
 
-    reattachScanListener();
 
    } catch (error) {
     console.error("MAE System: Error loading table data:", error);
@@ -1124,19 +1124,7 @@ async function handleUniversalLookup(scannedId) {
 
 // ===== END Universal Search logic for labels =====
 
-//======== reattachScanListener function =========
-function reattachScanListener() {
-    const scanBtn = document.getElementById('btn-scan');
-    if (scanBtn) {
-        scanBtn.onclick = () => {
-            console.log("MAE System: Scan initiated.");
-            Labels.startScanner((scannedId) => {
-                handleUniversalLookup(scannedId);
-            });
-        };
-    }
-}
-//====== END reattachScanListener function ==========
+
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
