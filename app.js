@@ -1,3 +1,5 @@
+
+//======END FUNCTION verifySpreadSheetExists =============
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 import { Labels } from './labels.js';
@@ -198,8 +200,6 @@ async function verifySpreadsheetExists(){
         console.error("Verification Error:", error);
     }
 }
-//======END FUNCTION verifySpreadSheetExists =============
-
 //=========FUNCTION createInitialWorkbook =============
 // Practical: Instead of building via API (brittle), we upload your Master Template.
 async function createInitialWorkbook(accessToken) {

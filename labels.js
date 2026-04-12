@@ -1,23 +1,19 @@
 /**
  * labels.js - MAE Custom Digital Solutions
- * Purpose: Handle QR scanning and ID extraction.
- * Philosophy: Practical & Rugged.
+ * Purpose: Handle Industrial HID Scanning (Inateck-75S) and ID extraction.
+ * Philosophy: Practical, Functional, Simple, Rugged.
  */
 
 import { UI } from './ui.js';
 
 export const Labels = {
-    // 1. EXTRACT ID: This makes the code flexible for any label (ToteScan, Metal, etc.)
-    // It takes a raw string (like a URL) and returns just the ID.
+    // 1. EXTRACT ID: Remains flexible for URL-based or Raw tags
     extractCleanId: function(decodedText) {
         try {
-            // If the label is a URL (like ToteScan)
             if (decodedText.startsWith("http")) {
                 const url = new URL(decodedText);
-                // Grabs the ID from the end of the path or a query param
                 return url.pathname.split('/').pop() || url.searchParams.get("id");
             }
-            // If it's just a raw text ID (like your metallized tags)
             return decodedText.trim();
         } catch (e) {
             console.warn("MAE System: Error parsing ID, using raw text.");
@@ -25,79 +21,46 @@ export const Labels = {
         }
     },
 
-    // 2. START SCANNER: Opens the phone camera
-startScanner: function(onSuccessCallback) {
-    // Check if the library loaded (now locally)
-    if (typeof Html5Qrcode === 'undefined') {
-        UI.showError("Scanner engine not loaded.");
-        return;
-    }
+    // 2. INDUSTRIAL HID LISTENER
+    // This listens for the "keystroke burst" from the Inateck-75S
+    initHIDScanner: function(onSuccessCallback) {
+        let buffer = "";
+        let lastKeyTime = Date.now();
 
-    // 1. Prepare the UI
-    UI.renderScannerUI(); 
+        console.log("MAE System: Industrial HID Listener Active.");
 
-    // 2. Initialize the scanner instance
-    const html5QrCode = new Html5Qrcode("reader");
-    
-    // RUGGED CONFIG: Keep it simple for the initial start to avoid Safari crashes
-    const config = { 
-        fps: 20,                       
-        qrbox: { width: 250, height: 250 }, 
-        aspectRatio: 1.0,
-        disableFlip: true
-    };
-
-    // 3. Start the Camera
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        (decodedText) => {  
-            const cleanId = this.extractCleanId(decodedText);              
-            html5QrCode.stop().then(() => onSuccessCallback(cleanId));
-        }
-    ).then(() => {
-        // RUGGED IOS FIX: Prevent full-screen hijacking
-        const videoElement = document.querySelector('#reader video');
-        if (videoElement) {
-            videoElement.setAttribute('playsinline', 'true');
-            videoElement.setAttribute('webkit-playsinline', 'true');
-            videoElement.style.display = "block";
-        }
-
-        // 4. THE HARDWARE UPGRADE (Resolution & Torch)
-        // We wait a full 1000ms for Safari to stabilize before "tuning" the lens
-        setTimeout(async () => {
-            try {
-                const track = html5QrCode.getRunningTrack();
-                if (track) {
-                    const capabilities = track.getCapabilities();
-                    
-                    const constraints = { advanced: [] };
-
-                    // Enable Flashlight if supported (Essential for paper contrast)
-                    if (capabilities.torch) {
-                        constraints.advanced.push({ torch: true });
-                    }
-
-                    // Force HD for sharp paper scanning
-                    constraints.advanced.push({ width: 1280, height: 720 });
-
-                    await track.applyConstraints(constraints);
-                    console.log("MAE System: Hardware optimized (HD + Torch).");
-                }
-            } catch (e) {
-                console.warn("MAE System: Hardware optimization ignored by Safari.", e);
+        document.addEventListener('keydown', (e) => {
+            const currentTime = Date.now();
+            
+            // If typing is slow (>100ms between keys), it's a human, not the scanner.
+            if (currentTime - lastKeyTime > 100) {
+                buffer = ""; 
             }
-        }, 1000); 
+            lastKeyTime = currentTime;
 
-        console.log("MAE System: Camera feed active.");
+            // Inateck-75S sends 'Enter' at the end of a barcode scan
+            if (e.key === 'Enter') {
+                if (buffer.length > 2) { 
+                    const cleanId = this.extractCleanId(buffer);
+                    onSuccessCallback(cleanId);
+                    buffer = ""; 
+                    e.preventDefault(); 
+                }
+            } else {
+                // Buffer the keys as they come in fast
+                if (e.key.length === 1) {
+                    buffer += e.key;
+                }
+            }
+        });
+    },
 
-    }).catch(err => {
-        console.error("MAE System: Safari Handshake Failed:", err);
-        // This clears the "Initialization" state and lets the user try again
-        UI.showError("Camera error. Please refresh the page and ensure Safari permissions are granted.");
-    });
-}
+    // 3. UI HELPER
+    focusScanner: function() {
+        console.log("MAE System: Awaiting Barcode...");
+    }
 };
 
-window.Labels = Labels; 
+window.Labels = Labels;
+
+
