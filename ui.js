@@ -868,83 +868,67 @@ async showAnnualOverhead() {
 },
 //===== END SHOW ANNUAL OVERHEAD ===========
 
-//============ LABEL LOGIC: Scanner Viewfinder and Mobile Card View  =============
-// Renders the camera viewfinder
-renderScannerUI() {
-    const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
-        
-    title.innerText = "Scanning Tag... Center code in box";
-        
-    container.innerHTML = `
-        <div class="scanner-wrapper">
-            <div id="reader"></div>
-            <div class="scanner-instructions">
-                <p>Align the QR code within the frame.</p>
-                <button class="action-btn cancel-btn" onclick="location.reload()">Cancel Scan</button>
-            </div>
-        </div>
-    `;
-},
 
-// Renders the specialized vertical card for mobile scans
-renderMobileScanCard(rowData, tableName, sheetConfig) {
+//============ INDUSTRIAL SCAN RESULT UI (Rugged Tablet Optimized) =============
+
+renderScanResultCard(rowData, tableName, sheetConfig) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
         
-    // MAE System Blueprint: Define which headers show on mobile for each table
-    const mobileManifest = {
-        "Resell_Inventory": ["Asset_ID", "Item Name", "Current Status", "Target Sale Price", "Actual Sale Price"],
-        "Shop_Machinery": ["Asset_ID", "Machine Name/Model", "Manufacturer/Brand", "Serial Number", "Condition"],
-        "Shop_Power_Tools": ["Asset_ID", "Tool Name/Model", "Functional Category", "Operational Category", "Power Source", "Condition"],
-        "Shop_Hand_Tools": ["Asset_ID", "Tool Name/Model", "Category", "Condition", "Quantity"],
-        "Shop_Consumables": ["Item Name", "Asset_ID", "Category", "Unit of Measure", "Current Stock", "Reorder Point"]
+    // Define headers for high situational awareness on the shop floor
+    const industrialManifest = {
+        "Resell_Inventory": ["Asset ID", "Item Name", "Current Status", "Target Sale Price"],
+        "Shop_Machinery": ["Machine Name/Model", "Manufacturer/Brand", "Serial Number", "Condition"],
+        "Shop_Power_Tools": ["Tool Name/Model", "Power Source", "Condition"],
+        "Shop_Hand_Tools": ["Tool Name/Model", "Category", "Condition", "Quantity"],
+        "Shop_Consumables": ["Item Name", "Current Stock", "Reorder Point", "Unit of Measure"]
     };
 
-    const allowedHeaders = mobileManifest[tableName] || [];
-    title.innerText = `Update: ${sheetConfig.tabName}`;
+    const allowedHeaders = industrialManifest[tableName] || [];
+    title.innerText = `Scan Found: ${sheetConfig.tabName}`;
 
-    let html = `<div class="mobile-scan-card">`;
+    let html = `
+        <div class="industrial-card" style="padding: 30px; border-top: 8px solid var(--accent); background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+    `;
         
     sheetConfig.columns.forEach((col, index) => {
         if (allowedHeaders.includes(col.header)) {
             let displayVal = rowData[index] ?? "---";
                 
-            // Use your existing formatCurrency helper for prices
             if (col.format && col.format.includes("$")) {
                 displayVal = formatCurrency(displayVal);
             }
 
             html += `
-                <div class="mobile-field-group">
-                    <label>${col.header}</label>
-                    <div class="mobile-value">${displayVal}</div>
+                <div class="data-point">
+                    <label style="display:block; font-size: 0.85rem; color: #7f8c8d; font-weight: bold; text-transform: uppercase;">${col.header}</label>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${displayVal}</div>
                 </div>`;
         }
     });
 
-    // ACTION BUTTONS: Built large for "Shop Hands"
+    html += `</div>`; 
+
     html += `
-        <div class="mobile-card-actions">
-            <button class="action-btn" id="btn-edit" 
-                    style="width: 100%; margin-bottom: 10px; background: var(--accent);">
-                ✏️ Edit Item
+        <div style="display: flex; gap: 15px;">
+            <button class="action-btn" 
+                    style="flex: 2; height: 70px; font-size: 1.3rem; background: var(--accent);" 
+                    onclick="window.handleEditClick('${tableName}')">
+                ✏️ Update Record
             </button>
-            <button class="action-btn cancel-btn" 
-                    style="width: 100%;" 
-                    onclick="loadTableData('Master_Dashboard')">
-                Back to Dashboard
+            <button class="action-btn" 
+                    style="flex: 1; height: 70px; font-size: 1.3rem; background: #7f8c8d;" 
+                    onclick="window.loadTableData('Master_Dashboard')">
+                Done
             </button>
         </div>
     </div>`;
 
     container.innerHTML = html;
-        
-    // Inject the command bar to keep the app flow consistent
     this.renderCommandBar(tableName);
-},
-
-//========= END LABEL LOGIC =============
+}
+//========= END SCAN RESULT UI LOGIC =============
 
 
 };
