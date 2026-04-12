@@ -34,7 +34,6 @@ const msalConfig = {
 
 export let myMSALObj;
 let account = null;
-
 async function startup() {
     try {
         // Initialize the PublicClientApplication
@@ -55,17 +54,17 @@ async function startup() {
             // SCENARIO 1: USER IS LOGGED IN
             updateUIForLoggedInUser(account); 
 
-            // Labels: Check if app opened by QR code 
-            const urlParams = new URLSearchParams(window.location.search);
-            const lookupId = urlParams.get('lookup');
+            // --- INDUSTRIAL SCANNER INTEGRATION ---
+            // Purged old URL/QR lookup logic.
+            // Initializing the background listener for the Inateck-75S.
+            console.log("MAE System: Initializing Industrial HID Listener...");
+            Labels.initHIDScanner((scannedId) => {
+                // When a scan is detected, it triggers the universal search
+                handleUniversalLookup(scannedId);
+            });
 
-            if (lookupId) {
-                console.log("MAE System: Scanned ID detected on startup:", lookupId);
-                setTimeout(() => handleUniversalLookup(lookupId), 500);
-            }
         } else {
             // SCENARIO 2: USER IS NOT LOGGED IN
-            // The button listener must be attached here
             const authButton = document.getElementById("auth-btn");
             if (authButton) {
                 authButton.addEventListener("click", signIn);
