@@ -1115,26 +1115,30 @@ async function handleQuickUpdate(tableName) {
 
 // ========END handleQuickUpdate ============
 
-// ===== Universal Search logic for labels ====
-
+// =========== UPDATED UNIVERSAL SCANNER LOOKUP ===========
 async function handleUniversalLookup(scannedId) {
-    UI.showLoading("Searching Shop Records...");
+    // RUGGED: Scanners often send hidden spaces or newline characters
+    const cleanId = scannedId.toString().trim();
+    console.log("MAE System: Searching Ledger for ID:", cleanId);
     
-    // The specific tables that support scannable labels
-    const tables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+    UI.showLoading(`Searching Shop Records for: ${cleanId}...`);
+    
+    // Priority order for search
+    const tables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
     
     try {
+        // Get fresh token once before the loop to save on resources
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account // Uses the account variable defined in app.js
+        });
+
         for (const tableName of tables) {
             const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
             
-            // Get fresh token and fetch data
-            const tokenResponse = await myMSALObj.acquireTokenSilent({
-                scopes: ["Files.ReadWrite"],
-                account: myMSALObj.getAllAccounts()[0]
-            });
-
-            
+            // API path to the specific table
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
+            
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
             });
@@ -1142,45 +1146,47 @@ async function handleUniversalLookup(scannedId) {
             if (response.ok) {
                 const data = await response.json();
                 
-                // Find the row where mae_id (Column 0) matches the scanned ID
+                // Find row where Column 0 (mae_id) matches
                 const matchedRow = data.value.find(row => {
-                    const rowId = row.values[0][0]; // mae_id is first column
-                    return rowId === scannedId;
+                    const rowId = row.values[0][0]; 
+                    return String(rowId).trim() === cleanId;
                 });
 
                 if (matchedRow) {
+                    console.log(`MAE System: Match found in ${tableName}`);
                     window.currentTable = tableName;
-                    UI.renderMobileScanCard(matchedRow.values[0], tableName, sheetConfig);
-                    return; // Stop searching once found
+                    
+                    // RUGGED TABLET UI: This replaces the 'Mobile' version
+                    UI.renderScanResultCard(matchedRow.values[0], tableName, sheetConfig);
+                    return; 
                 }
             }
         }
         
-        // If we get here, no match was found
+        // NO MATCH FOUND: Industrial Prompt
         UI.showError(`
             <div style="text-align:center; padding: 20px;">
                 <h3 style="color:var(--primary);">New Tag Detected</h3>
-                <p style="font-size: 1.2rem; font-weight: bold; background: #eee; padding: 10px; border-radius: 4px;">
-                    ID: ${scannedId}
-                </p>
-                <p>This ID is not in your system yet.</p>
-                <button class="action-btn" onclick="handleAddClickWithId('${scannedId}')" style="width:100%; margin-bottom:10px;">
-                    ➕ Add This Item Now
+                <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
+                    ID: ${cleanId}
+                </div>
+                <p>This ID is not recognized in the priority inventory lists.</p>
+                <button class="action-btn" onclick="handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
+                    ➕ Register New Item
                 </button>
                 <button class="action-btn cancel-btn" onclick="loadTableData('Master_Dashboard')" style="width:100%;">
-                    Cancel
+                    Discard Scan
                 </button>
             </div> 
         `);
-        
 
     } catch (error) {
         console.error("MAE System: Lookup failed", error);
-        UI.showError("Network error during tag lookup.");
+        UI.showError("Network error during lookup. Check workshop internet.");
     }
 }
+// =========== END UPDATED LOOKUP ===========
 
-// ===== END Universal Search logic for labels =====
 
 
 
