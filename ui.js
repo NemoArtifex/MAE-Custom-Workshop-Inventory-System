@@ -917,7 +917,7 @@ renderScanResultCard(rowData, tableName, sheetConfig) {
         <div style="display: flex; gap: 15px;">
             <button class="action-btn" 
                     style="flex: 2; height: 70px; font-size: 1.3rem; background: var(--accent);" 
-                    onclick="window.handleEditClick('${tableName}')">
+                    onclick="UI.openEditFormFromScan('${tableName}', ${JSON.stringify(rowData).replace(/"/g, '&quot;')})">
                 ✏️ Update Record
             </button>
             <button class="action-btn" 
@@ -930,6 +930,19 @@ renderScanResultCard(rowData, tableName, sheetConfig) {
 
     container.innerHTML = html;
     this.renderCommandBar(tableName);
+},
+openEditFormFromScan(tableName, rowData) {
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // RUGGED: Extract the persistent index from the row data if it exists, 
+    // or we may need to pass it from the search result. 
+    // For now, we trigger the standard AddForm but in 'edit' mode.
+    
+    this.renderEntryForm('edit', tableName, sheetConfig, async () => {
+        await processInPlaceTableUpdate(tableName); 
+    }, rowData[0], rowData); 
+    
+    // Note: rowData[0] is usually the index or mae_id needed for the update.
 }
 //========= END SCAN RESULT UI LOGIC =============
 
