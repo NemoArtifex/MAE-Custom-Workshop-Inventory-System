@@ -932,17 +932,20 @@ renderScanResultCard(rowData, tableName, sheetConfig) {
     this.renderCommandBar(tableName);
 },
 openEditFormFromScan(tableName, rowData) {
+    console.log("MAE System: Opening Edit Form for scanned item...");
     const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    // RUGGED: Extract the persistent index from the row data if it exists, 
-    // or we may need to pass it from the search result. 
-    // For now, we trigger the standard AddForm but in 'edit' mode.
-    
+    // RUGGED: We need to pass the actual row data and the callback
+    // NOTE: We use window.processInPlaceTableUpdate to sync the changes
     this.renderEntryForm('edit', tableName, sheetConfig, async () => {
-        await window.processInPlaceTableUpdate(tableName); 
-    }, rowData[0], rowData); 
-    
-    // Note: rowData[0] is usually the index or mae_id needed for the update.
+        
+        // This tells the app: "The user finished the form, now push the data"
+        if (window.processInPlaceTableUpdate) {
+            await window.processInPlaceTableUpdate(tableName);
+            this.exitEditMode(); 
+            window.loadTableData(tableName);
+        }
+    }, null, rowData); // Pass null for index here, rowData will fill the fields
 }
 //========= END SCAN RESULT UI LOGIC =============
 
