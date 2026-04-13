@@ -381,50 +381,53 @@ renderCommandBar(tableName) {
             <div class="form-grid">`;
 
     sheetConfig.columns.forEach((col, index) => {
-        // RUGGED: Skip ID, Hidden, and Formulas
-        if (!col.hidden && col.type !== "formula") {
-            const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
-            const val = (isEdit && existingData) ? existingData[index] : "";
+        const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+        const val = (isEdit && existingData) ? existingData[index] : "";
 
-            formHtml += `<div class="input-group"><label>${col.header}</label>`;
-
-            if (col.type === "dropdown") {
-                // INVIOLATE: Forces user to pick from config options only
-                formHtml += `
-                    <select id="${fieldId}" required>
-                        <option value="">-- Select ${col.header} --</option>
-                        ${col.options.map(opt => 
-                            `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
-                        ).join('')}
-                    </select>`;
-            } 
-            else if (col.type === "number") {
-                const isCurrency = col.format && col.format.includes("$");
-                
-                if (isCurrency) {
-                    // CURRENCY: Allows decimals, forces 2-decimal format on blur
-                    formHtml += `
-                        <input type="number" step="0.01" id="${fieldId}" value="${val}" 
-                            placeholder="0.00" 
-                            onblur="if(this.value) this.value = parseFloat(this.value).toFixed(2)">`;
-                } else {
-                    // INTEGER (Rugged): Blocks decimal/scientific keys, floors any pasted values
-                    formHtml += `
-                        <input type="number" step="1" id="${fieldId}" value="${val}" 
-                            placeholder="Whole number only"
-                            onkeydown="if(['.', ',', 'e', 'E'].includes(event.key)) event.preventDefault();"
-                            onblur="if(this.value) this.value = Math.floor(this.value)">`;
-                }
-            } 
-            else if (col.type === "date") {
-                formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
+        // RUGGED LOGIC: If the field is hidden or a formula, we still need the input 
+        // in the DOM for the data to be submitted, but we hide it from the user.
+            if (col.hidden || col.type === "formula") {
+                formHtml += `<input type="hidden" id="${fieldId}" value="${val}">`;
             } 
             else {
-                formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
+                // Render visible fields normally
+                    formHtml += `<div class="input-group"><label>${col.header}</label>`;
+
+                if (col.type === "dropdown") {
+                    // INVIOLATE: Forces user to pick from config options only
+                    formHtml += `
+                        <select id="${fieldId}" required>
+                            <option value="">-- Select ${col.header} --</option>
+                            ${col.options.map(opt => 
+                                `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
+                            ).join('')}
+                        </select>`;
+                } 
+                else if (col.type === "number") {
+                    const isCurrency = col.format && col.format.includes("$");
+                
+                    if (isCurrency) {
+                        formHtml += `
+                            <input type="number" step="0.01" id="${fieldId}" value="${val}" 
+                                placeholder="0.00" 
+                                onblur="if(this.value) this.value = parseFloat(this.value).toFixed(2)">`;
+                    } else {
+                        formHtml += `
+                            <input type="number" step="1" id="${fieldId}" value="${val}" 
+                                placeholder="Whole number only"
+                                onkeydown="if(['.', ',', 'e', 'E'].includes(event.key)) event.preventDefault();"
+                                onblur="if(this.value) this.value = Math.floor(this.value)">`;
+                    }
+                } 
+                else if (col.type === "date") {
+                    formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
+                } 
+                else {
+                    formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
+                }
+                formHtml += `</div>`;
             }
-            formHtml += `</div>`;
-        }
-    });
+        }); 
 
     formHtml += `</div>
         <div class="form-actions">
