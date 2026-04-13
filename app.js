@@ -658,17 +658,27 @@ async function handleAddClickWithId(scannedId) {
 window.confirmMobileAdd = async (scannedId) => {
     const tableName = document.getElementById('mobile-table-selector').value;
 
-    //  Clear the selector UI first so the Add Form has a clean stage
+    // 1. Clear the selector UI first so the Add Form has a clean stage
     document.getElementById("table-container").innerHTML = ""; 
 
+    // 2. Open the standard Add Form
     await handleAddClick(tableName);
+
+    // 3. RUGGED INJECTION: Wait for the DOM to render the form, then inject the ID
     setTimeout(() => {
-        const idInput = document.querySelector('input[id*="mae_id"]');
+        // Your code generates IDs using 'field-' + header name
+        const idInput = document.getElementById("field-mae_id");
+        
         if (idInput) {
             idInput.value = scannedId;
-            idInput.style.backgroundColor = "#e8f8f5";
+            // Visual confirmation for the developer/user that injection happened
+            idInput.style.backgroundColor = "#fffde7"; 
+            console.log("MAE System: Scanned ID successfully injected into field-mae_id:", scannedId);
+        } else {
+            // If this logs, we know the form didn't render the mae_id field
+            console.warn("MAE System: Could not find input field-mae_id. Check if it's rendered in ui.js");
         }
-    }, 600);
+    }, 500); // 500ms is usually the "sweet spot" for DOM rendering
 };
 //======= END Helper to bridge Scan to Add Form ===============
 
