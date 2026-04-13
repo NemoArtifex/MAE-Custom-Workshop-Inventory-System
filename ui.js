@@ -939,7 +939,7 @@ openEditFormFromScan(tableName, rowData) {
     // For now, we trigger the standard AddForm but in 'edit' mode.
     
     this.renderEntryForm('edit', tableName, sheetConfig, async () => {
-        await processInPlaceTableUpdate(tableName); 
+        await window.processInPlaceTableUpdate(tableName); 
     }, rowData[0], rowData); 
     
     // Note: rowData[0] is usually the index or mae_id needed for the update.

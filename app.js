@@ -1205,3 +1205,4 @@ window.requestDelete = requestDelete;
 window.loadTableData = loadTableData;
 window.handleAddClickWithId = handleAddClickWithId;
 window.handleUniversalLookup = handleUniversalLookup;
+window.processInPlaceTableUpdate = processInPlaceTableUpdate;
