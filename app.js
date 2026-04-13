@@ -1,5 +1,3 @@
-
-//======END FUNCTION verifySpreadSheetExists =============
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 import { Labels } from './labels.js';
