@@ -1212,8 +1212,8 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
         });
 
         // 2. Target the SPECIFIC row index
-        const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-        
+        //const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {
