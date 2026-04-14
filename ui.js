@@ -874,7 +874,7 @@ async showAnnualOverhead() {
 
 //============ INDUSTRIAL SCAN RESULT UI (Rugged Tablet Optimized) =============
 
-renderScanResultCard(rowData, tableName, sheetConfig) {
+renderScanResultCard(rowData, tableName, sheetConfig, rowIndex) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
         
@@ -917,7 +917,7 @@ renderScanResultCard(rowData, tableName, sheetConfig) {
         <div style="display: flex; gap: 15px;">
             <button class="action-btn" 
                     style="flex: 2; height: 70px; font-size: 1.3rem; background: var(--accent);" 
-                    onclick="UI.openEditFormFromScan('${tableName}', ${JSON.stringify(rowData).replace(/"/g, '&quot;')})">
+                    onclick="UI.openEditFormFromScan('${tableName}', ${JSON.stringify(rowData).replace(/"/g, '&quot;')}, ${rowIndex})">
                 ✏️ Update Record
             </button>
             <button class="action-btn" 
@@ -931,21 +931,17 @@ renderScanResultCard(rowData, tableName, sheetConfig) {
     container.innerHTML = html;
     this.renderCommandBar(tableName);
 },
-openEditFormFromScan(tableName, rowData) {
-    console.log("MAE System: Opening Edit Form for scanned item...");
+openEditFormFromScan(tableName, rowData, rowIndex) {
     const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    // RUGGED: We need to pass the actual row data and the callback
-    // NOTE: We use window.processInPlaceTableUpdate to sync the changes
     this.renderEntryForm('edit', tableName, sheetConfig, async () => {
-        
-        // This tells the app: "The user finished the form, now push the data"
-        if (window.processInPlaceTableUpdate) {
-            await window.processInPlaceTableUpdate(tableName);
-            this.exitEditMode(); 
+        // CALL THE NEW SINGLE ROW UPDATE INSTEAD OF THE TABLE SCRAPER
+        const success = await window.updateSingleRowFromForm(tableName, rowIndex, sheetConfig);
+        if (success) {
+            this.exitEditMode();
             window.loadTableData(tableName);
         }
-    }, null, rowData); // Pass null for index here, rowData will fill the fields
+    }, rowIndex, rowData); 
 }
 //========= END SCAN RESULT UI LOGIC =============
 

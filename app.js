@@ -1161,11 +1161,10 @@ async function handleUniversalLookup(scannedId) {
                 });
 
                 if (matchedRow) {
-                    console.log(`MAE System: Match found in ${tableName}`);
+                    console.log(`MAE System: Match found in ${tableName} at index ${matchedRow.index}`);
                     window.currentTable = tableName;
-                    
                     // RUGGED TABLET UI: This replaces the 'Mobile' version
-                    UI.renderScanResultCard(matchedRow.values[0], tableName, sheetConfig);
+                    UI.renderScanResultCard(matchedRow.values[0], tableName, sheetConfig, matchedRow.index);
                     return; 
                 }
             }
@@ -1195,6 +1194,46 @@ async function handleUniversalLookup(scannedId) {
 }
 // =========== END UPDATED LOOKUP ===========
 
+// ============ FUNCTION TO HANDLE SINGLE-ROW UPDATES===========
+async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
+    // 1. Gather data from the form fields
+    const rowData = sheetConfig.columns.map(col => {
+        const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+        const input = document.getElementById(fieldId);
+        
+        if (col.type === "formula") return null; // Don't overwrite formulas
+        return input ? input.value : "";
+    });
+
+    try {
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        // 2. Target the SPECIFIC row index
+        const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowData] })
+        });
+
+        if (response.ok) {
+            console.log("MAE System: Single row update successful.");
+            return true;
+        }
+    } catch (err) {
+        console.error("MAE System: Single row update failed", err);
+    }
+    return false;
+}
+//=========== END FUNCTION TO HANDLE SINGLE-ROW UPDATES ===========
+
 
 
 
@@ -1206,3 +1245,4 @@ window.loadTableData = loadTableData;
 window.handleAddClickWithId = handleAddClickWithId;
 window.handleUniversalLookup = handleUniversalLookup;
 window.processInPlaceTableUpdate = processInPlaceTableUpdate;
+window.updateSingleRowFromForm = updateSingleRowFromForm;
