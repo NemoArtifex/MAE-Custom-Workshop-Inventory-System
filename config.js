@@ -247,7 +247,7 @@ export const maeSystemConfig = {
                 { header: "Serial Number", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Location", type: "string", locked: false },
+                { header: "Location", type: "string", hidden: true, locked: false },
                 { header: "Location_ID", type: "string", locked: false},
                 { 
                     header: "Condition",
