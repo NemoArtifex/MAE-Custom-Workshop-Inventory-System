@@ -171,7 +171,7 @@ export const maeSystemConfig = {
                 {
                     header: "Maintenance Items Due in Next 30 Days",
                     type: "formula",
-                    formula: `=COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Complete], "FALSE")`.trim(),
+                    formula: `=COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Complete], FALSE)`.trim(),
                     format: "0",
                     locked: true
                 }
