@@ -888,7 +888,7 @@ async function submitNewRow(tableName, sheetConfig) {
 
         //  Handle Boolean Checkboxes
         if (col.type === "boolean") {
-            return input.checked ? "TRUE" : "FALSE"; // Excel prefers uppercase strings for formulas
+            return input.checked; 
         }
 
         // 6. Handle Dates, Dropdowns, and Strings
@@ -988,8 +988,8 @@ async function processInPlaceTableUpdate(tableName) {
             const checkbox = cell.querySelector('input[type="checkbox"]');
 
             if (checkbox) {
-                // Returns "TRUE" or "FALSE" as strings for Excel formula compatibility
-                val = checkbox.checked ? "TRUE" : "FALSE";
+                // Returns true or false as boolean values
+                val = checkbox.checked;
             } else if (select) {
                 val = select.value;
             } else if (input) {
