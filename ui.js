@@ -350,10 +350,6 @@ renderCommandBar(tableName) {
             "resell_inventory"
         ];
         
-        // Check if current table is scannable AND feature is enabled in config
-        if (scannableTables.includes(normalizedName) && config.features?.enableScanning) {
-            buttons += `<button class="action-btn" id="btn-scan" style="background:#8e44ad;">📷 Scan Item</button>`;
-        }
 
         buttons += `
             <button class="action-btn" id="btn-add">Add Item</button>
