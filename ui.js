@@ -190,11 +190,11 @@ renderMenu(activeWorksheets, onClickCallback) {
     // ============ END RENDER TABLE ============
 
     //=========== RENDER SUBDIVIDED REPAIRS Specialized Renderer ==============
-   renderSubdividedRepairs(rows, tableName, sheetConfig) {
+    renderSubdividedRepairs(rows, tableName, sheetConfig) {
     const container = document.getElementById("table-container");
     const conditions = ["Needs Repair", "Repair In-Progress", "Unusable/Junk"];
 
-    // NEW: Find the index of the mae_id column to protect it
+    // 1. PRIMARY KEY INTEGRITY: Find index of mae_id
     const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
 
     const condIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
@@ -228,7 +228,7 @@ renderMenu(activeWorksheets, onClickCallback) {
             groupRows.forEach(row => {
                 const rowData = row.values[0]; 
                 
-                // RUGGED: Extract actual ID and anchor to the row metadata
+                // 2. RUGGED ANCHOR: Attach ID to the row attribute
                 const rawMaeId = (idIndex !== -1) ? rowData[idIndex] : '';
 
                 html += `<tr data-row-index="${row.index}" data-mae-id="${rawMaeId}">`;
@@ -237,8 +237,14 @@ renderMenu(activeWorksheets, onClickCallback) {
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
                     const isEditable = !colDef.locked && colDef.type !== 'formula';
-                    const displayValue = rowData[idx] || ''; 
+                    let displayValue = rowData[idx] || ''; 
             
+                    // 3. BOOLEAN LOGIC: Match renderTable's checkbox conversion
+                    if (colDef.type === 'boolean') {
+                        const isChecked = displayValue.toString().toUpperCase().trim() === "TRUE";
+                        displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+                    }
+
                     html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'}" data-col-index="${idx}">${displayValue}</td>`;
                 });
                 html += `</tr>`;
