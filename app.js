@@ -924,75 +924,78 @@ async function processInPlaceTableUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    const rows = table.querySelectorAll("tbody tr");
+    const rows = table.querySelectorAll("tbody tr:not(.repair-group-header tr)"); // Skip sub-headers
     
-    // We only want to send rows that have actually been modified to save on API calls
     const updates = [];
 
     rows.forEach(tr => {
         const rowIndex = tr.getAttribute("data-row-index");
         const rowValues = [];
 
-        // Build the row array based on config order
         sheetConfig.columns.forEach((col, index) => {
+            // 1. RUGGED PROTECTION: Identify Formulas
             if (col.type === "formula") {
                 rowValues.push(null);
-                return; // Move to next column
+                return;
+            }
+
+            // 2. PRIMARY KEY INTEGRITY: Pull mae_id from attribute, not cell text
+            if (col.header === "mae_id") {
+                const anchoredId = tr.getAttribute('data-mae-id');
+                rowValues.push(anchoredId || ""); 
+                return;
             }
 
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-
             if (!cell) {
                 const isNumeric = col.type === "number" || col.type === "date";
                 rowValues.push(isNumeric ? null : "");
                 return;
             }
 
+            // 3. RUGGED SCRUB: Prioritize UI elements over raw text
+            const select = cell.querySelector('select');
+            const input = cell.querySelector('input[type="number"], input[type="text"]');
+            const checkbox = cell.querySelector('input[type="checkbox"]');
 
-             // 1. RUGGED SCRUB: Prioritize UI elements over raw text
-                const select = cell.querySelector('select');
-                const input = cell.querySelector('input'); // Look for your new arrow inputs
-
-                let val = "";
-                if (select) {
-                     val = select.value;
-                } else if (input) {
-                    val = input.value; // Get the live value from the number box
-                } else {
-                // Falls back to plain text for standard cells
-                    val = cell.innerText.replace(/[$,]/g,"").trim();
-                }
-             
-
-                // 2. TYPE ENFORCEMENT (Step 4: Currency vs Integer)
-                if (col.type === "number") {
-                    const isCurrency = col.format && col.format.includes("$");
-                    // Strip all non-numeric characters except decimal/minus
-                    let cleanNum = parseFloat(val.replace(/[^0-9.-]+/g,""));
-                
-                    if (isNaN(cleanNum)) {
-                    val = 0; // Prevent Excel from rejecting a "blank" string
-                    } else {
-                    // Force whole numbers for Qty/Stock, 2-decimals for Currency
-                    val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
-                    }
-                }
-                rowValues.push(val);
+            let val = "";
             
+            if (select) {
+                val = select.value;
+            } else if (checkbox) {
+                // Support for future Checkbox logic
+                val = checkbox.checked ? "TRUE" : "FALSE";
+            } else if (input) {
+                val = input.value;
+            } else {
+                // Fallback to plain text, stripping currency symbols for processing
+                val = cell.innerText.replace(/[$,]/g, "").trim();
+            }
+
+            // 4. TYPE ENFORCEMENT
+            if (col.type === "number") {
+                const isCurrency = col.format && col.format.includes("$");
+                let cleanNum = parseFloat(val.replace(/[^0-9.-]+/g, ""));
+                
+                if (isNaN(cleanNum)) {
+                    val = 0;
+                } else {
+                    val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
+                }
+            }
+            rowValues.push(val);
         });
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
-    // Send to Microsoft Graph
+    // 5. SYNC TO MICROSOFT GRAPH
     try {
         const tokenResponse = await myMSALObj.acquireTokenSilent({
             scopes: ["Files.ReadWrite"],
             account: account
         });
 
-        // Professional Approach: Update rows one by one or in a batch if supported
         for (const update of updates) {
-            // NEW: Add the Worksheet segment between the Filename and the Table
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`;
                        
             const response = await fetch(url, {
@@ -1004,12 +1007,12 @@ async function processInPlaceTableUpdate(tableName) {
                 body: JSON.stringify({ values: update.values })
             });
 
-            if (!response.ok){
+            if (!response.ok) {
                 const errorBody = await response.json();
-                console.error("Microsoft Graph Error:", errorBody);
+                console.error("MAE System: Microsoft Graph Error during sync:", errorBody);
             }
         }
-        console.log("MAE System: All changes synced to OneDrive.");
+        console.log("MAE System: Primary Key Integrity maintained. All changes synced.");
     } catch (err) {
         console.error("Sync Error:", err);
         UI.showError("Failed to sync changes. Check internet connection.");

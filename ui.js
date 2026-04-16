@@ -97,169 +97,154 @@ renderMenu(activeWorksheets, onClickCallback) {
     // 3. TABLE RENDERING (The "Worker" logic refactored from app.js)
     // Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
     // Rugged: Handles empty states and Microsoft Graph's row structure.
-    renderTable(rows, tableName, sheetConfig, customTitle= null) {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
-        
-        if (!sheetConfig) {
-            container.innerHTML = "Error: Worksheet configuration not found.";
-            return;
-        }
+    renderTable(rows, tableName, sheetConfig, customTitle = null) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
 
+    if (!sheetConfig) {
+        container.innerHTML = "Error: Worksheet configuration not found.";
+        return;
+    }
+
+    title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
+
+    // Check if this is an "Operational Issues" view
+    const isRepairsView = customTitle && customTitle.includes("Operational Issues");
+
+    if (isRepairsView) {
+        this.renderSubdividedRepairs(rows, tableName, sheetConfig);
+        return; 
+    }
+
+    // NEW: Find the index of the mae_id column to protect it
+    const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
+
+    // 1. Identify visible columns from the Manifest
+    const visibleIndices = [];
+    let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
     
-        title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
-
-        //  Check if this is an "Operational Issues" view
-        const isRepairsView = customTitle && customTitle.includes("Operational Issues");
-
-        if (isRepairsView) {
-            this.renderSubdividedRepairs(rows, tableName, sheetConfig);
-            return; // Hand off to specialized renderer
+    html += `<th class="edit-only-cell">Action</th>`;
+    
+    sheetConfig.columns.forEach((col, index) => {
+        if (col.hidden !== true) { 
+            html += `<th>${col.header}</th>`;
+            visibleIndices.push(index);
         }
+    });
+    html += `</tr></thead><tbody>`;
 
-        // 1. Identify visible columns from the Manifest (config.js)
-        const visibleIndices = [];
-        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
-        
-        // Add "Delete" Header
-        html += `<th class="edit-only-cell">Action</th>`;
-        
-        sheetConfig.columns.forEach((col, index) => {
-            if (col.hidden !== true) { 
-                html += `<th>${col.header}</th>`;
-                visibleIndices.push(index);
-            }
-        });
-        html += `</tr></thead><tbody>`;
+    // 2. Render Rows
+    if (rows && rows.length > 0) {
+        rows.forEach((row) => {
+            const persistentIndex = row.index; 
+            const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
 
-        // 2. Render Rows
-        if (rows && rows.length > 0) {
-            rows.forEach((row) => {
-                // RUGGED: Use the persistent 'index' from Graph API row object
-                // This ensures we always update the correct row in Excel
-                const persistentIndex = row.index; 
+            // RUGGED: Extract the actual ID and anchor it to the row attribute
+            // This prevents data loss if the cell text is edited or cleared
+            const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
 
-                html += `<tr data-row-index="${persistentIndex}">`;
+            html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
 
-                // Add Delete Icon Cell using the persistent index
-                html += `<td class="edit-only-cell">
-                            <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
-                         </td>`;
+            html += `<td class="edit-only-cell">
+                        <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
+                     </td>`;
+
+            visibleIndices.forEach(idx => {
+                const colDef = sheetConfig.columns[idx];
+                const isEditable = !colDef.locked && colDef.type !== 'formula';
                 
-                // Extract cell data
-                const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
+                const isCurrentStock = colDef.header === "Current Stock";
+                const isReorderPoint = colDef.header === "Reorder Point";
+                const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
+                const isCurrency = colDef.format && colDef.format.includes("$");
+                
+                let displayValue = allCells[idx] ?? '';
 
-                visibleIndices.forEach(idx => {
-                    const colDef = sheetConfig.columns[idx];
-                    const isEditable = !colDef.locked && colDef.type !== 'formula';
-                    
-                    // define alert borders
-                    let customStyle = "";
-                    if (colDef.header === "Current Stock") {
-                        //red border on stock levels
-                        customStyle = "border: 2px solid #e74c3c !important; font-weight: bold; color: #c0392b;";  
-                    } else if (colDef.header === "Reorder Point") {
-                        // green border for low order point
-                        customStyle = "border: 2px solid #27ae60 !important; font-weight: bold; color: #1e8449;";
-                    }
+                if (isCurrency) {
+                    displayValue = formatCurrency(displayValue);
+                }
 
-                    const isCurrentStock = colDef.header === "Current Stock";
-                    const isReorderPoint = colDef.header === "Reorder Point";
-                    const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
-                    
-                    // RUGGED: Identify if this is a currency column for CSS styling
-                    const isCurrency = colDef.format && colDef.format.includes("$");
-                    
-                    let displayValue = allCells[idx] ?? '';
-
-                    // Format visually for the UI
-                    if (isCurrency) {
-                        displayValue = formatCurrency(displayValue);
-                    }
-
-                    // 3. Build the Cell with specific MAE classes
-                    html += `<td 
-                            class="${isEditable ? 'editable-cell' : 'locked-cell'}
-                                   ${isCurrentStock ? 'col-type-stock-alert' : ''}
-                                   ${isReorderPoint ? 'col-type-reorder-point' : ''}
-                                   ${isQuantity ? 'col-type-qty' : ''} 
-                                   ${isCurrency ? 'col-type-currency' : ''}" 
-                            data-col-index="${idx}">${displayValue}</td>`;
-                });
-                html += `</tr>`;
+                html += `<td 
+                        class="${isEditable ? 'editable-cell' : 'locked-cell'}
+                               ${isCurrentStock ? 'col-type-stock-alert' : ''}
+                               ${isReorderPoint ? 'col-type-reorder-point' : ''}
+                               ${isQuantity ? 'col-type-qty' : ''} 
+                               ${isCurrency ? 'col-type-currency' : ''}" 
+                        data-col-index="${idx}">${displayValue}</td>`;
             });
-        } else {
-            const colSpan = visibleIndices.length + 1;
-            html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
-        }
+            html += `</tr>`;
+        });
+    } else {
+        const colSpan = visibleIndices.length + 1;
+        html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
+    }
 
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-    },
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+},
     // ============ END RENDER TABLE ============
 
     //=========== RENDER SUBDIVIDED REPAIRS Specialized Renderer ==============
-    renderSubdividedRepairs(rows, tableName, sheetConfig) {
-        const container = document.getElementById("table-container");
-        const conditions = ["Needs Repair", "Repair In-Progress", "Unusable/Junk"];
+   renderSubdividedRepairs(rows, tableName, sheetConfig) {
+    const container = document.getElementById("table-container");
+    const conditions = ["Needs Repair", "Repair In-Progress", "Unusable/Junk"];
 
-        const condIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
-        const visibleIndices = sheetConfig.columns
-            .map((col, i) => col.hidden !== true ? i : -1)
-            .filter(i => i !== -1);
+    // NEW: Find the index of the mae_id column to protect it
+    const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
 
-        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
-        html += `<th class="edit-only-cell">Action</th>`;
-        visibleIndices.forEach(idx => html += `<th>${sheetConfig.columns[idx].header}</th>`);
-        html += `</tr></thead>`;
+    const condIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
+    const visibleIndices = sheetConfig.columns
+        .map((col, i) => col.hidden !== true ? i : -1)
+        .filter(i => i !== -1);
 
-        conditions.forEach(status => {
-            // RUGGED: Filter by piercing the [0] index created in app.js
-            const groupRows = rows.filter(r => {
-                const rowCells = r.values[0]; 
-                return rowCells && rowCells[condIdx] === status;
-            });
+    let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
+    html += `<th class="edit-only-cell">Action</th>`;
+    visibleIndices.forEach(idx => html += `<th>${sheetConfig.columns[idx].header}</th>`);
+    html += `</tr></thead>`;
 
-            if (groupRows.length > 0) {
-                // RUGGED SUB-HEADER: High contrast grouping
-                html += `
-                    <tbody class="repair-group-header">
-                        <tr>
-                            <td colspan="${visibleIndices.length + 1}" 
-                                style="background: #34495e; color: white; font-weight: bold; padding: 10px; border-left: 10px solid ${this.getRepairColor(status)}">
-                                ${status.toUpperCase()} (${groupRows.length} Items)
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tbody>`;
-
-                groupRows.forEach(row => {
-                    const rowData = row.values[0]; // Targeted the inner array for display
-                    html += `<tr data-row-index="${row.index}">`;
-                    html += `<td class="edit-only-cell"><button class="delete-row-btn" onclick="requestDelete(${row.index})">🗑️</button></td>`;
-            
-                    visibleIndices.forEach(idx => {
-                        const colDef = sheetConfig.columns[idx];
-                        const isEditable = !colDef.locked && colDef.type !== 'formula';
-                        const displayValue = rowData[idx] || ''; // Using the inner rowData
-                
-                        html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'}" data-col-index="${idx}">${displayValue}</td>`;
-                    });
-                    html += `</tr>`;
-                });
-                html += `</tbody>`;
-            }
+    conditions.forEach(status => {
+        const groupRows = rows.filter(r => {
+            const rowCells = r.values[0]; 
+            return rowCells && rowCells[condIdx] === status;
         });
 
-        html += `</table>`;
-        container.innerHTML = html;
-    },
-    // Helper for high-visibility colors
-    getRepairColor(status) {
-        if (status === "Needs Repair") return "#e74c3c"; // Red
-        if (status === "Repair In-Progress") return "#f1c40f"; // Yellow
-        return "#2c3e50"; // Dark Navy for Junk
-    },
+        if (groupRows.length > 0) {
+            html += `
+                <tbody class="repair-group-header">
+                    <tr>
+                        <td colspan="${visibleIndices.length + 1}" 
+                            style="background: #34495e; color: white; font-weight: bold; padding: 10px; border-left: 10px solid ${this.getRepairColor(status)}">
+                            ${status.toUpperCase()} (${groupRows.length} Items)
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody>`;
+
+            groupRows.forEach(row => {
+                const rowData = row.values[0]; 
+                
+                // RUGGED: Extract actual ID and anchor to the row metadata
+                const rawMaeId = (idIndex !== -1) ? rowData[idIndex] : '';
+
+                html += `<tr data-row-index="${row.index}" data-mae-id="${rawMaeId}">`;
+                html += `<td class="edit-only-cell"><button class="delete-row-btn" onclick="requestDelete(${row.index})">🗑️</button></td>`;
+        
+                visibleIndices.forEach(idx => {
+                    const colDef = sheetConfig.columns[idx];
+                    const isEditable = !colDef.locked && colDef.type !== 'formula';
+                    const displayValue = rowData[idx] || ''; 
+            
+                    html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'}" data-col-index="${idx}">${displayValue}</td>`;
+                });
+                html += `</tr>`;
+            });
+            html += `</tbody>`;
+        }
+    });
+
+    html += `</table>`;
+    container.innerHTML = html;
+},
 
     //=========== END RENDER SUBDIVIDED REPAIRS Specialized Renderer==============
 
