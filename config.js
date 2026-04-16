@@ -18,7 +18,8 @@
  * Version 1.3.5: Added header in Master Dashboard for Maintenance Items card
  * Version 1.4:  Added features: enableScanning: true to support label scanning
  * Version 1.5: changed Asset_ID and Log_ID to "hidden:true", added checkboxes, modified some names
- * Version: xxxxx
+ * Version: 1.5.1: Modified formula for Maint Items Due in 30 days to include past due and not complete
+ * Version: xxxx
  */
 
 export const maeSystemConfig = {
@@ -170,11 +171,7 @@ export const maeSystemConfig = {
                 {
                     header: "Maintenance Items Due in Next 30 Days",
                     type: "formula",
-                    formula:`
-                            =SUM(
-                                COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Next Service Date], ">="&TODAY())
-                        )
-                     `.trim(),
+                    formula: `=COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Complete], "FALSE")`.trim(),
                     format: "0",
                     locked: true
                 }
