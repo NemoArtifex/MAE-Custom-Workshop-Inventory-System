@@ -788,7 +788,8 @@ function handleEditClick(tableName) {
         // ---- BRANCH 2: BOOLEAN CHECKBOXES ---
         else if (colDef.type === "boolean") {
             cell.contentEditable = "false"; // Rugged: No typing allowed
-            const isChecked = cell.innerText.trim().toUpperCase() === "TRUE";
+            const isChecked = cell.innerText.trim().toUpperCase() === "TRUE" || 
+                      (cell.querySelector('input') && cell.querySelector('input').checked);
     
             // Inject the checkbox
             cell.innerHTML = `<input type="checkbox" class="mae-checkbox" ${isChecked ? 'checked' : ''}>`;

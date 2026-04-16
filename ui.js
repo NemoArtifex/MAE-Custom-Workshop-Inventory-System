@@ -497,7 +497,14 @@ renderCommandBar(tableName) {
         // --- A. Handle Number Inputs (The "Sticky" Culprit) ---
         const input = cell.querySelector('input');
         if (input) {
-            cell.innerText = input.value; // Capture the final number
+            //==== if checkbox, don't show "on"
+            if (input.type === "checkbox"){
+                const isChecked = input.checked;
+                // restore visual disabled checkbox immediately
+                cell.innerHTML = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+            } else {
+                cell.innerText = input.value; // Capture the final number
+            }
         }
 
         // --- B. Handle Dropdowns ---
