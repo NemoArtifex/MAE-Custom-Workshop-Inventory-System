@@ -257,6 +257,15 @@ renderMenu(activeWorksheets, onClickCallback) {
         document.getElementById("table-container").innerHTML = `<p style="color:red; padding:20px;">${message}</p>`;
     },
 
+    getRepairColor(status) {
+        const colors = {
+            "Needs Repair": "#e74c3c",       // Red
+            "Repair In-Progress": "#f1c40f", // Yellow/Gold
+            "Unusable/Junk": "#7f8c8d"       // Gray
+        };
+        return colors[status] || "#34495e";  // Default Navy
+    },
+
     //===== Updated setHealthStatus reflecting the "Read-Only Database" Policy========
     setHealthStatus(isHealthy, firstTableName) {
         const container = document.getElementById("table-container");
