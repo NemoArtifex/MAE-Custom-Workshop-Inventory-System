@@ -785,7 +785,28 @@ function handleEditClick(tableName) {
                 cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
             };
         } 
-        // --- BRANCH 2: DROPDOWNS ---
+        // ---- BRANCH 2: BOOLEAN CHECKBOXES ---
+        else if (colDef.type === "boolean") {
+            cell.contentEditable = "false"; // Rugged: No typing allowed
+            const isChecked = cell.innerText.trim().toUpperCase() === "TRUE";
+    
+            // Inject the checkbox
+            cell.innerHTML = `<input type="checkbox" class="mae-checkbox" ${isChecked ? 'checked' : ''}>`;
+    
+            const checkbox = cell.querySelector('input');
+    
+            // Stop propagation: clicking the checkbox shouldn't trigger the global "Click-Off" sync immediately
+            checkbox.onmousedown = (e) => e.stopPropagation();
+    
+            // Ensure clicking the cell toggles the checkbox
+            cell.onclick = (e) => {
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                }
+            };
+        }
+
+        // --- BRANCH 3: DROPDOWNS ---
         else if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
@@ -944,13 +965,14 @@ async function processInPlaceTableUpdate(tableName) {
                 return;
             }
 
-            // 2. PRIMARY KEY INTEGRITY: Pull mae_id from attribute, not cell text
+            // 2. PRIMARY KEY INTEGRITY: Pull mae_id from attribute
             if (col.header === "mae_id") {
                 const anchoredId = tr.getAttribute('data-mae-id');
                 rowValues.push(anchoredId || ""); 
                 return;
             }
 
+            // Find the specific cell for this column
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
             if (!cell) {
                 const isNumeric = col.type === "number" || col.type === "date";
@@ -958,18 +980,17 @@ async function processInPlaceTableUpdate(tableName) {
                 return;
             }
 
-            // 3. RUGGED SCRUB: Prioritize UI elements over raw text
+            // 3. DATA EXTRACTION: Identify the UI element and grab the value
+            let val = "";
             const select = cell.querySelector('select');
             const input = cell.querySelector('input[type="number"], input[type="text"]');
             const checkbox = cell.querySelector('input[type="checkbox"]');
 
-            let val = "";
-            
-            if (select) {
-                val = select.value;
-            } else if (checkbox) {
-                // Support for future Checkbox logic
+            if (checkbox) {
+                // Returns "TRUE" or "FALSE" as strings for Excel formula compatibility
                 val = checkbox.checked ? "TRUE" : "FALSE";
+            } else if (select) {
+                val = select.value;
             } else if (input) {
                 val = input.value;
             } else {
@@ -980,7 +1001,7 @@ async function processInPlaceTableUpdate(tableName) {
             // 4. TYPE ENFORCEMENT
             if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
-                let cleanNum = parseFloat(val.replace(/[^0-9.-]+/g, ""));
+                let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
                 
                 if (isNaN(cleanNum)) {
                     val = 0;

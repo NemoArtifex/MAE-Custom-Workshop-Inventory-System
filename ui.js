@@ -164,6 +164,11 @@ renderMenu(activeWorksheets, onClickCallback) {
                     displayValue = formatCurrency(displayValue);
                 }
 
+                if (colDef.type === 'boolean') {
+                    const isChecked = displayValue.toString().toUpperCase() === "TRUE";
+                    displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+                }
+
                 html += `<td 
                         class="${isEditable ? 'editable-cell' : 'locked-cell'}
                                ${isCurrentStock ? 'col-type-stock-alert' : ''}
