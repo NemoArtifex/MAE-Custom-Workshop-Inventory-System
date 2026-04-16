@@ -864,6 +864,11 @@ async function submitNewRow(tableName, sheetConfig) {
             return isNaN(num) ? null : num;
         }
 
+        //  Handle Boolean Checkboxes
+        if (col.type === "boolean") {
+            return input.checked ? "TRUE" : "FALSE"; // Excel prefers uppercase strings for formulas
+        }
+
         // 6. Handle Dates, Dropdowns, and Strings
         return input.value;
     });
@@ -1205,6 +1210,7 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
         const input = document.getElementById(fieldId);
         
         if (col.type === "formula") return null; // Don't overwrite formulas
+        if (col.type === "boolean") return input.checked ? "TRUE" : "FALSE";
         return input ? input.value : "";
     });
 

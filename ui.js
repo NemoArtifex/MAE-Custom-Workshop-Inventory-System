@@ -385,9 +385,15 @@ renderCommandBar(tableName) {
             } 
             else {
                 // Render visible fields normally
-                    formHtml += `<div class="input-group"><label>${col.header}</label>`;
+                formHtml += `<div class="input-group"><label>${col.header}</label>`;
 
-                if (col.type === "dropdown") {
+                if (col.type === "boolean") {
+                    // Render as a checkbox for boolean types
+                    const isChecked = val.toString().toUpperCase() === "TRUKE";
+                    formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+                }
+
+                else if (col.type === "dropdown") {
                     // INVIOLATE: Forces user to pick from config options only
                     formHtml += `
                         <select id="${fieldId}" required>
