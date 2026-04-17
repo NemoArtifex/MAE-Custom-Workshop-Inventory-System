@@ -1,3 +1,4 @@
+window.maeLocations =["TBD"]; // Global cache default for intake workflow
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 import { Labels } from './labels.js';
@@ -150,6 +151,10 @@ async function loadDynamicMenu() {
     // 1. FILTER: only show worksheets with active:true
     const activeWorksheets = maeSystemConfig.worksheets.filter(sheet => sheet.active !== false);
 
+    await refreshLocationCache(); // fetch "control tower" date (locations)
+
+
+
     // 2. UI handles the creation of buttons
     UI.renderMenu(activeWorksheets, (tableName) => {
         
@@ -166,6 +171,45 @@ async function loadDynamicMenu() {
 }
 
 //=======END FUNCTION Load Dynamic Menu ================
+
+//===== NEW WORKER FUNCTION: refresh location cache; specifically pulls you Location List for the dropdowns
+// Worker: Turns [["Value1", "Value2"]] into { "mae_id": "Value1", "Location_ID": "Value2" }
+function mapRowToHeaders(rowValues, sheetConfig) {
+    const data = {};
+    sheetConfig.columns.forEach((col, index) => {
+        data[col.header] = rowValues[index];
+    });
+    return data;
+}
+
+async function refreshLocationCache() {
+    try {
+        const locationConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        const data = await Dashboard.getFullTableData("Location");
+
+        if (data && data.length > 0) {
+            // Find the index dynamically based on the header name in config
+            const locIdx = locationConfig.columns.findIndex(c => c.header === "Location_ID");
+
+            const list = data.map(row => {
+                const rowCells = row.values[0]; 
+                return rowCells[locIdx];
+            });
+
+            // Clean the list: remove nulls/duplicates and keep "TBD" at the top
+            window.maeLocations = ["TBD", ...new Set(list.filter(i => i && i !== "TBD"))];
+            console.log("MAE System: Location cache refreshed using Header Mapping.");
+        }
+    } catch (e) {
+        console.warn("MAE System: Could not find 'Location_ID' column. Using default 'TBD'.", e);
+        window.maeLocations = ["TBD"];
+    }
+}
+
+
+
+
+//==== END WORKER FUNCTION======
 
 // ======= FUNCTION verifySpreadSheetExists =============
 async function verifySpreadsheetExists(){
@@ -860,39 +904,39 @@ function handleEditClick(tableName) {
 
 async function submitNewRow(tableName, sheetConfig) {
     const rowData = sheetConfig.columns.map(col => {
-        // 1. Identify the input field FIRST
         const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
         const input = document.getElementById(fieldId);
 
-        // 2. Handle mae_id logic (NOW it can see 'input')
+        // 1. Primary Key: mae_id
         if (col.header === "mae_id") {
-           // RUGGED: If there's a scanned code in the input, USE IT. 
-            // Only if the input is totally empty do we generate a new MAE-timestamp.
             const scannedValue = input ? input.value.trim() : "";
             return (scannedValue !== "") ? scannedValue : `MAE-${Date.now()}`; 
         }
 
-        // 3. Handle Formulas
+        // 2. Formulas: Always null (let Excel calculate)
         if (col.type === "formula") return null;
 
-        // 4. Handle Empty Inputs
-        if (!input || input.value === "") {
-            return (col.type === "number" || col.type === "date") ? null : "";
+        // 3. Checkboxes: Boolean Logic
+        if (col.type === "boolean") {
+            return input ? input.checked : false; 
         }
 
-        // 5. Handle Numbers & Currency
+        // 4. Numbers & Currency: Float logic
         if (col.type === "number" || (col.format && col.format.includes("$"))) {
+            if (!input || input.value === "") return null;
             const num = parseFloat(input.value);
             return isNaN(num) ? null : num;
         }
 
-        //  Handle Boolean Checkboxes
-        if (col.type === "boolean") {
-            return input.checked; 
+        // 5. Dropdowns & Strings: Logic for "Control Tower" consistency
+        if (!input || input.value === "") {
+            // RUGGED: If Location_ID is empty, force it to the "Intake" bucket (TBD)
+            if (col.header === "Location_ID") return "TBD";
+            return (col.type === "date") ? null : "";
         }
 
-        // 6. Handle Dates, Dropdowns, and Strings
-        return input.value;
+        // Return trimmed string for clean Excel data
+        return input.value.trim();
     });
 
 

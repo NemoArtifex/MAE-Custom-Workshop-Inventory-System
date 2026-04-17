@@ -401,15 +401,18 @@ renderCommandBar(tableName) {
                 }
 
                 else if (col.type === "dropdown") {
-                    // INVIOLATE: Forces user to pick from config options only
+                    // TIGHTENED: Fallback order: 1. Hardcoded Options -> 2. Dynamic Locations -> 3. "TBD"
+                    const availableOptions = col.options || window.maeLocations || ["TBD"];
+    
                     formHtml += `
                         <select id="${fieldId}" required>
                             <option value="">-- Select ${col.header} --</option>
-                            ${col.options.map(opt => 
+                            ${availableOptions.map(opt => 
                                 `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
                             ).join('')}
                         </select>`;
-                } 
+                }
+                
                 else if (col.type === "number") {
                     const isCurrency = col.format && col.format.includes("$");
                 
