@@ -19,12 +19,14 @@
  * Version 1.4:  Added features: enableScanning: true to support label scanning
  * Version 1.5: changed Asset_ID and Log_ID to "hidden:true", added checkboxes, modified some names
  * Version: 1.5.1: Modified formula for Maint Items Due in 30 days to include past due and not complete
- * Version: xxxx
+ * Version: 1.5.2: updated Table: Location: changed "Name" to "Description; Added Tag_ID columns to 
+ *                 Inventory related worksheets, adjusted column placement; made Location_ID type: "dropdown"
+ * Version xxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5",
+    version: "1.5.2",
 
     features: {
         enableScanning: true
@@ -203,6 +205,8 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset ID", type: "string", hidden:true, locked: false },
+                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item Name", type: "string", locked: false },
                 { 
                     header: "Category",
@@ -229,7 +233,6 @@ export const maeSystemConfig = {
                 { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Location", type: "string", hidden:true,locked: false },
-                { header: "Location_ID", type: "string", locked: false},
                 { header: "Sold", type: "boolean", locked: false }
             ]
         },
@@ -240,12 +243,13 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset ID", type: "string", hidden: true, locked: false },
+                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Machine Name/Brand/Model", type: "string", locked: false },
                 { header: "Serial Number", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Location", type: "string", hidden: true, locked: false },
-                { header: "Location_ID", type: "string", locked: false},
                 { 
                     header: "Condition",
                     type: "dropdown",
@@ -290,9 +294,10 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset_ID", type: "string", hidden: true, locked: false },
+                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Tool Name/Brand/Model", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
-                { header: "Location_ID", type: "string", locked: false},
                 { 
                     header: "Functional Category",
                     type: "dropdown",
@@ -327,6 +332,8 @@ export const maeSystemConfig = {
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Asset_ID", type: "string", hidden: true, locked: false },
+                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Tool Name/Brand/Model/Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
@@ -335,7 +342,6 @@ export const maeSystemConfig = {
                     options: ["Fastening/Turning","Measuring/Layout","Striking/Hammering","Gripping/Holding","Cutting/Shaping","Other"],
                     locked: false 
                 },
-                { header: "Location_ID", type: "string", locked: false},
                 {
                     header: "Condition",
                     type: "dropdown",
@@ -352,8 +358,10 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Item Name", type: "string", locked: false },
                 { header: "Asset_ID", type: "string", hidden: true, locked: false },
+                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
+                { header: "Item Name", type: "string", locked: false },
                 { 
                   header: "Category",
                   type: "dropdown",
@@ -374,7 +382,6 @@ export const maeSystemConfig = {
                   format: "$#,##0.00",
                   locked: true
                 },
-                { header: "Location_ID", type: "string", locked: false},
                 { header: "Supplier/Remarks", type: "string", locked: false }
             ]
         },
@@ -432,8 +439,8 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Location_ID", type: "string", locked: false },
-                { header: "Name", type: "string", locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false },
+                { header: "Description", type: "string", locked: false },
                 { header: "Type", type: "string", locked: false },
                 { header: "Parent_Location", type: "string", locked: false}
             ]
