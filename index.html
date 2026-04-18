@@ -10,14 +10,26 @@
                style-src 'self' 'unsafe-inline';">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <title>MAE Workshop Inventory Management</title>
+
+
+    <!-- 1. External Libraries (Synchronous) -->
     <script src="msal-browser.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="chartjs-plugin-datalabels.min.js"></script>
-    <script type="module" src="./config.js"></script> <!-- Load this first -->
+
+    <!-- 2. Foundation Modules (Asynchronous) -->
+    <script type="module" src="./auth.js"></script>
+    <script type="module" src="./config.js"></script>
+
+    <!-- 3. Feature Modules -->
     <script type="module" src="./labels.js"></script>
     <script type="module" src="./dashboard.js"></script>
     <script type="module" src="./ui.js"></script> 
+
+    <!-- 4. The Orchestrator (Last Module) -->
     <script type="module" src="./app.js"></script>
+
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>

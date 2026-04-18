@@ -8,7 +8,7 @@ import { maeSystemConfig } from './config.js';
 const msalConfig = {
     auth: {
         clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
-        authority: "https://microsoftonline.com/common",
+        authority: "https://login.microsoftonline.com/common",
         redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
         navigateToLoginRequestUrl: false 
     },

@@ -34,7 +34,10 @@ window.currentTable = "";
 //attempt or has an existing session (ie, clicked refresh)  
 
 //export let myMSALObj;
-let account = null;
+//let account = null;
+
+window.account = null;
+
 async function startup() {
     try {
         // Initialize the PublicClientApplication
