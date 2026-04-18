@@ -1042,17 +1042,22 @@ async promptNewLocation() {
     if (newLoc && newLoc.trim() !== "") {
         const cleanLoc = newLoc.trim().toUpperCase();
         
-        // We call the logic function in app.js
-        // We use 'window' because app.js functions are globally exposed
+        // VISUAL FEEDBACK: Let the user know the network request is starting
+        console.log(`MAE System: Registering new location [${cleanLoc}]...`);
+        
         const success = await window.submitNewLocationToTable(cleanLoc);
         
         if (success) {
-            // Tell app.js to refresh the data
+            // 1. Sync the local list of locations
             await window.refreshLocationCache();
+            
+            // 2. Alert the user (Essential for shop-floor confirmation)
             alert(`Location ${cleanLoc} successfully registered.`);
             
-            // Refresh current view so the dropdowns update
+            // 3. Refresh the UI so the new location appears in dropdowns immediately
             window.loadTableData(window.currentTable);
+        } else {
+            alert("Error: Could not save location. Check your internet connection.");
         }
     }
 }

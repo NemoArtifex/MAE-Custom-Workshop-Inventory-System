@@ -1337,23 +1337,26 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
 //======= submitNewLocationToTable : writes data to Excel
 async function submitNewLocationToTable(locationId) {
     try {
+        // 1. Explicitly target the Location table config
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-        
-        // Build the row based on the Header names in config.js
+        const tableName = "Location"; 
+
+        // 2. Build the new row based on the blueprint
         const newRow = sheetConfig.columns.map(col => {
             if (col.header === "mae_id") return `LOC-${Date.now()}`;
             if (col.header === "Location_ID") return locationId;
-            if (col.header === "Description") return "New Location - Update in Location Tab";
-            return ""; // For Type or Parent_Location
+            return ""; // Description, Type, and Parent_Location stay empty for now
         });
 
+        // 3. AUTH: Get a fresh token
         const tokenResponse = await myMSALObj.acquireTokenSilent({
             scopes: ["Files.ReadWrite"],
             account: account
         });
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        // 4. API CALL: Use the /rows endpoint (POST adds a new row)
+        
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -1363,12 +1366,21 @@ async function submitNewLocationToTable(locationId) {
             body: JSON.stringify({ values: [newRow] })
         });
 
-        return response.ok;
+        if (response.ok) {
+            console.log("MAE System: New Location registered in Control Tower.");
+            return true;
+        } else {
+            const errorData = await response.json();
+            console.error("Graph API Error:", errorData.error.message);
+            return false;
+        }
     } catch (err) {
-        console.error("MAE System: Failed to establish new location", err);
+        console.error("MAE System: Failed to submit new location", err);
         return false;
     }
 }
+
+
 
 //===== END submitNewLocationToTable =============
 
