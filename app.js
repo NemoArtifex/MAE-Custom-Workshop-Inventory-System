@@ -33,7 +33,7 @@ window.currentTable = "";
 //first loads, specifically checking if user is returning from a login 
 //attempt or has an existing session (ie, clicked refresh)  
 
-export let myMSALObj;
+//export let myMSALObj;
 let account = null;
 async function startup() {
     try {
