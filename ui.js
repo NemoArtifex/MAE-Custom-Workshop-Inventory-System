@@ -1066,7 +1066,8 @@ async promptNewLocation() {
 
         // Render data rows
         data.forEach((row, idx) => {
-            const vals = row.values;
+            //const vals = row.values;
+            const vals = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
             const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
             const currentLocName = vals[locIdIdx];
             
