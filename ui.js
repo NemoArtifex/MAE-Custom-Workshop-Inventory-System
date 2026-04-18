@@ -404,6 +404,25 @@ renderCommandBar(tableName) {
                     formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
                 }
 
+                // ==== check special case of Location_ID FIRST as a dropdown =====
+                if (col.header === "Location_ID") {
+                    formHtml += `
+                        <div class="input-group location-control-group">
+                            <label>${col.header}</label>
+                            <div class="location-input-wrapper">
+                                <select id="${fieldId}" required>
+                                    ${window.maeLocations.map(loc => 
+                                        `<option value="${loc}" ${loc === val ? 'selected' : ''}>${loc}</option>`
+                                    ).join('')}
+                                </select>
+                                <button type="button" class="add-loc-btn" onclick="UI.promptNewLocation()">
+                                    + NEW
+                                </button>
+                            </div>
+                            <span class="foundation-alert">FOUNDATION FIELD: Affects Shop Infrastructure</span>
+                        </div>`;
+                } 
+
                 else if (col.type === "dropdown") {
                     // TIGHTENED: Fallback order: 1. Hardcoded Options -> 2. Dynamic Locations -> 3. "TBD"
                     const availableOptions = col.options || window.maeLocations || ["TBD"];
@@ -995,8 +1014,31 @@ openEditFormFromScan(tableName, rowData, rowIndex) {
             window.loadTableData(tableName);
         }
     }, rowIndex, rowData); 
-}
+},
 //========= END SCAN RESULT UI LOGIC =============
+
+//===== PROMPT LOGIC for Location_ID =====
+async promptNewLocation() {
+    const newLoc = prompt("ESTABLISH NEW SHOP LOCATION:\nThis permanently adds a new storage spot to your Control Tower.");
+    
+    if (newLoc && newLoc.trim() !== "") {
+        const cleanLoc = newLoc.trim().toUpperCase();
+        
+        // We call the logic function in app.js
+        // We use 'window' because app.js functions are globally exposed
+        const success = await window.submitNewLocationToTable(cleanLoc);
+        
+        if (success) {
+            // Tell app.js to refresh the data
+            await window.refreshLocationCache();
+            alert(`Location ${cleanLoc} successfully registered.`);
+            
+            // Refresh current view so the dropdowns update
+            window.loadTableData(window.currentTable);
+        }
+    }
+}
+//====== END PROMPT LOGIC For Location_ID ====
 
 
 };

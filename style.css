@@ -923,3 +923,57 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     color: #c0392b; /* Safety Red */
 }
 /*==== END Hybrid Inventory styling ======*/
+
+/* =====Location Control Tower Styling */
+.location-control-group {
+    background: #fdf2e9; /* Very light orange tint to signal importance */
+    padding: 10px;
+    border: 1px dashed var(--accent);
+    border-radius: 4px;
+}
+
+.location-input-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.location-input-wrapper select {
+    flex-grow: 1;
+    border: 2px solid var(--primary);
+    font-weight: bold;
+}
+
+.add-loc-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0 15px;
+    font-weight: 800;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: transform 0.1s;
+}
+
+.add-loc-btn:active {
+    transform: scale(0.95);
+}
+
+.foundation-alert {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: bold;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table View highlight for Locations */
+.inventory-table td[data-col-index*="Location_ID"] {
+    background-color: #fff8f1;
+    font-weight: bold;
+    color: var(--primary);
+}
+/* =====END Location Control TOwer Styling     */

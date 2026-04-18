@@ -1310,7 +1310,7 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
         });
 
         // 2. Target the SPECIFIC row index
-        //const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
         const response = await fetch(url, {
             method: 'PATCH',
@@ -1332,6 +1332,64 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
 }
 //=========== END FUNCTION TO HANDLE SINGLE-ROW UPDATES ===========
 
+//========= ADD refreshLocationCache Location_ID SYNC===========
+async function refreshLocationCache() {
+    try {
+        const data = await Dashboard.getFullTableData("Location");
+        const locConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
+
+        if (data) {
+            // Extract the IDs, filter nulls, and ensure "TBD" is the first option
+            const list = data.map(row => row.values[0][locIdx]);
+            window.maeLocations = ["TBD", ...new Set(list.filter(i => i && i !== "TBD"))];
+            console.log("MAE System: Location Control Tower Synced.");
+        }
+    } catch (e) {
+        console.warn("Location sync failed, using last known cache.");
+    }
+}
+
+//====== END refreshLocationCache  Location_ID sync============
+
+//======= submitNewLocationToTable : writes data to Excel
+async function submitNewLocationToTable(locationId) {
+    try {
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        
+        // Build the row based on the Header names in config.js
+        const newRow = sheetConfig.columns.map(col => {
+            if (col.header === "mae_id") return `LOC-${Date.now()}`;
+            if (col.header === "Location_ID") return locationId;
+            if (col.header === "Description") return "New Location - Update in Location Tab";
+            return ""; // For Type or Parent_Location
+        });
+
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: account
+        });
+
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [newRow] })
+        });
+
+        return response.ok;
+    } catch (err) {
+        console.error("MAE System: Failed to establish new location", err);
+        return false;
+    }
+}
+
+//===== END submitNewLocationToTable =============
+
 
 
 
@@ -1344,3 +1402,4 @@ window.handleAddClickWithId = handleAddClickWithId;
 window.handleUniversalLookup = handleUniversalLookup;
 window.processInPlaceTableUpdate = processInPlaceTableUpdate;
 window.updateSingleRowFromForm = updateSingleRowFromForm;
+window.submitNewLocationToTable = submitNewLocationToTable;
