@@ -1024,57 +1024,81 @@ async promptNewLocation() {
     },
 
     manageLocationMap() {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
-        title.innerText = "Administrative: Manage Shop Location Map";
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = "Administrative: Manage Shop Location Map";
 
-        this.showLoading("Fetching Foundation Data...");
+    this.showLoading("Fetching Foundation Data...");
+    
+    window.Dashboard.getFullTableData("Location").then(data => {
+        // --- THE FIX: Define the blueprint inside the .then() block ---
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
         
-        window.Dashboard.getFullTableData("Location").then(data => {
-            let html = `<div class="form-card" id="location-manager">
-                <div style="border-bottom: 2px solid var(--accent); margin-bottom: 15px; padding-bottom: 10px;">
-                    <h4>+ Establish New Foundation Point</h4>
-                    <input type="text" id="new-loc-name" placeholder="ID (e.g. BIN-A1)" style="width:150px;">
-                    <input type="text" id="new-loc-desc" placeholder="Description" style="width:200px;">
-                    <button class="action-btn" onclick="UI.saveNewLocation()">Establish</button>
-                </div>
-                <table class="inventory-table">
-                    <thead>
-                        <tr><th>ID</th><th>Description</th><th>Type</th><th>Parent</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>`;
+        if (!sheetConfig) {
+            this.showError("Configuration for 'Location' table not found.");
+            return;
+        }
 
-            data.forEach((row, idx) => {
-                const vals = row.values;
-                const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
-                const currentLocName = vals[locIdIdx];
-        
-                if (currentLocName === "TBD") return;
+        let html = `<div class="form-card" id="location-manager">
+            <div style="border-bottom: 2px solid var(--accent); margin-bottom: 15px; padding-bottom: 10px;">
+                <h4>+ Establish New Foundation Point</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">`;
 
-                html += `<tr>`;
-                sheetConfig.columns.forEach((col, colIdx) => {
-                    if (col.hidden) return;
+        // DYNAMICALLY build the "Establish" inputs based on config
+        sheetConfig.columns.forEach(col => {
+            if (col.hidden || col.header === "mae_id") return;
+            const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
+            html += `<input type="text" id="${inputId}" placeholder="${col.header}" style="flex: 1; min-width: 120px;">`;
+        });
+
+        html += `<button class="action-btn" onclick="UI.saveNewLocation()" style="background:#27ae60;">Establish</button>
+            </div>
+        </div>
+        <div id="location-list-scroll" style="max-height: 500px; overflow-y: auto;">
+            <table class="inventory-table">
+                <thead><tr>`;
+
+        // Render headers from config
+        sheetConfig.columns.forEach(col => {
+            if (!col.hidden) html += `<th>${col.header}</th>`;
+        });
+        html += `<th>Actions</th></tr></thead><tbody>`;
+
+        // Render data rows
+        data.forEach((row, idx) => {
+            const vals = row.values;
+            const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+            const currentLocName = vals[locIdIdx];
             
-                    const fieldId = `loc-${col.header.replace(/\s+/g, '')}-${idx}`;
-                    const displayVal = vals[colIdx] || '';
-            
-                    html += `<td><input type="text" id="${fieldId}" value="${displayVal}" style="width:100%;"></td>`;
-                });
+            if (currentLocName === "TBD") return;
 
-                html += `
-                <td>
-                     <button class="mini-btn" onclick="UI.applyLocationChange(${idx}, '${currentLocName}')">Update</button>
-                        <button class="mini-btn" onclick="UI.removeLocation('${currentLocName}')" style="background:#c0392b;">Delete</button>
-                    </td>
-                </tr>`;
+            html += `<tr>`;
+            sheetConfig.columns.forEach((col, colIdx) => {
+                if (col.hidden) return;
+                const fieldId = `loc-${col.header.replace(/\s+/g, '')}-${idx}`;
+                const displayVal = vals[colIdx] || '';
+                html += `<td><input type="text" id="${fieldId}" value="${displayVal}" style="width:100%;"></td>`;
             });
 
-            html += `</tbody></table>
-                <div class="form-actions"><button class="cancel-btn" onclick="loadTableData('Location')">Close</button></div>
-            </div>`;
-            container.innerHTML = html;
+            html += `
+                <td>
+                    <button class="mini-btn" onclick="UI.applyLocationChange(${idx}, '${currentLocName}')" style="background:#2980b9;">Update</button>
+                    <button class="mini-btn" onclick="UI.removeLocation('${currentLocName}')" style="background:#c0392b;">Delete</button>
+                </td>
+            </tr>`;
         });
-    },
+
+        html += `</tbody></table></div>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
+            </div>`;
+            
+        container.innerHTML = html;
+    }).catch(err => {
+        console.error("MAE System: Manager load failed", err);
+        this.showError("Could not load Location data from OneDrive.");
+    });
+},
 
     async removeLocation(locName) {
         const confirmed = confirm(`CRITICAL WARNING: You are about to DELETE the location [${locName}]. \n\nAny items currently assigned to this spot will lose their physical reference. Proceed?`);
@@ -1132,29 +1156,47 @@ async promptNewLocation() {
     },
 
     async saveNewLocation() {
-        const input = document.getElementById("new-loc-name");
-        const newLoc = input.value.trim().toUpperCase();
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+    const rowDataMap = {};
 
-        if (!newLoc) {
-            alert("Please enter a Location ID.");
-            return;
+    // 1. DYNAMIC GATHERING: Pull data from the top "Establish" row
+    sheetConfig.columns.forEach(col => {
+        if (col.hidden || col.header === "mae_id") return;
+        
+        const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
+        const input = document.getElementById(inputId);
+        if (input) {
+            rowDataMap[col.header] = col.header === "Location_ID" ? 
+                input.value.trim().toUpperCase() : input.value.trim();
         }
+    });
 
-        if (window.maeLocations.includes(newLoc)) {
-            alert(`Error: [${newLoc}] already exists in the Location Map.`);
-            return;
-        }
-
-        this.showLoading(`Establishing ${newLoc}...`);
-        const success = await window.submitNewLocationToTable(newLoc);
-
-        if (success) {
-            await window.refreshLocationCache();
-            this.manageLocationMap(); // Reload Manager
-        } else {
-            this.showError("Failed to establish new location.");
-        }
+    const newLoc = rowDataMap["Location_ID"];
+    if (!newLoc) {
+        alert("Please enter a Location ID.");
+        return;
     }
+
+    // 2. RUGGED DUPLICATE CHECK
+    if (window.maeLocations.includes(newLoc)) {
+        alert(`Error: [${newLoc}] is already established.`);
+        return;
+    }
+
+    this.showLoading(`Establishing ${newLoc}...`);
+
+    // 3. SAVE: We reuse updateLocationRecord but pass -1 to signify a NEW row 
+    // OR use your existing submitNewLocationToTable if preferred.
+    // Let's use a dynamic version of submit to handle all fields:
+    const success = await window.submitNewLocationToTable(rowDataMap);
+
+    if (success) {
+        await window.refreshLocationCache();
+        this.manageLocationMap(); // Reload Manager
+    } else {
+        this.showError("Failed to establish new location.");
+    }
+}
 
 // ======== END modify location Map Logic ========
 
