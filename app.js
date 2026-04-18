@@ -6,35 +6,12 @@ import { Dashboard } from './dashboard.js';
 import { myMSALObj } from './auth.js';
 const fileName = maeSystemConfig.spreadsheetName;
 window.currentTable = "";
-// =============CONFIGURATION: The "Blueprint"  ======================
-// Defines the configuration object for the Microsoft Authentication Library (MSAL)
-// Used to integrate Microsoft's identity and sign-in features into web apps
-//const msalConfig = {
- //   auth: {
- //       clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
- //       authority: "https://login.microsoftonline.com/common",
- //       //redirectUri: "http://localhost:5500" ,
- //       redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
- //       navigateToLoginRequestUrl: false 
- //   },
-    // Defines how and where the app stores security tokens after received
-    // Tokens stored for duration of browser's tab life 
-    // "false": tells MSAL NOT to store the auth state in browser cookies  
-  //  cache: {
- ////       cacheLocation: "sessionStorage", // Simple and effective for workshop environments
-        storeAuthStateInCookie: false,
- //   }
-    
-//};
-// ===========END CONFIGURATION =============
+
 
 // =========== STARTUP LOGIC ============
 //Initializes the authentication flow for app. Handles the moment page
 //first loads, specifically checking if user is returning from a login 
 //attempt or has an existing session (ie, clicked refresh)  
-
-//export let myMSALObj;
-//let account = null;
 
 window.account = null;
 
@@ -829,13 +806,33 @@ function handleEditClick(tableName) {
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
-        //===Location_ID: treat as "Locked" to prevent accidental changes whe bulk editing
+        //===Location_ID: treat as "Dropdown READ-Only" to prevent accidental changes whe bulk editing
         if (colDef.header === "Location_ID") {
-            // Treat Location_ID as a locked field in bulk-edit mode to force discipline
-            cell.contentEditable = "false";
-            cell.classList.add("locked-cell");
-            cell.style.backgroundColor = "#f4f4f4";
-            return; // Skip turning this into an editable dropdown here
+            cell.contentEditable = "false"; 
+            cell.classList.add("dropdown-edit-zone");
+
+            // RUGGED: Create a dropdown using the established Location Map cache
+            const currentVal = cell.innerText.trim();
+            let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7;">`;
+    
+            // Always pull from the window.maeLocations cache we refreshed on startup
+            window.maeLocations.forEach(loc => {
+                selectHtml += `<option value="${loc}" ${loc === currentVal ? 'selected' : ''}>${loc}</option>`;
+            });
+            selectHtml += `</select>`;
+
+            cell.innerHTML = selectHtml;
+            const select = cell.querySelector('select');
+    
+            // Save the change when they pick a new one or click away
+            const finishEdit = () => {
+                cell.innerText = select.value;
+                cell.classList.remove("dropdown-edit-zone");
+            };
+
+            select.onchange = finishEdit;
+            select.onblur = finishEdit;
+                    return; // Move to the next cell
         }
 
 
@@ -1438,6 +1435,49 @@ async function loadTbdAudit() {
 }
 //==== END TBD location audit function =====
 
+//========= update location name =========
+async function updateLocationName(rowIndex, newName) {
+    try {
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+        
+        // RUGGED: Create an array of nulls, placing the new name only at the Location_ID index.
+        // Sending null prevents overwriting other columns like 'Description' or 'Type'.
+        const rowValues = sheetConfig.columns.map((col, idx) => {
+            return idx === locIdx ? newName : null;
+        });
+
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: window.account
+        });
+
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/Location/rows/itemAt(index=${rowIndex})`;
+     // const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowValues] })
+        });
+
+        if (response.ok) {
+            console.log(`MAE System: Location successfully renamed to ${newName}`);
+            return true;
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error.message);
+        }
+    } catch (err) {
+        console.error("MAE System: Rename failed", err);
+        return false;
+    }
+}
+
+//====  END update location name ===========
+
 window.Dashboard = Dashboard;
 window.UI = UI;
 window.Labels = Labels;
@@ -1454,6 +1494,7 @@ window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
+window.updateLocationName = updateLocationName;
 
 
 startup();

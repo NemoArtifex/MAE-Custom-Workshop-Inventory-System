@@ -333,10 +333,9 @@ renderCommandBar(tableName) {
     // 1. RULE: LOCATION TABLE DISCIPLINE (The "Administrative" view)
     if (normalizedName === "location") {
         buttons = `
-            <button class="action-btn" id="btn-add">Establish New Physical Location</button>
+            <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
             <button class="action-btn" onclick="loadTbdAudit()">Audit of TBD Locations</button>
-            <button class="action-btn" onclick="loadTableData('Location')">Location Map</button>
-            <button class="action-btn" id="btn-print">Print</button>
+            <button class="action-btn" id="btn-print">Print Map</button>
         `;
     } 
     // 2. RULE: INVENTORY TABLES (The "Standard" view)
@@ -991,8 +990,136 @@ async promptNewLocation() {
             alert("Error: Could not save location. Check your internet connection.");
         }
     }
-}
+},
 //====== END PROMPT LOGIC For Location_ID ====
+
+//========== Manage Location Map ===========
+manageLocationMap() {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        title.innerText = "Administrative: Manage Shop Location Map";
+
+        let html = `
+            <div class="form-card" id="location-manager">
+                <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent);">
+                    <h4>Add New Foundation Point</h4>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="new-loc-name" placeholder="E.g. BIN-A1" style="flex: 1; padding: 10px;">
+                        <button class="action-btn" onclick="UI.saveNewLocation()" style="background:#27ae60;">Establish</button>
+                    </div>
+                </div>
+                
+                <h4>Current Established Locations</h4>
+                <div id="location-list-scroll" style="max-height: 400px; overflow-y: auto;">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr><th>Location_ID</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        // Populate with existing cache (excluding TBD from deletion/editing)
+        window.maeLocations.filter(loc => loc !== "TBD").forEach(loc => {
+            html += `
+                <tr>
+                    <td><strong>${loc}</strong></td>
+                    <td style="display: flex; gap: 10px;">
+                        <button class="mini-btn" onclick="UI.renameLocation('${loc}')" style="background:#2980b9;">Rename</button>
+                        <button class="mini-btn" onclick="UI.removeLocation('${loc}')" style="background:#c0392b;">Delete</button>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table></div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
+                </div>
+            </div>`;
+
+        container.innerHTML = html;
+    },
+
+    async removeLocation(locName) {
+        const confirmed = confirm(`CRITICAL WARNING: You are about to DELETE the location [${locName}]. \n\nAny items currently assigned to this spot will lose their physical reference. Proceed?`);
+        
+        if (confirmed) {
+            this.showLoading(`Decommissioning ${locName}...`);
+            
+            try {
+                const data = await window.Dashboard.getFullTableData("Location");
+                const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+                const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
+                
+                // RUGGED: match based on nested values array from Graph API
+                const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
+
+                if (rowIndex !== -1) {
+                    const success = await window.deleteExcelRow("Location", rowIndex);
+                    if (success) {
+                        await window.refreshLocationCache();
+                        this.manageLocationMap(); // Reload Manager
+                    }
+                }
+            } catch (err) {
+                console.error("MAE System: Removal failed", err);
+                this.showError("Failed to delete location from OneDrive.");
+            }
+        }
+    },
+
+    async renameLocation(oldName) {
+        const newName = prompt(`RENAME FOUNDATION POINT: \nChanging [${oldName}] will break the link for all items currently assigned to it in Excel. \n\nEnter new name:`, oldName);
+        
+        if (newName && newName.trim() !== "" && newName.trim().toUpperCase() !== oldName) {
+            const cleanNewName = newName.trim().toUpperCase();
+            this.showLoading(`Renaming ${oldName} to ${cleanNewName}...`);
+
+            try {
+                const data = await window.Dashboard.getFullTableData("Location");
+                const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+                const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
+                const rowIndex = data.findIndex(row => row.values[0][locIdx] === oldName);
+
+                if (rowIndex !== -1) {
+                    const success = await window.updateLocationName(rowIndex, cleanNewName);
+                    if (success) {
+                        await window.refreshLocationCache();
+                        this.manageLocationMap(); // Reload Manager
+                    }
+                }
+            } catch (err) {
+                console.error("MAE System: Rename failed", err);
+                this.showError("Failed to rename location in OneDrive.");
+            }
+        }
+    },
+
+    async saveNewLocation() {
+        const input = document.getElementById("new-loc-name");
+        const newLoc = input.value.trim().toUpperCase();
+
+        if (!newLoc) {
+            alert("Please enter a Location ID.");
+            return;
+        }
+
+        if (window.maeLocations.includes(newLoc)) {
+            alert(`Error: [${newLoc}] already exists in the Location Map.`);
+            return;
+        }
+
+        this.showLoading(`Establishing ${newLoc}...`);
+        const success = await window.submitNewLocationToTable(newLoc);
+
+        if (success) {
+            await window.refreshLocationCache();
+            this.manageLocationMap(); // Reload Manager
+        } else {
+            this.showError("Failed to establish new location.");
+        }
+    }
+
+// ======== END modify location Map Logic ========
 
 
 };
