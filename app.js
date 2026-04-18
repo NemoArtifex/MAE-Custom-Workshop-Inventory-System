@@ -42,21 +42,21 @@ async function startup() {
     try {
         // Initialize the PublicClientApplication
         //  MSAL V2 uses 'msal.PublicClientApplication'
-        myMSALObj = new window.msal.PublicClientApplication(msalConfig);
+        //myMSALObj = new window.msal.PublicClientApplication(msalConfig);
 
         const response = await myMSALObj.handleRedirectPromise();
     
         if (response) {
-            account = response.account;
-            console.log("Login successful via redirect. Account:", account.username);
+            window.account = response.account;
+            console.log("Login successful via redirect. Account:", window.account.username);
         } else {
             const accounts = myMSALObj.getAllAccounts();
             if (accounts.length > 0) account = accounts[0];
         }
 
-        if (account) {
+        if (window.account) {
             // SCENARIO 1: USER IS LOGGED IN
-            updateUIForLoggedInUser(account); 
+            updateUIForLoggedInUser(window.account); 
 
             // --- INDUSTRIAL SCANNER INTEGRATION ---
             // Purged old URL/QR lookup logic.
@@ -117,13 +117,13 @@ function updateUIForLoggedInUser(userAccount) {
 async function signOut() {
     console.log("Starting sign-out process via redirect...");
     
-    if (!account) {
+    if (!window.account) {
         resetUI();
         return;
     }
 
     const logoutRequest = {
-        account: myMSALObj.getAccountByUsername(account.username),
+        account: myMSALObj.getAccountByUsername(window.account.username),
         // After Microsoft logs you out, it will send the browser back here
         postLogoutRedirectUri: window.location.origin + window.location.pathname
     };
@@ -135,7 +135,7 @@ async function signOut() {
     } catch (error) {
         console.error("Sign-out redirect failed:", error);
         // Fallback: If the redirect fails, at least clean up the local UI
-        account = null;
+        window.account = null;
         sessionStorage.clear();
         resetUI();
     }
