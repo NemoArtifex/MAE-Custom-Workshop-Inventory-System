@@ -1404,19 +1404,32 @@ async function loadTbdAudit() {
     
     let allTbdRows = [];
     
-    for (const table of tablesToSearch) {
-        const data = await Dashboard.getFullTableData(table);
-        const config = maeSystemConfig.worksheets.find(s => s.tableName === table);
-        const locIdx = config.columns.findIndex(c => c.header === "Location_ID");
-        
-        // Filter rows where Location is TBD
-        const tbdRows = data.filter(row => row.values[0][locIdx] === "TBD");
-        allTbdRows = allTbdRows.concat(tbdRows);
-    }
+    try {
+        for (const table of tablesToSearch) {
+            const data = await Dashboard.getFullTableData(table);
+            const config = maeSystemConfig.worksheets.find(s => s.tableName === table);
+            const locIdx = config.columns.findIndex(c => c.header === "Location_ID");
+            
+            // RUGGED: Only process if data exists to prevent "Cannot read property of undefined"
+            if (data && data.length > 0) {
+                const tbdRows = data.filter(row => {
+                    // Check row.values[0] exists before accessing the index
+                    const rowCells = row.values[0];
+                    return rowCells && rowCells[locIdx] === "TBD";
+                });
+                allTbdRows = allTbdRows.concat(tbdRows);
+            }
+        }
 
-    // Render using a generic "Audit" view title
-    UI.renderTable(allTbdRows, "Location", null, "Audit: Items Awaiting Final Location Assignment");
-    UI.renderCommandBar("Location");
+        // Render the results using the Location blueprint
+        const locationConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        UI.renderTable(allTbdRows, "Location", locationConfig, "Audit: Items Awaiting Final Location Assignment");
+        UI.renderCommandBar("Location");
+
+    } catch (error) {
+        console.error("MAE System: TBD Audit failed", error);
+        UI.showError("Audit failed. Ensure all inventory tables are healthy.");
+    }
 }
 //==== END TBD location audit function =====
 
