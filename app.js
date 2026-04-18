@@ -16,7 +16,7 @@ window.currentTable = "";
  //       //redirectUri: "http://localhost:5500" ,
  //       redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
  //       navigateToLoginRequestUrl: false 
-    },
+ //   },
     // Defines how and where the app stores security tokens after received
     // Tokens stored for duration of browser's tab life 
     // "false": tells MSAL NOT to store the auth state in browser cookies  
