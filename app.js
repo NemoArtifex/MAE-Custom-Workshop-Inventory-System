@@ -1436,15 +1436,18 @@ async function loadTbdAudit() {
 //==== END TBD location audit function =====
 
 //========= update location name =========
-async function updateLocationName(rowIndex, newName) {
+async function updateLocationRecord(rowIndex, rowDataMap) {
     try {
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-        const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
         
-        // RUGGED: Create an array of nulls, placing the new name only at the Location_ID index.
-        // Sending null prevents overwriting other columns like 'Description' or 'Type'.
-        const rowValues = sheetConfig.columns.map((col, idx) => {
-            return idx === locIdx ? newName : null;
+        // DYNAMIC MAPPING: Build an array of nulls the same length as the config
+        const rowValues = new Array(sheetConfig.columns.length).fill(null);
+
+        // Fill the array only where the headers match the data we provided
+        sheetConfig.columns.forEach((col, idx) => {
+            if (rowDataMap.hasOwnProperty(col.header)) {
+                rowValues[idx] = rowDataMap[col.header];
+            }
         });
 
         const tokenResponse = await myMSALObj.acquireTokenSilent({
@@ -1453,7 +1456,7 @@ async function updateLocationName(rowIndex, newName) {
         });
 
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/Location/rows/itemAt(index=${rowIndex})`;
-     // const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+      //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/Location/tables/Location/rows/itemAt(index=${rowIndex})`; 
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {
@@ -1463,18 +1466,15 @@ async function updateLocationName(rowIndex, newName) {
             body: JSON.stringify({ values: [rowValues] })
         });
 
-        if (response.ok) {
-            console.log(`MAE System: Location successfully renamed to ${newName}`);
-            return true;
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error.message);
-        }
+        return response.ok;
     } catch (err) {
-        console.error("MAE System: Rename failed", err);
+        console.error("MAE System: Record update failed", err);
         return false;
     }
 }
+
+
+
 
 //====  END update location name ===========
 
@@ -1494,7 +1494,7 @@ window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
-window.updateLocationName = updateLocationName;
+window.updateLocationRecord = updateLocationRecord;
 
 
 startup();

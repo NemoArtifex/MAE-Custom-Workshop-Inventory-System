@@ -994,49 +994,86 @@ async promptNewLocation() {
 //====== END PROMPT LOGIC For Location_ID ====
 
 //========== Manage Location Map ===========
-manageLocationMap() {
+    async applyLocationChange(rowIndex, oldId) {
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        const rowDataMap = {};
+
+        // 1. DYNAMIC DATA GATHERING
+        // We look for inputs by a predictable ID pattern based on the Header Name
+        sheetConfig.columns.forEach(col => {
+            if (col.type !== 'formula' && col.header !== 'mae_id') {
+                const inputId = `loc-${col.header.replace(/\s+/g, '')}-${rowIndex}`;
+                const input = document.getElementById(inputId);
+                if (input) {
+                    rowDataMap[col.header] = col.header === "Location_ID" ? input.value.trim().toUpperCase() : input.value.trim();
+                }
+            }
+        });
+
+        const newId = rowDataMap["Location_ID"];
+        const confirmed = confirm(`Update Foundation Point [${oldId}]? \n\nNote: If the ID changed, existing items in other tables will need to be re-assigned.`);
+        
+        if (confirmed) {
+            this.showLoading(`Updating ${newId}...`);
+            const success = await window.updateLocationRecord(rowIndex, rowDataMap);
+            if (success) {
+                await window.refreshLocationCache();
+                this.manageLocationMap();
+            }
+        }
+    },
+
+    manageLocationMap() {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
         title.innerText = "Administrative: Manage Shop Location Map";
 
-        let html = `
-            <div class="form-card" id="location-manager">
-                <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent);">
-                    <h4>Add New Foundation Point</h4>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="new-loc-name" placeholder="E.g. BIN-A1" style="flex: 1; padding: 10px;">
-                        <button class="action-btn" onclick="UI.saveNewLocation()" style="background:#27ae60;">Establish</button>
-                    </div>
+        this.showLoading("Fetching Foundation Data...");
+        
+        window.Dashboard.getFullTableData("Location").then(data => {
+            let html = `<div class="form-card" id="location-manager">
+                <div style="border-bottom: 2px solid var(--accent); margin-bottom: 15px; padding-bottom: 10px;">
+                    <h4>+ Establish New Foundation Point</h4>
+                    <input type="text" id="new-loc-name" placeholder="ID (e.g. BIN-A1)" style="width:150px;">
+                    <input type="text" id="new-loc-desc" placeholder="Description" style="width:200px;">
+                    <button class="action-btn" onclick="UI.saveNewLocation()">Establish</button>
                 </div>
-                
-                <h4>Current Established Locations</h4>
-                <div id="location-list-scroll" style="max-height: 400px; overflow-y: auto;">
-                    <table class="inventory-table">
-                        <thead>
-                            <tr><th>Location_ID</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody>
-        `;
+                <table class="inventory-table">
+                    <thead>
+                        <tr><th>ID</th><th>Description</th><th>Type</th><th>Parent</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>`;
 
-        // Populate with existing cache (excluding TBD from deletion/editing)
-        window.maeLocations.filter(loc => loc !== "TBD").forEach(loc => {
-            html += `
-                <tr>
-                    <td><strong>${loc}</strong></td>
-                    <td style="display: flex; gap: 10px;">
-                        <button class="mini-btn" onclick="UI.renameLocation('${loc}')" style="background:#2980b9;">Rename</button>
-                        <button class="mini-btn" onclick="UI.removeLocation('${loc}')" style="background:#c0392b;">Delete</button>
+            data.forEach((row, idx) => {
+                const vals = row.values;
+                const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+                const currentLocName = vals[locIdIdx];
+        
+                if (currentLocName === "TBD") return;
+
+                html += `<tr>`;
+                sheetConfig.columns.forEach((col, colIdx) => {
+                    if (col.hidden) return;
+            
+                    const fieldId = `loc-${col.header.replace(/\s+/g, '')}-${idx}`;
+                    const displayVal = vals[colIdx] || '';
+            
+                    html += `<td><input type="text" id="${fieldId}" value="${displayVal}" style="width:100%;"></td>`;
+                });
+
+                html += `
+                <td>
+                     <button class="mini-btn" onclick="UI.applyLocationChange(${idx}, '${currentLocName}')">Update</button>
+                        <button class="mini-btn" onclick="UI.removeLocation('${currentLocName}')" style="background:#c0392b;">Delete</button>
                     </td>
                 </tr>`;
-        });
+            });
 
-        html += `</tbody></table></div>
-                <div class="form-actions" style="margin-top: 20px;">
-                    <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
-                </div>
+            html += `</tbody></table>
+                <div class="form-actions"><button class="cancel-btn" onclick="loadTableData('Location')">Close</button></div>
             </div>`;
-
-        container.innerHTML = html;
+            container.innerHTML = html;
+        });
     },
 
     async removeLocation(locName) {
