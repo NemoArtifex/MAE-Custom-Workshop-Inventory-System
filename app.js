@@ -935,6 +935,15 @@ async function submitNewRow(tableName, sheetConfig) {
             return (col.type === "date") ? null : "";
         }
 
+        // Hybrid-Inventory
+        if (col.type === "hybrid-inventory") {
+            const select = document.getElementById(fieldId);
+            const numInput = document.getElementById(`${fieldId}-num`);
+    
+            // If "Number" is chosen, send as Integer. Else, send the string label.
+            return (select.value === "Number") ? (parseInt(numInput.value) || 0) : select.value;
+        }
+
         // Return trimmed string for clean Excel data
         return input.value.trim();
     });

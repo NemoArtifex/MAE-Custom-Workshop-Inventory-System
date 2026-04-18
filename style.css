@@ -899,3 +899,27 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 
 
 /*====== END Mobile phone specific adjustments ======*/
+
+/*===== Hybrid Inventory styling ========= */
+.hybrid-num-input {
+    margin-top: 8px;
+    border: 2px solid var(--accent) !important;
+    background-color: #fffde7 !important; /* Soft yellow action color */
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* Visual cue for subjective labels in the table */
+.inventory-table td:contains("Few"),
+.inventory-table td:contains("Adequate"),
+.inventory-table td:contains("Many") {
+    font-style: italic;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Highlight "Few" in the table as a mini-alert */
+.inventory-table td:contains("Few") {
+    color: #c0392b; /* Safety Red */
+}
+/*==== END Hybrid Inventory styling ======*/

@@ -412,7 +412,7 @@ renderCommandBar(tableName) {
                             ).join('')}
                         </select>`;
                 }
-                
+
                 else if (col.type === "number") {
                     const isCurrency = col.format && col.format.includes("$");
                 
@@ -432,6 +432,24 @@ renderCommandBar(tableName) {
                 else if (col.type === "date") {
                     formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
                 } 
+                // Hybrid-inventory branch
+                else if (col.type === "hybrid-inventory") {
+                    // Determine if existing value is a number to set initial state
+                    const isNum = val !== "" && !isNaN(val); 
+                    formHtml += `
+                        <div class="input-group">
+                            <label>${col.header}</label>
+                            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
+                                <option value="">-- Select Level --</option>
+                                ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                            <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
+                                placeholder="Enter Count" 
+                                class="hybrid-num-input"
+                                style="display: ${isNum ? 'block' : 'none'};">
+                        </div>`;
+                }
+
                 else {
                     formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
                 }
@@ -475,6 +493,20 @@ renderCommandBar(tableName) {
     }
 },
 //======= END RENDER ENTRY FORM ============
+
+//====== HYBRID INVENTORY Helper (Show/Hide Number Input) ======
+handleHybridChange(select, numFieldId) {
+    const numInput = document.getElementById(numFieldId);
+    if (select.value === "Number") {
+        numInput.style.display = "block";
+        numInput.focus();
+    } else {
+        numInput.style.display = "none";
+        numInput.value = ""; 
+    }
+},
+
+//=====END HYBRID INVENTORY Helper ===========
 
 //========== EXIT EDIT MODE ==============
     exitEditMode() {

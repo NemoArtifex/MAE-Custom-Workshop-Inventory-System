@@ -21,12 +21,14 @@
  * Version: 1.5.1: Modified formula for Maint Items Due in 30 days to include past due and not complete
  * Version: 1.5.2: updated Table: Location: changed "Name" to "Description; Added Tag_ID columns to 
  *                 Inventory related worksheets, adjusted column placement; made Location_ID type: "dropdown"
- * Version xxxx
+ * Version 1.5.3: changed quantity/current stock in hand tools and consumables to "hybrid inventory" type to 
+ *                support both dropdown and number input
+ * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.2",
+    version: "1.5.3",
 
     features: {
         enableScanning: true
@@ -348,7 +350,7 @@ export const maeSystemConfig = {
                     options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
                     locked: false
                 },
-                { header: "Quantity", type: "number", format: "0", locked: false },
+                { header: "Quantity", type: "hybrid-inventory", options: ["Few", "Adequate", "Many", "Number"], locked: false },
                 { header: "Remarks", type: "string", locked: false }
             ]
         },
@@ -372,13 +374,18 @@ export const maeSystemConfig = {
                   locked: false 
                 },
                 { header: "Unit of Measure", type: "string", locked: false },
-                { header: "Current Stock", type: "number", format: "0", locked: false },
+                { header: "Current Stock", type: "hybrid-inventory", options: ["Few", "Adequate", "Many", "Number"], locked: false },
                 { header: "Reorder Point", type: "number", format: "0", locked: false },
                 { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },
                 {
                   header: "Current Inventory Value",
                   type: "formula",
-                  formula: "=[@[Current Stock]]*[@[Unit Cost]]",
+                  formula: `
+                            =IF(ISNUMBER([@[Current Stock]]), 
+                            [@[Current Stock]] * [@[Unit Cost]], 
+                            IFS([@[Current Stock]]="Many", 1.0, [@[Current Stock]]="Adequate", 0.5, [@[Current Stock]]="Few", 0.1, TRUE, 0) * [@[Unit Cost]]
+                            )
+                            `.trim(),
                   format: "$#,##0.00",
                   locked: true
                 },
