@@ -976,4 +976,31 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     font-weight: bold;
     color: var(--primary);
 }
+
+.location-input-wrapper {
+    display: flex !important; /* Force layout */
+    gap: 8px;
+    margin-top: 5px;
+    align-items: center;
+}
+
+.add-loc-btn {
+    display: inline-block !important;
+    background: var(--accent); /* Safety Orange */
+    color: white;
+    font-weight: 800;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.foundation-alert {
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: bold;
+    display: block;
+    margin-top: 4px;
+}
 /* =====END Location Control TOwer Styling     */

@@ -1403,3 +1403,4 @@ window.handleUniversalLookup = handleUniversalLookup;
 window.processInPlaceTableUpdate = processInPlaceTableUpdate;
 window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
+window.refreshLocationCache = refreshLocationCache;

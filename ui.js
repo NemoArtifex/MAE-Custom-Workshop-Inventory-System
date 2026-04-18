@@ -423,6 +423,24 @@ renderCommandBar(tableName) {
                         </div>`;
                 } 
 
+                // Hybrid-inventory branch
+                else if (col.type === "hybrid-inventory") {
+                    // Determine if existing value is a number to set initial state
+                    const isNum = val !== "" && !isNaN(val); 
+                    formHtml += `
+                        <div class="input-group">
+                            <label>${col.header}</label>
+                            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
+                                <option value="">-- Select Level --</option>
+                                ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                            <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
+                                placeholder="Enter Count" 
+                                class="hybrid-num-input"
+                                style="display: ${isNum ? 'block' : 'none'};">
+                        </div>`;
+                }
+
                 else if (col.type === "dropdown") {
                     // TIGHTENED: Fallback order: 1. Hardcoded Options -> 2. Dynamic Locations -> 3. "TBD"
                     const availableOptions = col.options || window.maeLocations || ["TBD"];
