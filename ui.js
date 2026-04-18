@@ -317,68 +317,48 @@ renderCommandBar(tableName) {
     const container = document.getElementById("action-bar-zone");
     if (!container) return;
 
-    // 1. Access the global config
-    const config = window.maeSystemConfig; 
-    if (!config) return;
-
-    // 2. Find the specific sheet blueprint
+    const config = window.maeSystemConfig;
     const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
-    if (!sheetConfig) return; 
+    if (!sheetConfig) return;
 
-    // Normalize name for reliable comparison
     const normalizedName = tableName.trim().toLowerCase();
     const isDashboard = normalizedName.includes("dashboard");
 
-    // 3. Scan for "Manual" keywords (Quantity / Current Stock)
     const hasManualField = sheetConfig.columns.some(col => 
         col.header === "Quantity" || col.header === "Current Stock"
     );
 
-    // 4. Build the Button HTML
-    let buttons = `<button class="action-btn" id="btn-print">Print Table</button>`;
+    let buttons = "";
 
-    // Add Manual Log button if keywords match
-    if (hasManualField) {
-        buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
-    }
-
-    //====Button to Add Location_ID
-    if (tableName === "Location") {
+    // 1. RULE: LOCATION TABLE DISCIPLINE (The "Administrative" view)
+    if (normalizedName === "location") {
         buttons = `
             <button class="action-btn" id="btn-add">Establish New Physical Location</button>
             <button class="action-btn" onclick="loadTbdAudit()">Audit of TBD Locations</button>
             <button class="action-btn" onclick="loadTableData('Location')">Location Map</button>
             <button class="action-btn" id="btn-print">Print</button>
         `;
-    }
-
-    // Only show "Action" buttons if we are NOT on a dashboard
-    if (!isDashboard) {
-        
-        // Define the specific five tables allowed to show the Scan button (in lowercase)
-        const scannableTables = [
-            "shop_machinery", 
-            "shop_power_tools", 
-            "shop_hand_tools", 
-            "shop_consumables", 
-            "resell_inventory"
-        ];
-        
-
-        buttons += `
+    } 
+    // 2. RULE: INVENTORY TABLES (The "Standard" view)
+    else if (!isDashboard) {
+        buttons = `
+            <button class="action-btn" id="btn-print">Print Table</button>
             <button class="action-btn" id="btn-add">Add Item</button>
             <button class="action-btn" id="btn-edit">Edit Table</button>
         `;
 
-        // Only show Quick Update if it's an inventory-style sheet
         if (hasManualField) {
+            buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
             buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
+    } 
+    // 3. RULE: DASHBOARDS (Minimalist view)
+    else {
+        buttons = `<button class="action-btn" id="btn-print">Print Dashboard</button>`;
     }
 
-    // 5. Inject into the UI
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-}},
+},
 
 //========== END RENDER COMMAND BAR ================
 
@@ -399,109 +379,65 @@ renderCommandBar(tableName) {
         const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
         const val = (isEdit && existingData) ? existingData[index] : "";
 
-        // RUGGED LOGIC: If the field is hidden or a formula, we still need the input 
-        // in the DOM for the data to be submitted, but we hide it from the user.
-            if (col.hidden || col.type === "formula") {
-                formHtml += `<input type="hidden" id="${fieldId}" value="${val}">`;
+        if (col.hidden || col.type === "formula") {
+            formHtml += `<input type="hidden" id="${fieldId}" value="${val}">`;
+        } 
+        else {
+            formHtml += `<div class="input-group"><label>${col.header}</label>`;
+
+            // 1. BOOLEAN FIX
+            if (col.type === "boolean") {
+                const isChecked = val.toString().toUpperCase() === "TRUE";
+                formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+            }
+            // 2. LOCATION DISCIPLINE FIX
+            else if (col.header === "Location_ID") {
+                formHtml += `
+                    <div class="location-control-group">
+                        <select id="${fieldId}" required>
+                            ${window.maeLocations.map(loc => 
+                                `<option value="${loc}" ${loc === val ? 'selected' : ''}>${loc}</option>`
+                            ).join('')}
+                        </select>
+                        <span class="foundation-alert">FOUNDATION FIELD: Managed via Location Table</span>
+                    </div>`;
+            }
+            // 3. HYBRID INVENTORY (Unified Branch)
+            else if (col.type === "hybrid-inventory") {
+                const isNum = val !== "" && !isNaN(val); 
+                formHtml += `
+                    <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
+                        <option value="">-- Select Level --</option>
+                        ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
+                        placeholder="Enter Count" 
+                        class="hybrid-num-input"
+                        style="display: ${isNum ? 'block' : 'none'};">`;
+            }
+            else if (col.type === "dropdown") {
+                const availableOptions = col.options || window.maeLocations || ["TBD"];
+                formHtml += `
+                    <select id="${fieldId}" required>
+                        <option value="">-- Select ${col.header} --</option>
+                        ${availableOptions.map(opt => `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>`;
+            }
+            else if (col.type === "number") {
+                const isCurrency = col.format && col.format.includes("$");
+                formHtml += `<input type="number" step="${isCurrency ? '0.01' : '1'}" id="${fieldId}" value="${val}" placeholder="${isCurrency ? '0.00' : 'Whole number'}">`;
+            } 
+            else if (col.type === "date") {
+                formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
             } 
             else {
-                // Render visible fields normally
-                formHtml += `<div class="input-group"><label>${col.header}</label>`;
-
-                if (col.type === "boolean") {
-                    // Render as a checkbox for boolean types
-                    const isChecked = val.toString().toUpperCase() === "TRUKE";
-                    formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
-                }
-
-                // ==== check special case of Location_ID FIRST as a dropdown =====
-                if (col.header === "Location_ID") {
-                    formHtml += `
-                        <div class="input-group location-control-group">
-                            <label>${col.header}</label>
-                            <select id="${fieldId}" required>
-                                ${window.maeLocations.map(loc => 
-                                    `<option value="${loc}" ${loc === val ? 'selected' : ''}>${loc}</option>`
-                                ).join('')}
-                            </select>
-                            <span class="foundation-alert">FOUNDATION FIELD: Managed via Location Table Only</span>
-                        </div>`;
-                }
-
-                // Hybrid-inventory branch
-                else if (col.type === "hybrid-inventory") {
-                    // Determine if existing value is a number to set initial state
-                    const isNum = val !== "" && !isNaN(val); 
-                    formHtml += `
-                        <div class="input-group">
-                            <label>${col.header}</label>
-                            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
-                                <option value="">-- Select Level --</option>
-                                ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
-                            </select>
-                            <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
-                                placeholder="Enter Count" 
-                                class="hybrid-num-input"
-                                style="display: ${isNum ? 'block' : 'none'};">
-                        </div>`;
-                }
-
-                else if (col.type === "dropdown") {
-                    // TIGHTENED: Fallback order: 1. Hardcoded Options -> 2. Dynamic Locations -> 3. "TBD"
-                    const availableOptions = col.options || window.maeLocations || ["TBD"];
-    
-                    formHtml += `
-                        <select id="${fieldId}" required>
-                            <option value="">-- Select ${col.header} --</option>
-                            ${availableOptions.map(opt => 
-                                `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`
-                            ).join('')}
-                        </select>`;
-                }
-
-                else if (col.type === "number") {
-                    const isCurrency = col.format && col.format.includes("$");
-                
-                    if (isCurrency) {
-                        formHtml += `
-                            <input type="number" step="0.01" id="${fieldId}" value="${val}" 
-                                placeholder="0.00" 
-                                onblur="if(this.value) this.value = parseFloat(this.value).toFixed(2)">`;
-                    } else {
-                        formHtml += `
-                            <input type="number" step="1" id="${fieldId}" value="${val}" 
-                                placeholder="Whole number only"
-                                onkeydown="if(['.', ',', 'e', 'E'].includes(event.key)) event.preventDefault();"
-                                onblur="if(this.value) this.value = Math.floor(this.value)">`;
-                    }
-                } 
-                else if (col.type === "date") {
-                    formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
-                } 
-                // Hybrid-inventory branch
-                else if (col.type === "hybrid-inventory") {
-                    // Determine if existing value is a number to set initial state
-                    const isNum = val !== "" && !isNaN(val); 
-                    formHtml += `
-                        <div class="input-group">
-                            <label>${col.header}</label>
-                            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
-                                <option value="">-- Select Level --</option>
-                                ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
-                            </select>
-                            <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
-                                placeholder="Enter Count" 
-                                class="hybrid-num-input"
-                                style="display: ${isNum ? 'block' : 'none'};">
-                        </div>`;
-                }
-
-                else {
-                    formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}...">`;
-                }
-                formHtml += `</div>`;
+                // ADD AUTOFOCUS TO TAG_ID FOR SCANNER DISCIPLINE
+                const isTag = col.header === "Tag_ID";
+                formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
             }
-        }); 
+            formHtml += `</div>`;
+        }
+    }); 
 
     formHtml += `</div>
         <div class="form-actions">
@@ -512,30 +448,20 @@ renderCommandBar(tableName) {
 
     container.insertAdjacentHTML('beforebegin', formHtml);
 
-     // FIX: Define the button AFTER it is injected into the DOM
+    // 4. SAVE HANDLER (Tightened Scope)
     const submitBtn = document.getElementById("submit-form-btn");
-
     if (submitBtn) {
         submitBtn.onclick = async () => {
-            // RUGGED LOCK
             submitBtn.disabled = true;
-            submitBtn.innerText = "Saving to OneDrive...";
-            submitBtn.style.opacity = "0.5";
-            submitBtn.style.cursor = "not-allowed";
-
-            // RUN THE SAVE: Call the callback from app.js
-            // We 'await' it so we know when the network request is finished
+            submitBtn.innerText = "Saving...";
+            
             await onSaveCallback(rowIndex, existingData); 
 
-            // UNLOCK (If the form wasn't removed by the callback)
             if (document.getElementById("submit-form-btn")) {
                 submitBtn.disabled = false;
                 submitBtn.innerText = isEdit ? 'Update to OneDrive' : 'Save to OneDrive';
-                submitBtn.style.opacity = "1";
-                submitBtn.style.cursor = "pointer";
             }
-            
-        }
+        };
     }
 },
 //======= END RENDER ENTRY FORM ============
