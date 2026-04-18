@@ -1446,3 +1446,4 @@ window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
+window.Dashboard = Dashboard;
