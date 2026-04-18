@@ -157,9 +157,11 @@ renderMenu(activeWorksheets, onClickCallback) {
                 const isReorderPoint = colDef.header === "Reorder Point";
                 const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
                 const isCurrency = colDef.format && colDef.format.includes("$");
-                const isLowStockText = displayValue === "Few";
                 
                 let displayValue = allCells[idx] ?? '';
+
+                const isLowStockText = displayValue === "Few";
+
 
                 if (isCurrency) {
                     displayValue = formatCurrency(displayValue);
