@@ -1102,32 +1102,41 @@ async promptNewLocation() {
 },
 
     async removeLocation(locName) {
-        const confirmed = confirm(`CRITICAL WARNING: You are about to DELETE the location [${locName}]. \n\nAny items currently assigned to this spot will lose their physical reference. Proceed?`);
+    const confirmed = confirm(`CRITICAL WARNING: You are about to DELETE the location [${locName}]. \n\nAny items currently assigned to this spot will lose their physical reference. Proceed?`);
+    
+    if (confirmed) {
+        this.showLoading(`Decommissioning ${locName}...`);
         
-        if (confirmed) {
-            this.showLoading(`Decommissioning ${locName}...`);
+        try {
+            const data = await window.Dashboard.getFullTableData("Location");
+            const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
             
-            try {
-                const data = await window.Dashboard.getFullTableData("Location");
-                const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-                const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
-                
-                // RUGGED: match based on nested values array from Graph API
-                const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
+            // --- HEADER DISCOVERY ---
+            const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
 
-                if (rowIndex !== -1) {
-                    const success = await window.deleteExcelRow("Location", rowIndex);
-                    if (success) {
-                        await window.refreshLocationCache();
-                        this.manageLocationMap(); // Reload Manager
-                    }
+            // RUGGED SEARCH: Dig into row.values[0] where Graph API hides the data
+            const rowIndex = data.findIndex(row => {
+                const rowCells = row.values[0]; 
+                return rowCells[locIdx] === locName;
+            });
+
+            if (rowIndex !== -1) {
+                // This calls the engine in app.js
+                const success = await window.deleteExcelRow("Location", rowIndex);
+                if (success) {
+                    await window.refreshLocationCache();
+                    this.manageLocationMap(); // Reload Manager
                 }
-            } catch (err) {
-                console.error("MAE System: Removal failed", err);
-                this.showError("Failed to delete location from OneDrive.");
+            } else {
+                console.error("MAE System: Could not find row for " + locName);
+                this.showError("Search failed: Location not found in OneDrive.");
             }
+        } catch (err) {
+            console.error("MAE System: Removal failed", err);
+            this.showError("Failed to delete location. Check connection.");
         }
-    },
+    }
+},
 
     async renameLocation(oldName) {
         const newName = prompt(`RENAME FOUNDATION POINT: \nChanging [${oldName}] will break the link for all items currently assigned to it in Excel. \n\nEnter new name:`, oldName);
