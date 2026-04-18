@@ -1332,25 +1332,7 @@ async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
 }
 //=========== END FUNCTION TO HANDLE SINGLE-ROW UPDATES ===========
 
-//========= ADD refreshLocationCache Location_ID SYNC===========
-async function refreshLocationCache() {
-    try {
-        const data = await Dashboard.getFullTableData("Location");
-        const locConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-        const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
 
-        if (data) {
-            // Extract the IDs, filter nulls, and ensure "TBD" is the first option
-            const list = data.map(row => row.values[0][locIdx]);
-            window.maeLocations = ["TBD", ...new Set(list.filter(i => i && i !== "TBD"))];
-            console.log("MAE System: Location Control Tower Synced.");
-        }
-    } catch (e) {
-        console.warn("Location sync failed, using last known cache.");
-    }
-}
-
-//====== END refreshLocationCache  Location_ID sync============
 
 //======= submitNewLocationToTable : writes data to Excel
 async function submitNewLocationToTable(locationId) {
