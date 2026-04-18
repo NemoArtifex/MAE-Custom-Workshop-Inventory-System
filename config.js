@@ -145,7 +145,12 @@ export const maeSystemConfig = {
                 { 
                     header: "Low Stock Items Count", 
                     type: "formula",
-                    formula: "=SUMPRODUCT(--(Shop_Consumables[Current Stock]<=Shop_Consumables[Reorder Point]))",
+                    formula: `
+                        =SUMPRODUCT(
+                            --( (ISNUMBER(Shop_Consumables[Current Stock])*(Shop_Consumables[Current Stock]<=Shop_Consumables[Reorder Point])) 
+                            + (Shop_Consumables[Current Stock]="Few") )
+                        )
+                    `.trim(),
                     format: "0",       
                     locked: true 
                 },
@@ -350,7 +355,11 @@ export const maeSystemConfig = {
                     options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
                     locked: false
                 },
-                { header: "Quantity", type: "hybrid-inventory", options: ["Few", "Adequate", "Many", "Number"], locked: false },
+                { 
+                    header: "Quantity", 
+                    type: "hybrid-inventory", 
+                    options: ["Few", "Adequate", "Many", "Number"], 
+                    locked: false },
                 { header: "Remarks", type: "string", locked: false }
             ]
         },
@@ -374,7 +383,12 @@ export const maeSystemConfig = {
                   locked: false 
                 },
                 { header: "Unit of Measure", type: "string", locked: false },
-                { header: "Current Stock", type: "hybrid-inventory", options: ["Few", "Adequate", "Many", "Number"], locked: false },
+                { 
+                    header: "Current Stock",
+                    type: "hybrid-inventory", 
+                    options: ["Few", "Adequate", "Many", "Number"], 
+                    locked: false 
+                },
                 { header: "Reorder Point", type: "number", format: "0", locked: false },
                 { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },
                 {

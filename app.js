@@ -525,7 +525,21 @@ function applyDashboardFilters(tableName, rows, filterType) {
             case 'low-stock':
                 const stockIdx = sheetConfig.columns.findIndex(c => c.header === "Current Stock");
                 const reorderIdx = sheetConfig.columns.findIndex(c => c.header === "Reorder Point");
-                return parseFloat(values[stockIdx]) <= parseFloat(values[reorderIdx]);
+    
+                // RUGGED: Extract the raw value from the cell
+                const stockVal = values[stockIdx];
+    
+                // 1. Text-Based Trigger: If the owner feels there are "Few," it's a Low Stock alert.
+                if (stockVal === "Few") return true;
+    
+                // 2. Text-Based Pass: If it's "Adequate" or "Many," it's not an alert.
+                if (stockVal === "Adequate" || stockVal === "Many") return false;
+    
+                // 3. Number-Based Trigger: Standard logic for numeric entries
+                const numericStock = parseFloat(stockVal);
+                const numericReorder = parseFloat(values[reorderIdx]);
+    
+                return !isNaN(numericStock) && numericStock <= numericReorder;
             
             case 'needs-repair':
                 const conditionIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");

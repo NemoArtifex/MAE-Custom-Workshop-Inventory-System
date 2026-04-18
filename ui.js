@@ -157,6 +157,7 @@ renderMenu(activeWorksheets, onClickCallback) {
                 const isReorderPoint = colDef.header === "Reorder Point";
                 const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
                 const isCurrency = colDef.format && colDef.format.includes("$");
+                const isLowStockText = displayValue === "Few";
                 
                 let displayValue = allCells[idx] ?? '';
 
@@ -171,6 +172,7 @@ renderMenu(activeWorksheets, onClickCallback) {
 
                 html += `<td 
                         class="${isEditable ? 'editable-cell' : 'locked-cell'}
+                               ${isLowStockText ? 'col-type-stock-alert' : ''}
                                ${isCurrentStock ? 'col-type-stock-alert' : ''}
                                ${isReorderPoint ? 'col-type-reorder-point' : ''}
                                ${isQuantity ? 'col-type-qty' : ''} 
