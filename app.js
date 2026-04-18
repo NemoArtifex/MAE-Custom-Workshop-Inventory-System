@@ -2,6 +2,7 @@ window.maeLocations =["TBD"]; // Global cache default for intake workflow
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 import { Labels } from './labels.js';
+import { Dashboard } from './dashboard.js';
 const fileName = maeSystemConfig.spreadsheetName;
 window.currentTable = "";
 // =============CONFIGURATION: The "Blueprint"  ======================
@@ -76,7 +77,7 @@ async function startup() {
 }
 
 //========END STARTUP LOGIC ===========
-startup();
+//startup();
 
 //===========SIGN-IN FUNCTION ==========
 //Initiated after pushing the authButton after made active at the end of the Startup function
@@ -1447,3 +1448,5 @@ window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
 window.Dashboard = Dashboard;
+
+startup();
