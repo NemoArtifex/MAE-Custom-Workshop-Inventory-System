@@ -1434,6 +1434,9 @@ async function loadTbdAudit() {
 }
 //==== END TBD location audit function =====
 
+window.Dashboard = Dashboard;
+window.UI = UI;
+window.labels = Labels;
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
@@ -1447,6 +1450,6 @@ window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
-window.Dashboard = Dashboard;
+
 
 startup();
