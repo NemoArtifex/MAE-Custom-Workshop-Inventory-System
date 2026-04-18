@@ -824,6 +824,16 @@ function handleEditClick(tableName) {
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
+        //===Location_ID: treat as "Locked" to prevent accidental changes whe bulk editing
+        if (colDef.header === "Location_ID") {
+            // Treat Location_ID as a locked field in bulk-edit mode to force discipline
+            cell.contentEditable = "false";
+            cell.classList.add("locked-cell");
+            cell.style.backgroundColor = "#f4f4f4";
+            return; // Skip turning this into an editable dropdown here
+        }
+
+
         // --- BRANCH 1: NUMBERS (Integer & Currency) ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
@@ -956,6 +966,11 @@ async function submitNewRow(tableName, sheetConfig) {
     
             // If "Number" is chosen, send as Integer. Else, send the string label.
             return (select.value === "Number") ? (parseInt(numInput.value) || 0) : select.value;
+        }
+
+        // Location ID: ensure defaults to "TBD" if empty
+        if (col.header === "Location_ID" && (!input || input.value === "")) {
+            return "TBD"; // Rapid entry fallback
         }
 
         // Return trimmed string for clean Excel data
@@ -1380,11 +1395,30 @@ async function submitNewLocationToTable(locationId) {
     }
 }
 
-
-
 //===== END submitNewLocationToTable =============
 
+//===== TBD location audit function =====
+async function loadTbdAudit() {
+    const tablesToSearch = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+    UI.showLoading("Auditing TBD Items...");
+    
+    let allTbdRows = [];
+    
+    for (const table of tablesToSearch) {
+        const data = await Dashboard.getFullTableData(table);
+        const config = maeSystemConfig.worksheets.find(s => s.tableName === table);
+        const locIdx = config.columns.findIndex(c => c.header === "Location_ID");
+        
+        // Filter rows where Location is TBD
+        const tbdRows = data.filter(row => row.values[0][locIdx] === "TBD");
+        allTbdRows = allTbdRows.concat(tbdRows);
+    }
 
+    // Render using a generic "Audit" view title
+    UI.renderTable(allTbdRows, "Location", null, "Audit: Items Awaiting Final Location Assignment");
+    UI.renderCommandBar("Location");
+}
+//==== END TBD location audit function =====
 
 
 window.handleEditClick = handleEditClick;
@@ -1398,3 +1432,4 @@ window.processInPlaceTableUpdate = processInPlaceTableUpdate;
 window.updateSingleRowFromForm = updateSingleRowFromForm;
 window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
+window.loadTbdAudit = loadTbdAudit;

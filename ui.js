@@ -342,6 +342,16 @@ renderCommandBar(tableName) {
         buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
     }
 
+    //====Button to Add Location_ID
+    if (tableName === "Location") {
+        buttons = `
+            <button class="action-btn" id="btn-add">Establish New Physical Location</button>
+            <button class="action-btn" onclick="loadTbdAudit()">Audit of TBD Locations</button>
+            <button class="action-btn" onclick="loadTableData('Location')">Location Map</button>
+            <button class="action-btn" id="btn-print">Print</button>
+        `;
+    }
+
     // Only show "Action" buttons if we are NOT on a dashboard
     if (!isDashboard) {
         
@@ -368,7 +378,7 @@ renderCommandBar(tableName) {
 
     // 5. Inject into the UI
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-},
+}},
 
 //========== END RENDER COMMAND BAR ================
 
@@ -409,19 +419,14 @@ renderCommandBar(tableName) {
                     formHtml += `
                         <div class="input-group location-control-group">
                             <label>${col.header}</label>
-                            <div class="location-input-wrapper">
-                                <select id="${fieldId}" required>
-                                    ${window.maeLocations.map(loc => 
-                                        `<option value="${loc}" ${loc === val ? 'selected' : ''}>${loc}</option>`
-                                    ).join('')}
-                                </select>
-                                <button type="button" class="add-loc-btn" onclick="UI.promptNewLocation()">
-                                    + NEW
-                                </button>
-                            </div>
-                            <span class="foundation-alert">FOUNDATION FIELD: Affects Shop Infrastructure</span>
+                            <select id="${fieldId}" required>
+                                ${window.maeLocations.map(loc => 
+                                    `<option value="${loc}" ${loc === val ? 'selected' : ''}>${loc}</option>`
+                                ).join('')}
+                            </select>
+                            <span class="foundation-alert">FOUNDATION FIELD: Managed via Location Table Only</span>
                         </div>`;
-                } 
+                }
 
                 // Hybrid-inventory branch
                 else if (col.type === "hybrid-inventory") {
