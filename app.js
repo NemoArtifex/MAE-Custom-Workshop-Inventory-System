@@ -3,28 +3,29 @@ import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
 import { Labels } from './labels.js';
 import { Dashboard } from './dashboard.js';
+import { myMSALObj } from './auth.js';
 const fileName = maeSystemConfig.spreadsheetName;
 window.currentTable = "";
 // =============CONFIGURATION: The "Blueprint"  ======================
-// Defines the configuration object for the Microsoft Authentication Libray (MSAL)
+// Defines the configuration object for the Microsoft Authentication Library (MSAL)
 // Used to integrate Microsoft's identity and sign-in features into web apps
-const msalConfig = {
-    auth: {
-        clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
-        authority: "https://login.microsoftonline.com/common",
-        //redirectUri: "http://localhost:5500" ,
-        redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
-        navigateToLoginRequestUrl: false 
+//const msalConfig = {
+ //   auth: {
+ //       clientId: "1f9f1df5-e39b-4845-bb07-ba7a683cf999",
+ //       authority: "https://login.microsoftonline.com/common",
+ //       //redirectUri: "http://localhost:5500" ,
+ //       redirectUri: "https://nemoartifex.github.io/MAE-Custom-Workshop-Inventory-System/",
+ //       navigateToLoginRequestUrl: false 
     },
     // Defines how and where the app stores security tokens after received
     // Tokens stored for duration of browser's tab life 
     // "false": tells MSAL NOT to store the auth state in browser cookies  
-    cache: {
-        cacheLocation: "sessionStorage", // Simple and effective for workshop environments
+  //  cache: {
+ ////       cacheLocation: "sessionStorage", // Simple and effective for workshop environments
         storeAuthStateInCookie: false,
-    }
+ //   }
     
-};
+//};
 // ===========END CONFIGURATION =============
 
 // =========== STARTUP LOGIC ============
@@ -1436,7 +1437,7 @@ async function loadTbdAudit() {
 
 window.Dashboard = Dashboard;
 window.UI = UI;
-window.labels = Labels;
+window.Labels = Labels;
 
 window.handleEditClick = handleEditClick;
 window.handleQuickUpdate = handleQuickUpdate;
