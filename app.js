@@ -1484,7 +1484,7 @@ window.submitNewLocationToTable = submitNewLocationToTable;
 window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
 window.updateLocationRecord = updateLocationRecord;
-Window.deleteExcelRow = deleteExcelRow;
+window.deleteExcelRow = deleteExcelRow;
 
 
 startup();
