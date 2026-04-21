@@ -367,7 +367,7 @@ renderCommandBar(tableName) {
     }
 
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-}
+},
 
 //========== END RENDER COMMAND BAR ================
 
