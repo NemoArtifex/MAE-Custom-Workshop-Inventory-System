@@ -317,20 +317,30 @@ renderCommandBar(tableName) {
     const container = document.getElementById("action-bar-zone");
     if (!container) return;
 
+    const normalizedName = tableName.trim().toLowerCase();
+    let buttons = "";
+
+    // --- VIRTUAL RULE 1: AUDIT VIEW (Check this BEFORE the sheetConfig guard) ---
+    if (normalizedName === "location_audit") {
+        buttons = `
+            <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
+            <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
+        `;
+        container.innerHTML = `<div class="command-bar">${buttons}</div>`;
+        return; // EXIT: We don't need sheetConfig for a virtual view
+    }
+
+    // --- STANDARD GUARD: Only proceed if this is a physical Excel table ---
     const config = window.maeSystemConfig;
     const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
     if (!sheetConfig) return;
 
-    const normalizedName = tableName.trim().toLowerCase();
     const isDashboard = normalizedName.includes("dashboard");
-
     const hasManualField = sheetConfig.columns.some(col => 
         col.header === "Quantity" || col.header === "Current Stock"
     );
 
-    let buttons = "";
-
-    // 1. RULE: LOCATION TABLE DISCIPLINE (The "Administrative" view)
+    // --- RULE 1: LOCATION TABLE DISCIPLINE ---
     if (normalizedName === "location") {
         buttons = `
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
@@ -338,16 +348,7 @@ renderCommandBar(tableName) {
             <button class="action-btn" id="btn-print">Print Location Map</button>
         `;
     } 
-
-    // NEW: Context-specific bar for the Audit view
-    else if (normalizedName === "location_audit") {
-        buttons = `
-            <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
-            <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
-        `;
-    }
-
-    // 2. RULE: INVENTORY TABLES (The "Standard" view)
+    // --- RULE 2: INVENTORY TABLES ---
     else if (!isDashboard) {
         buttons = `
             <button class="action-btn" id="btn-print">Print Table</button>
@@ -360,13 +361,13 @@ renderCommandBar(tableName) {
             buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
     } 
-    // 3. RULE: DASHBOARDS (Minimalist view)
+    // --- RULE 3: DASHBOARDS ---
     else {
         buttons = `<button class="action-btn" id="btn-print">Print Dashboard</button>`;
     }
 
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-},
+}
 
 //========== END RENDER COMMAND BAR ================
 
