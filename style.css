@@ -1004,3 +1004,40 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     margin-top: 4px;
 }
 /* =====END Location Control TOwer Styling     */
+
+/* Normal view: Hide the virtual print container */
+/* Normal Browser View: Hide the virtual container from the user */
+.print-only-container {
+    display: none;
+}
+
+@media print {
+    /* 1. Hide the entire application UI */
+    body > *:not(.print-only-container) {
+        display: none !important;
+    }
+
+    /* 2. Force the virtual container to show on the paper */
+    .print-only-container {
+        display: block !important;
+        width: 100% !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    /* 3. Ensure the table inside uses your rugged grid styling */
+    .print-only-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 2px solid black !important;
+    }
+
+    .print-only-container th, 
+    .print-only-container td {
+        border: 1px solid black !important;
+        padding: 8px !important;
+        font-size: 10pt !important;
+        color: black !important;
+    }
+}

@@ -606,7 +606,6 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
-
     else if (btn.id === 'btn-print-tbd') {
         UI.showLoading("Preparing TBD Audit for print...");
     
@@ -617,44 +616,36 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
             // Hand off to the Virtual Print function in ui.js
             UI.printVirtualAudit(results, title);
         
-            // Restore the UI view
+            // Restore the UI view to the standard Location Map
             UI.renderCommandBar("Location");
             loadTableData("Location");
         });
     }
-    
-    //  Button scan Logic
-   // else if (btn.id === 'btn-scan') {
-        // Call your new Labels module
-   //     Labels.startScanner((cleanId) => {
-            // Once scanned, run the lookup
-    //        handleUniversalLookup(cleanId);
-    //    });
-    //}
-
     // CONSOLIDATED PRINT LOGIC: Handles both Table and Manual Log
     else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
-        const titleElement = document.getElementById("current-view-title");
-        
-        // RUGGED: Extract only the title text (ignores the "Back" button)
-        const spanElement = titleElement.querySelector("span");
-        //const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
-
-        // DATE GENERATION: MM/DD/YYYY
         const today = new Date().toLocaleDateString('en-US');
+        
+        // RUGGED CHECK: Determine if we are looking at an Audit or a standard Map
+        const table = document.getElementById("main-data-table");
+        const isAuditViewActive = table && table.innerText.includes("Assign New Location");
 
-        // Logic-Based Title Override
         let finalPrintTitle;
-        if (currentTable === "Location"){
+
+        if (isAuditViewActive) {
+            // Case 1: User is viewing the Audit on screen and clicked the general 'Print' button
+            finalPrintTitle = `Items with Location_ID: TBD (as of ${today})`;
+        } else if (currentTable === "Location") {
+            // Case 2: User is viewing the standard Location Map
             finalPrintTitle = `Workshop Location Map (as of ${today})`;
         } else {
+            // Case 3: Standard Inventory Tables
+            const titleElement = document.getElementById("current-view-title");
+            const spanElement = titleElement.querySelector("span");
             const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
             finalPrintTitle = `${currentTitleText} (as of ${today})`;
         }
         
-        
-
         // Branch to appropriate UI function
         if (btn.id === 'btn-print') {
             UI.printTable(currentTable, sheetConfig, finalPrintTitle);

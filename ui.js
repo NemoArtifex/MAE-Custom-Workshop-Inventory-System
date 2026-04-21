@@ -1287,7 +1287,7 @@ renderAuditGrid(auditData) {
 // =======Virtual TBD Item Print =========
 printVirtualAudit(auditData, title) {
     const printContainer = document.createElement("div");
-    printContainer.style.display = "none";
+    printContainer.className = "print-only-container";
     printContainer.id = "temp-print-zone";
 
     const grouped = auditData.reduce((acc, item) => {
@@ -1313,6 +1313,12 @@ printVirtualAudit(auditData, title) {
 
     printContainer.innerHTML = html;
     document.body.appendChild(printContainer);
+
+    // Small delay to let the DOM settle before opening the print dialog
+    setTimeout(() => {
+        window.print();
+        printContainer.remove();
+    }, 50);
 
     window.print();
     printContainer.remove();
