@@ -335,7 +335,7 @@ renderCommandBar(tableName) {
         buttons = `
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
             <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
-            <button class="action-btn" id="btn-print">Print Map</button>
+            <button class="action-btn" id="btn-print">Print Location Map</button>
         `;
     } 
     // 2. RULE: INVENTORY TABLES (The "Standard" view)

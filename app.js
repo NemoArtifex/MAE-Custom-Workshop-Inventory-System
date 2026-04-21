@@ -623,13 +623,21 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         
         // RUGGED: Extract only the title text (ignores the "Back" button)
         const spanElement = titleElement.querySelector("span");
-        const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
+        //const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
 
         // DATE GENERATION: MM/DD/YYYY
         const today = new Date().toLocaleDateString('en-US');
 
         // Logic-Based Title Override
-        let finalPrintTitle = `${currentTitleText} (as of ${today})`;
+        let finalPrintTitle;
+        if (currentTable === "Location"){
+            finalPrintTitle = `Workshop Location Map (as of ${today})`;
+        } else {
+            const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
+            finalPrintTitle = `${currentTitleText} (as of ${today})`;
+        }
+        
+        
 
         // Branch to appropriate UI function
         if (btn.id === 'btn-print') {
