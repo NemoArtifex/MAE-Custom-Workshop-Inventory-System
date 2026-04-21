@@ -336,9 +336,17 @@ renderCommandBar(tableName) {
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
             <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
             <button class="action-btn" id="btn-print">Print Location Map</button>
-            <button class="action-btn" id="btn-print-tbd">Print TBD Audit</button>
         `;
     } 
+
+    // NEW: Context-specific bar for the Audit view
+    else if (normalizedName === "location_audit") {
+        buttons = `
+            <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
+            <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
+        `;
+    }
+
     // 2. RULE: INVENTORY TABLES (The "Standard" view)
     else if (!isDashboard) {
         buttons = `
@@ -1280,7 +1288,7 @@ renderAuditGrid(auditData) {
     container.innerHTML = html;
 
     // Ensure we show the correct command bar context
-    this.renderCommandBar("Location"); 
+    this.renderCommandBar("location_audit"); 
 },
 //======= END   "Virtual table renderer" for TBD ======
 

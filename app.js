@@ -606,40 +606,25 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
-    else if (btn.id === 'btn-print-tbd') {
-        UI.showLoading("Preparing TBD Audit for print...");
-    
-        getTbdAuditData().then(results => {
-            const today = new Date().toLocaleDateString('en-US');
-            const title = `Items with Location_ID: TBD (as of ${today})`;
-            
-            // Hand off to the Virtual Print function in ui.js
-            UI.printVirtualAudit(results, title);
-        
-            // Restore the UI view to the standard Location Map
-            UI.renderCommandBar("Location");
-            loadTableData("Location");
-        });
-    }
-    // CONSOLIDATED PRINT LOGIC: Handles both Table and Manual Log
-    else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print') {
+    // CONSOLIDATED PRINT LOGIC: Handles Table, Manual Log, and TBD Audit
+    else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print' || btn.id === 'btn-print-audit') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
         const today = new Date().toLocaleDateString('en-US');
         
-        // RUGGED CHECK: Determine if we are looking at an Audit or a standard Map
+        // RUGGED CHECK: Determine if we are looking at an Audit View or a standard Map/Table
         const table = document.getElementById("main-data-table");
-        const isAuditViewActive = table && table.innerText.includes("Assign New Location");
+        const isAuditViewActive = table && table.innerHTML.includes("Assign New Location");
 
         let finalPrintTitle;
 
-        if (isAuditViewActive) {
-            // Case 1: User is viewing the Audit on screen and clicked the general 'Print' button
+        if (isAuditViewActive || btn.id === 'btn-print-audit') {
+            // Case 1: TBD Audit View (Two columns, grouped)
             finalPrintTitle = `Items with Location_ID: TBD (as of ${today})`;
         } else if (currentTable === "Location") {
-            // Case 2: User is viewing the standard Location Map
+            // Case 2: Standard Workshop Location Map (4 columns)
             finalPrintTitle = `Workshop Location Map (as of ${today})`;
         } else {
-            // Case 3: Standard Inventory Tables
+            // Case 3: Standard Inventory Tables (Consumables, Machinery, etc.)
             const titleElement = document.getElementById("current-view-title");
             const spanElement = titleElement.querySelector("span");
             const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
@@ -647,8 +632,9 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         }
         
         // Branch to appropriate UI function
-        if (btn.id === 'btn-print') {
-            UI.printTable(currentTable, sheetConfig, finalPrintTitle);
+        // Note: For Audit view, we pass 'null' for sheetConfig so it prints exactly what's on screen
+        if (btn.id === 'btn-print' || btn.id === 'btn-print-audit') {
+            UI.printTable(currentTable, isAuditViewActive ? null : sheetConfig, finalPrintTitle);
         } else {
             UI.printManualLog(currentTable, sheetConfig, finalPrintTitle);
         }
