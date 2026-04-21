@@ -1521,6 +1521,46 @@ async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId) {
         }, 500);
     }
 }
+
+// ==== HELPER function for the "Update Engine"=====
+async function commitCellChange(tableName, maeId, columnName, newValue) {
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    const colIdx = sheetConfig.columns.findIndex(c => c.header === columnName);
+
+    try {
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: window.account
+        });
+
+        // 1. Find the row index by mae_id (Column 0)
+        const data = await Dashboard.getFullTableData(tableName);
+        const rowIndex = data.findIndex(row => row.values[0][0] === maeId);
+
+        if (rowIndex === -1) return false;
+
+        // 2. PATCH only the specific row. Excel handles the column mapping.
+        const rowValues = new Array(sheetConfig.columns.length).fill(null);
+        rowValues[colIdx] = newValue;
+
+        const url = `https://microsoft.com{encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowValues] })
+        });
+
+        return response.ok;
+    } catch (err) {
+        console.error("MAE System: Quick Sync Failed", err);
+        return false;
+    }
+}
+//==== END HELPER function for the "Update Engine" =====
 //===== END  Update "Engine" for TBD =========
 
 window.Dashboard = Dashboard;

@@ -334,7 +334,7 @@ renderCommandBar(tableName) {
     if (normalizedName === "location") {
         buttons = `
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
-            <button class="action-btn" onclick="loadTbdAudit()">Audit of TBD Locations</button>
+            <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
             <button class="action-btn" id="btn-print">Print Map</button>
         `;
     } 
@@ -1214,41 +1214,72 @@ async promptNewLocation() {
 renderAuditGrid(auditData) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
+    
     title.innerText = "Audit: Items Awaiting Final Location Assignment";
 
-    if (auditData.length === 0) {
-        container.innerHTML = "<div class='form-card'><h3>✅ Audit Complete</h3><p>All items have been assigned a location.</p></div>";
+    // 1. Check for empty state (Audit Complete)
+    if (!auditData || auditData.length === 0) {
+        container.innerHTML = `
+            <div class="form-card" style="text-align:center; padding:40px;">
+                <h3 style="color:#27ae60;">✅ Audit Complete</h3>
+                <p>All items have been assigned a location in the Control Tower.</p>
+                <button class="action-btn" onclick="loadTableData('Location')">Return to Location Map</button>
+            </div>`;
         return;
     }
 
-    // Grouping by Category for the UI
+    // 2. Group the data by category for visual organization
     const grouped = auditData.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
     }, {});
 
+    // 3. Build the two-column grouped table
     let html = `<table class="inventory-table" id="main-data-table">`;
+    
     for (const [category, items] of Object.entries(grouped)) {
-        html += `<thead><tr><th colspan="3" style="background:var(--primary);">${category}</th></tr>
-                 <tr><th>Item Name</th><th>Current</th><th>New Assignment</th></tr></thead><tbody>`;
+        // Render Category Header and Sub-Headers (Item / Location_ID)
+        html += `
+            <thead>
+                <tr>
+                    <th colspan="2" style="background:var(--primary); color:white; padding:12px;">
+                        ${category.toUpperCase()}
+                    </th>
+                </tr>
+                <tr>
+                    <th style="width:60%;">Item</th>
+                    <th style="width:40%;">Location_ID</th>
+                </tr>
+            </thead>
+            <tbody>`;
         
         items.forEach(item => {
-            html += `<tr id="audit-row-${item.mae_id}" style="transition: opacity 0.5s ease;">
-                <td>${item.itemName}</td>
-                <td style="color:var(--accent); font-weight:bold;">TBD</td>
+            // Option A: Live Cleanup - includes the unique ID for the fade-out animation
+            html += `
+            <tr id="audit-row-${item.mae_id}" style="transition: opacity 0.5s ease, transform 0.5s ease;">
+                <td class="locked-cell">${item.itemName}</td>
                 <td>
-                    <select class="edit-dropdown" onchange="handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, 'audit-row-${item.mae_id}')">
-                        <option value="TBD">-- Select Location --</option>
-                        ${window.maeLocations.map(loc => `<option value="${loc}">${loc}</option>`).join('')}
+                    <select class="edit-dropdown" 
+                            style="width:100%; height:40px; background:#fffde7; border:1px solid var(--accent);"
+                            onchange="handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, 'audit-row-${item.mae_id}')">
+                        <option value="TBD">TBD</option>
+                        ${window.maeLocations
+                            .filter(loc => loc !== "TBD")
+                            .map(loc => `<option value="${loc}">${loc}</option>`)
+                            .join('')}
                     </select>
                 </td>
             </tr>`;
         });
+        html += `</tbody>`;
     }
-    html += `</tbody></table>`;
+    
+    html += `</table>`;
     container.innerHTML = html;
-    this.renderCommandBar("Location_Audit"); 
+
+    // Ensure we show the correct command bar context
+    this.renderCommandBar("Location"); 
 }
 //======= END   "Virtual table renderer" for TBD ======
 
