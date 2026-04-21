@@ -1206,9 +1206,51 @@ async promptNewLocation() {
     } else {
         this.showError("Failed to establish new location.");
     }
-}
+},
 
 // ======== END modify location Map Logic ========
+
+//======= "Virtual table renderer" for TBD ======
+renderAuditGrid(auditData) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = "Audit: Items Awaiting Final Location Assignment";
+
+    if (auditData.length === 0) {
+        container.innerHTML = "<div class='form-card'><h3>✅ Audit Complete</h3><p>All items have been assigned a location.</p></div>";
+        return;
+    }
+
+    // Grouping by Category for the UI
+    const grouped = auditData.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    let html = `<table class="inventory-table" id="main-data-table">`;
+    for (const [category, items] of Object.entries(grouped)) {
+        html += `<thead><tr><th colspan="3" style="background:var(--primary);">${category}</th></tr>
+                 <tr><th>Item Name</th><th>Current</th><th>New Assignment</th></tr></thead><tbody>`;
+        
+        items.forEach(item => {
+            html += `<tr id="audit-row-${item.mae_id}" style="transition: opacity 0.5s ease;">
+                <td>${item.itemName}</td>
+                <td style="color:var(--accent); font-weight:bold;">TBD</td>
+                <td>
+                    <select class="edit-dropdown" onchange="handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, 'audit-row-${item.mae_id}')">
+                        <option value="TBD">-- Select Location --</option>
+                        ${window.maeLocations.map(loc => `<option value="${loc}">${loc}</option>`).join('')}
+                    </select>
+                </td>
+            </tr>`;
+        });
+    }
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    this.renderCommandBar("Location_Audit"); 
+}
+//======= END   "Virtual table renderer" for TBD ======
 
 
 };

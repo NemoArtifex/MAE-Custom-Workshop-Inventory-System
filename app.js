@@ -1462,10 +1462,66 @@ async function updateLocationRecord(rowIndex, rowDataMap) {
     }
 }
 
-
-
-
 //====  END update location name ===========
+
+//===========  scan all inventory tables to find "TBD" items====
+async function runLocationAudit() {
+    UI.showLoading("Performing Cross-Table Audit...");
+    
+    // The list of tables we want to check for TBD locations
+    const inventoryTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    let auditResults = [];
+
+    for (const tableName of inventoryTables) {
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        // Use your existing worker to get raw rows
+        const data = await Dashboard.getFullTableData(tableName); 
+
+        // HEADER DISCOVERY: Find the index of Location_ID and the Item Name
+        const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+        // We look for the first column that isn't hidden/ID to find the "Item Name"
+        const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && c.header.includes("Name") || c.header.includes("Tool"));
+
+        data.forEach(row => {
+            const cells = row.values[0];
+            // Check if Location_ID is exactly "TBD"
+            if (cells[locIdx] === "TBD") {
+                auditResults.push({
+                    category: sheetConfig.tabName,
+                    itemName: cells[nameIdx],
+                    mae_id: cells[0], // mae_id is always index 0 per your config
+                    tableName: tableName
+                });
+            }
+        });
+    }
+    // Hand off the aggregated results to the UI
+    UI.renderAuditGrid(auditResults);
+}
+//=====  END scan all inventory tables to find "TBD items ======"
+
+//=====  Update "Engine" for TBD =========
+async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId) {
+    if (newLoc === "TBD") return;
+
+    const row = document.getElementById(rowHtmlId);
+    row.style.opacity = "0.5"; // Visual "Saving" hint
+
+    // Using your existing updateSingleRowFromForm logic or similar
+    const success = await commitCellChange(tableName, maeId, "Location_ID", newLoc);
+
+    if (success) {
+        row.style.opacity = "0";
+        setTimeout(() => {
+            row.remove();
+            // If table is now empty, re-run audit to show "Complete" message
+            if (document.querySelectorAll("#main-data-table tbody tr").length === 0) {
+                runLocationAudit();
+            }
+        }, 500);
+    }
+}
+//===== END  Update "Engine" for TBD =========
 
 window.Dashboard = Dashboard;
 window.UI = UI;
@@ -1485,6 +1541,8 @@ window.refreshLocationCache = refreshLocationCache;
 window.loadTbdAudit = loadTbdAudit;
 window.updateLocationRecord = updateLocationRecord;
 window.deleteExcelRow = deleteExcelRow;
+window.runLocationAudit = runLocationAudit;
+window.handleAuditUpdate = handleAuditUpdate;
 
 
 startup();
