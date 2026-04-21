@@ -1543,8 +1543,8 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
         const rowValues = new Array(sheetConfig.columns.length).fill(null);
         rowValues[colIdx] = newValue;
 
-        const url = `https://microsoft.com{encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-        
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+     
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {
