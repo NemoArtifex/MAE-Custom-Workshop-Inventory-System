@@ -336,6 +336,7 @@ renderCommandBar(tableName) {
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
             <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
             <button class="action-btn" id="btn-print">Print Location Map</button>
+            <button class="action-btn" id="btn-print-tbd">Print TBD Audit</button>
         `;
     } 
     // 2. RULE: INVENTORY TABLES (The "Standard" view)
@@ -1280,8 +1281,43 @@ renderAuditGrid(auditData) {
 
     // Ensure we show the correct command bar context
     this.renderCommandBar("Location"); 
-}
+},
 //======= END   "Virtual table renderer" for TBD ======
+
+// =======Virtual TBD Item Print =========
+printVirtualAudit(auditData, title) {
+    const printContainer = document.createElement("div");
+    printContainer.style.display = "none";
+    printContainer.id = "temp-print-zone";
+
+    const grouped = auditData.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    let html = `<div class="print-only-title"><h1>${title}</h1></div>`;
+    // We use your 'manual-log-mode' class to ensure rugged table borders and row height
+    html += `<table class="inventory-table manual-log-mode" style="width:100%; border-collapse:collapse;">`;
+    
+    for (const [category, items] of Object.entries(grouped)) {
+        html += `<thead>
+                    <tr><th colspan="2" style="background:#eee; border:1px solid black; padding:10px;">${category.toUpperCase()}</th></tr>
+                    <tr><th style="border:1px solid black; width:60%;">Item</th><th style="border:1px solid black; width:40%;">Location Assignment</th></tr>
+                 </thead><tbody>`;
+        items.forEach(item => {
+            html += `<tr><td style="border:1px solid black; height:40px; padding:5px;">${item.itemName}</td><td style="border:1px solid black;"></td></tr>`;
+        });
+    }
+    html += `</tbody></table>`;
+
+    printContainer.innerHTML = html;
+    document.body.appendChild(printContainer);
+
+    window.print();
+    printContainer.remove();
+}
+//======= END    Virtual TBD Item Print =========
 
 
 };

@@ -606,15 +606,31 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
+
+    else if (btn.id === 'btn-print-tbd') {
+        UI.showLoading("Preparing TBD Audit for print...");
     
-    //  Button scan Logic
-    else if (btn.id === 'btn-scan') {
-        // Call your new Labels module
-        Labels.startScanner((cleanId) => {
-            // Once scanned, run the lookup
-            handleUniversalLookup(cleanId);
+        getTbdAuditData().then(results => {
+            const today = new Date().toLocaleDateString('en-US');
+            const title = `Items with Location_ID: TBD (as of ${today})`;
+            
+            // Hand off to the Virtual Print function in ui.js
+            UI.printVirtualAudit(results, title);
+        
+            // Restore the UI view
+            UI.renderCommandBar("Location");
+            loadTableData("Location");
         });
     }
+    
+    //  Button scan Logic
+   // else if (btn.id === 'btn-scan') {
+        // Call your new Labels module
+   //     Labels.startScanner((cleanId) => {
+            // Once scanned, run the lookup
+    //        handleUniversalLookup(cleanId);
+    //    });
+    //}
 
     // CONSOLIDATED PRINT LOGIC: Handles both Table and Manual Log
     else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print') {
@@ -1475,6 +1491,7 @@ async function updateLocationRecord(rowIndex, rowDataMap) {
 //===========  scan all inventory tables to find "TBD" items====
 async function runLocationAudit() {
     UI.showLoading("Performing Cross-Table Audit...");
+    const results = await getTbdAuditData();
     
     // The list of tables we want to check for TBD locations
     const inventoryTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
@@ -1569,6 +1586,36 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
     }
 }
 //==== END HELPER function for the "Update Engine" =====
+
+// ====== SCans all inventory tables for TBD items ======
+async function getTbdAuditData() {
+    const inventoryTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    let auditResults = [];
+
+    for (const tableName of inventoryTables) {
+        const config = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        const data = await Dashboard.getFullTableData(tableName); 
+
+        // HEADER DISCOVERY
+        const locIdx = config.columns.findIndex(c => c.header === "Location_ID");
+        const nameIdx = config.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
+
+        data.forEach(row => {
+            const cells = row.values;
+            if (cells[locIdx] === "TBD") {
+                auditResults.push({
+                    category: config.tabName,
+                    itemName: cells[nameIdx],
+                    mae_id: cells[0], // Column 0
+                    tableName: tableName
+                });
+            }
+        });
+    }
+    return auditResults;
+}
+
+// ====== END   SCans all inventory tables for TBD items ======
 //===== END  Update "Engine" for TBD =========
 
 window.Dashboard = Dashboard;
