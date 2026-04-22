@@ -18,7 +18,6 @@ const formatCurrency = (value) => {
 };
 
 import { Dashboard } from './dashboard.js';
-import { globalClickOffHandler } from './app.js';
 
 export const UI = {
     
@@ -1395,13 +1394,18 @@ async removeLocation(locName) {
 
 //====== Finalize Decommission: ensures location_id default to TBD if not selected ====
 async finalizeDecommission(locName) {
-    // 1. SYSTEM LOCK: Prevent any other syncs from firing
-    document.removeEventListener('mousedown', globalClickOffHandler);
+    // 1. SYSTEM LOCK: Prevent any other syncs from firing during re-homing
+    // Access via window to avoid circular dependency with app.js
+    if (window.globalClickOffHandler) {
+        document.removeEventListener('mousedown', window.globalClickOffHandler);
+        console.log("MAE System: UI Locked for Decommissioning.");
+    }
+    
     this.showLoading(`LOCKING SYSTEM: Re-homing items from ${locName}...`);
     
     const selects = document.querySelectorAll('.rehome-select');
     
-    // 2. SEQUENTIAL SYNC: Use a standard for loop to ensure order
+    // 2. SEQUENTIAL SYNC: Loop and WAIT for each item to hit OneDrive
     for (const select of selects) {
         const newLoc = select.value;
         const tableName = select.getAttribute('data-table');
@@ -1409,32 +1413,43 @@ async finalizeDecommission(locName) {
 
         console.log(`MAE System: Re-homing ${maeId} to ${newLoc} in ${tableName}`);
         
+        // Silent update (no row removal from UI)
         await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+        
+        // Throttling: 400ms pause to respect Microsoft Graph API limits
         await new Promise(r => setTimeout(r, 400));
     }
 
-    // 3. FINAL DELETION: Only happens after the loop finishes
+    // 3. FINAL DELETION: Only happens after the re-homing loop finishes
     const data = await window.Dashboard.getFullTableData("Location");
-    const locConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+    const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
     const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
-    const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
+    
+    // RUGGED LOOKUP: Find the specific row index for the Location being deleted
+    const rowIndex = data.findIndex(row => {
+        const rowCells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
+        return rowCells[locIdx] === locName;
+    });
 
     if (rowIndex !== -1) {
         const success = await window.deleteExcelRow("Location", rowIndex);
         if (success) {
-            // 4. REFRESH EVERYTHING
+            // 4. REFRESH EVERYTHING: Wipe cache and refresh local data
             await window.refreshLocationCache();
             alert("System Integrity Verified: Items re-homed and Location removed.");
             
-            // === PLACEMENT: Re-attach the listener here inside the success block ===
-            // This ensures standard "Click-Off" saving is enabled again for the user.
-            document.addEventListener('mousedown', globalClickOffHandler);
+            // 5. SYSTEM UNLOCK: Re-attach the click-off listener
+            if (window.globalClickOffHandler) {
+                document.addEventListener('mousedown', window.globalClickOffHandler);
+            }
             
             this.manageLocationMap(); // Reload the manager UI
         }
     } else {
-        // RUGGED RECOVERY: If deletion fails, re-attach listener so app doesn't stay locked
-        document.addEventListener('mousedown', globalClickOffHandler);
+        // RUGGED RECOVERY: If location deletion fails, unlock the system so user can retry
+        if (window.globalClickOffHandler) {
+            document.addEventListener('mousedown', window.globalClickOffHandler);
+        }
         this.showError("Location record not found for final deletion.");
     }
 }

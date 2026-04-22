@@ -725,7 +725,7 @@ window.confirmMobileAdd = async (scannedId) => {
 
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
 // Centralized "Click-Off" handler for all edit modes
-export async function globalClickOffHandler(e) {
+async function globalClickOffHandler(e) {
     const table = document.getElementById("main-data-table");
     const container = document.getElementById("table-container");// scrollbar area
     const title = document.getElementById("current-view-title");
@@ -1659,6 +1659,7 @@ window.deleteExcelRow = deleteExcelRow;
 window.runLocationAudit = runLocationAudit;
 window.handleAuditUpdate = handleAuditUpdate;
 window.getLocationDependencies = getLocationDependencies;
+window.globalClickOffHandler = globalClickOffHandler;
 
 
 startup();
