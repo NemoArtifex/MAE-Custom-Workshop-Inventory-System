@@ -1404,7 +1404,10 @@ async finalizeDecommission(locName) {
         const tableName = select.getAttribute('data-table');
         const maeId = select.getAttribute('data-id');
         
-        await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+        const success = await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+        if (!success){
+            console.error(`MAE System: Failed to re-home item ${maeID}`);
+        }
         
         // RUGGED THROTTLE: Wait 300ms before the next request
         await new Promise(resolve => setTimeout(resolve, 300));

@@ -1532,17 +1532,26 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
             account: window.account
         });
 
-        // 1. Find the row index by mae_id (Column 0)
+        // 1. Find the row index by mae_id
         const data = await Dashboard.getFullTableData(tableName);
-        const rowIndex = data.findIndex(row => row.values[0][0] === maeId);
+        
+        // RUGGED LOOKUP: Check index 0 of the inner values array
+        const rowIndex = data.findIndex(row => {
+            const cells = Array.isArray(row.values[0]) ? row.values[0] : row.values;
+            return String(cells[0]) === String(maeId);
+        });
 
-        if (rowIndex === -1) return false;
+        if (rowIndex === -1) {
+            console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}.`);
+            return false;
+        }
 
-        // 2. PATCH only the specific row. Excel handles the column mapping.
+        // 2. PATCH the specific row index
         const rowValues = new Array(sheetConfig.columns.length).fill(null);
         rowValues[colIdx] = newValue;
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        // Using the Table URL (more rugged than Worksheet URL for structural integrity)
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
      
         const response = await fetch(url, {
             method: 'PATCH',
@@ -1553,7 +1562,12 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
             body: JSON.stringify({ values: [rowValues] })
         });
 
-        return response.ok;
+        if (response.ok) {
+            console.log(`MAE System: Success. ${maeId} re-homed to ${newValue}.`);
+            return true;
+        }
+        return false;
+
     } catch (err) {
         console.error("MAE System: Quick Sync Failed", err);
         return false;
