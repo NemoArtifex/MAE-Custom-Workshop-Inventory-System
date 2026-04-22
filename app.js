@@ -1524,6 +1524,8 @@ async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId = null) {
 // ==== HELPER function for the "Update Engine"=====
 async function commitCellChange(tableName, maeId, columnName, newValue) {
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    if (!sheetConfig) return false;
+    
     const colIdx = sheetConfig.columns.findIndex(c => c.header === columnName);
 
     try {
@@ -1532,28 +1534,31 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
             account: window.account
         });
 
-        // 1. Find the row index by mae_id
+        // 1. Fetch fresh table data
         const data = await Dashboard.getFullTableData(tableName);
         
-        // RUGGED LOOKUP: Check index 0 of the inner values array
+        // RUGGED LOOKUP: Graph API returns values as a 2D array: [[col1, col2, ...]]
         const rowIndex = data.findIndex(row => {
-            const cells = Array.isArray(row.values[0]) ? row.values[0] : row.values;
-            return String(cells[0]) === String(maeId);
+            // Dig into the first row of values returned for this specific row object
+            const cells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
+            
+            // Compare the mae_id (Index 0) as a trimmed string to prevent "phantom space" failures
+            return String(cells[0]).trim() === String(maeId).trim();
         });
 
-      
         console.log(`MAE DEBUG: Looking for ID [${maeId}] in [${tableName}]. Match found at row index: ${rowIndex}`);
        
         if (rowIndex === -1) {
-            console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}.`);
+            console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}. Check if user manually deleted it from Excel.`);
             return false;
         }
 
-        // 2. PATCH the specific row index
+        // 2. Prepare the Sparse Update Array
+        // We only send the one column we want to change; others are null so Excel ignores them
         const rowValues = new Array(sheetConfig.columns.length).fill(null);
         rowValues[colIdx] = newValue;
 
-        // Using the Table URL (more rugged than Worksheet URL for structural integrity)
+        // 3. Execute the PATCH to the specific Table Row
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
      
         const response = await fetch(url, {
@@ -1566,13 +1571,16 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
         });
 
         if (response.ok) {
-            console.log(`MAE System: Success. ${maeId} re-homed to ${newValue}.`);
+            console.log(`MAE System: Success. ${maeId} re-homed to ${newValue} in OneDrive.`);
             return true;
+        } else {
+            const errData = await response.json();
+            console.error("MAE System: Graph API PATCH failed", errData);
+            return false;
         }
-        return false;
 
     } catch (err) {
-        console.error("MAE System: Quick Sync Failed", err);
+        console.error("MAE System: Quick Sync Exception", err);
         return false;
     }
 }
