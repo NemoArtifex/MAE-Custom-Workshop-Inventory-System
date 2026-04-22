@@ -1595,6 +1595,35 @@ async function getTbdAuditData() {
 // ====== END   SCans all inventory tables for TBD items ======
 //===== END  Update "Engine" for TBD =========
 
+//========== Getting Location Dependencies to support Deletion of Location_ID
+async function getLocationDependencies(locationId) {
+    const inventoryTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    let dependencies = [];
+
+    for (const tableName of inventoryTables) {
+        const config = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        const data = await Dashboard.getFullTableData(tableName);
+        
+        const locIdx = config.columns.findIndex(c => c.header === "Location_ID");
+        const nameIdx = config.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
+
+        data.forEach(row => {
+            const cells = row.values[0]; // Graph API nested array
+            if (cells[locIdx] === locationId) {
+                dependencies.push({
+                    tableName: tableName,
+                    mae_id: cells[0],
+                    itemName: cells[nameIdx],
+                    currentLoc: cells[locIdx]
+                });
+            }
+        });
+    }
+    return dependencies;
+}
+
+//==========  END Getting Location Dependencies to support Deletion of Location_ID
+
 window.Dashboard = Dashboard;
 window.UI = UI;
 window.Labels = Labels;
@@ -1615,6 +1644,7 @@ window.updateLocationRecord = updateLocationRecord;
 window.deleteExcelRow = deleteExcelRow;
 window.runLocationAudit = runLocationAudit;
 window.handleAuditUpdate = handleAuditUpdate;
+window.getLocationDependencies = getLocationDependencies;
 
 
 startup();

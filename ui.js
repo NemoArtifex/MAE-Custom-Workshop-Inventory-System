@@ -1331,8 +1331,99 @@ printVirtualAudit(auditData, title) {
 
     window.print();
     printContainer.remove();
-}
+},
 //======= END    Virtual TBD Item Print =========
+
+//========== Re-Homing Table for deletion of Location_ID ====
+async removeLocation(locName) {
+    const container = document.getElementById("table-container");
+    this.showLoading(`Scanning Workshop for items in ${locName}...`);
+    
+    const deps = await window.getLocationDependencies(locName);
+
+    if (deps.length > 0) {
+        // SCENARIO A: Dependencies Found - Enforce Re-homing
+        let html = `
+            <div class="form-card" style="border-left: 10px solid var(--accent);">
+                <h3>⚠️ Warning: Location Dependency Detected</h3>
+                <p>There are <b>${deps.length}</b> items assigned to <b>${locName}</b>. Please assign them to a new Location_ID now.</p>
+                <p style="font-size: 0.9rem; color: #7f8c8d;">Items not updated will revert to <b>TBD</b> for future assignment via the Audit tool.</p>
+                
+                <table class="inventory-table">
+                    <thead>
+                        <tr><th>Item Name</th><th>New Location Assignment</th></tr>
+                    </thead>
+                    <tbody>`;
+        
+        deps.forEach((item, idx) => {
+            html += `
+                <tr>
+                    <td>${item.itemName}</td>
+                    <td>
+                        <select class="rehome-select" data-table="${item.tableName}" data-id="${item.mae_id}">
+                            <option value="TBD">TBD (Unassigned)</option>
+                            ${window.maeLocations.filter(l => l !== 'TBD' && l !== locName).map(l => `<option value="${l}">${l}</option>`).join('')}
+                        </select>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="save-btn" onclick="UI.finalizeDecommission('${locName}')">Confirm Location Deletion</button>
+                    <button class="cancel-btn" onclick="UI.manageLocationMap()">Cancel</button>
+                </div>
+            </div>`;
+        container.innerHTML = html;
+    } else {
+        // SCENARIO B: No Dependencies - The "Discipline" Confirm
+        container.innerHTML = `
+            <div class="form-card" style="text-align: center; padding: 40px;">
+                <h3>Confirm System Change</h3>
+                <p>You are deleting <b>${locName}</b> from your Location Map.</p>
+                <p>This structural change is permanent. Click below to proceed.</p>
+                <div style="margin-top: 20px;">
+                    <button class="save-btn" style="background:#c0392b;" onclick="UI.finalizeDecommission('${locName}')">Confirm Location Deletion</button>
+                    <button class="cancel-btn" onclick="UI.manageLocationMap()">Cancel</button>
+                </div>
+            </div>`;
+    }
+},
+
+//========== END Re-Homing Table for deletion of Location_ID ====
+
+//====== Finalize Decommission: ensures location_id default to TBD if not selected ====
+async finalizeDecommission(locName) {
+    this.showLoading(`Finalizing System Integrity Update...`);
+
+    // 1. Process Re-homing if selects exist
+    const selects = document.querySelectorAll('.rehome-select');
+    for (const select of selects) {
+        const newLoc = select.value;
+        const tableName = select.getAttribute('data-table');
+        const maeId = select.getAttribute('data-id');
+        
+        // Push update to OneDrive (Silent sync)
+        await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+    }
+
+    // 2. Find and Delete the Location from the Location Table
+    const data = await window.Dashboard.getFullTableData("Location");
+    const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+    const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
+    const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
+
+    if (rowIndex !== -1) {
+        const success = await window.deleteExcelRow("Location", rowIndex);
+        if (success) {
+            await window.refreshLocationCache();
+            alert(`Location ${locName} decommissioned successfully.`);
+            this.manageLocationMap();
+        }
+    }
+}
+//====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
+
 
 
 };
