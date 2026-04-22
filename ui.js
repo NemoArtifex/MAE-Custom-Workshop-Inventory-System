@@ -1340,6 +1340,9 @@ async removeLocation(locName) {
     this.showLoading(`Scanning Workshop for items in ${locName}...`);
     
     const deps = await window.getLocationDependencies(locName);
+    //  Force the mae_id to a string so the data-id attribute is valid
+    const cleanMaeId = Array.isArray(item.mae_id) ? item.mae_id[0] : item.mae_id;
+
 
     if (deps.length > 0) {
         // SCENARIO A: Dependencies Found - Enforce Re-homing
@@ -1360,7 +1363,7 @@ async removeLocation(locName) {
                 <tr>
                     <td>${item.itemName}</td>
                     <td>
-                        <select class="rehome-select" data-table="${item.tableName}" data-id="${Array.isArray(item.mae_id) ? item.mae_id[0] : item.mae_id}">
+                        <select class="rehome-select" data-table="${item.tableName}" data-id="${cleanMaeId}">
                             <option value="TBD">TBD (Unassigned)</option>
                             ${window.maeLocations.filter(l => l !== 'TBD' && l !== locName).map(l => `<option value="${l}">${l}</option>`).join('')}
                         </select>
@@ -1404,6 +1407,11 @@ async finalizeDecommission(locName) {
     this.showLoading(`LOCKING SYSTEM: Re-homing items from ${locName}...`);
     
     const selects = document.querySelectorAll('.rehome-select');
+    console.log(`MAE System: Found ${selects.length} items to re-home.`); // Debug check
+
+    if (selects.length === 0) {
+        console.warn("MAE System: No items found to re-home. Proceeding to direct deletion.");
+    }
     
     // 2. SEQUENTIAL SYNC: Loop and WAIT for each item to hit OneDrive
     for (const select of selects) {
