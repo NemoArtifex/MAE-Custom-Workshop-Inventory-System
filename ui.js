@@ -18,6 +18,7 @@ const formatCurrency = (value) => {
 };
 
 import { Dashboard } from './dashboard.js';
+import { globalClickOffHandler } from './app.js';
 
 export const UI = {
     
@@ -1404,15 +1405,11 @@ async finalizeDecommission(locName) {
     for (const select of selects) {
         const newLoc = select.value;
         const tableName = select.getAttribute('data-table');
-        // Ensure this attribute contains ONLY the mae_id string
         const maeId = select.getAttribute('data-id'); 
 
         console.log(`MAE System: Re-homing ${maeId} to ${newLoc} in ${tableName}`);
         
-        // Wait for the sync to finish before moving to the next item
         await window.handleAuditUpdate(tableName, maeId, newLoc, null);
-        
-        // Throttle to respect Graph API limits
         await new Promise(r => setTimeout(r, 400));
     }
 
@@ -1429,12 +1426,16 @@ async finalizeDecommission(locName) {
             await window.refreshLocationCache();
             alert("System Integrity Verified: Items re-homed and Location removed.");
             
-            // Re-attach the listener now that it's safe
-            setTimeout(() => {
-                document.addEventListener('mousedown', globalClickOffHandler);
-                this.manageLocationMap();
-            }, 500);
+            // === PLACEMENT: Re-attach the listener here inside the success block ===
+            // This ensures standard "Click-Off" saving is enabled again for the user.
+            document.addEventListener('mousedown', globalClickOffHandler);
+            
+            this.manageLocationMap(); // Reload the manager UI
         }
+    } else {
+        // RUGGED RECOVERY: If deletion fails, re-attach listener so app doesn't stay locked
+        document.addEventListener('mousedown', globalClickOffHandler);
+        this.showError("Location record not found for final deletion.");
     }
 }
 //====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
