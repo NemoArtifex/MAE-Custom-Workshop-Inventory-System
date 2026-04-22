@@ -1360,7 +1360,7 @@ async removeLocation(locName) {
                 <tr>
                     <td>${item.itemName}</td>
                     <td>
-                        <select class="rehome-select" data-table="${item.tableName}" data-id="${item.mae_id[0]}">
+                        <select class="rehome-select" data-table="${item.tableName}" data-id="${Array.isArray(item.mae_id) ? item.mae_id[0] : item.mae_id}">
                             <option value="TBD">TBD (Unassigned)</option>
                             ${window.maeLocations.filter(l => l !== 'TBD' && l !== locName).map(l => `<option value="${l}">${l}</option>`).join('')}
                         </select>
@@ -1394,39 +1394,46 @@ async removeLocation(locName) {
 
 //====== Finalize Decommission: ensures location_id default to TBD if not selected ====
 async finalizeDecommission(locName) {
-    this.showLoading(`Syncing item changes to OneDrive...`);
-
+    // 1. SYSTEM LOCK: Prevent any other syncs from firing
+    document.removeEventListener('mousedown', globalClickOffHandler);
+    this.showLoading(`LOCKING SYSTEM: Re-homing items from ${locName}...`);
+    
     const selects = document.querySelectorAll('.rehome-select');
     
-    // 1. Process re-homing with a small delay to prevent 503 errors
+    // 2. SEQUENTIAL SYNC: Use a standard for loop to ensure order
     for (const select of selects) {
         const newLoc = select.value;
         const tableName = select.getAttribute('data-table');
-        const maeId = select.getAttribute('data-id');
+        // Ensure this attribute contains ONLY the mae_id string
+        const maeId = select.getAttribute('data-id'); 
+
+        console.log(`MAE System: Re-homing ${maeId} to ${newLoc} in ${tableName}`);
         
-        const success = await window.handleAuditUpdate(tableName, maeId, newLoc, null);
-        if (!success){
-            console.error(`MAE System: Failed to re-home item ${maeID}`);
-        }
+        // Wait for the sync to finish before moving to the next item
+        await window.handleAuditUpdate(tableName, maeId, newLoc, null);
         
-        // RUGGED THROTTLE: Wait 300ms before the next request
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Throttle to respect Graph API limits
+        await new Promise(r => setTimeout(r, 400));
     }
 
-    // 2. Proceed to delete the Location row only AFTER items are synced
-    this.showLoading(`Finalizing Location Deletion...`);
+    // 3. FINAL DELETION: Only happens after the loop finishes
     const data = await window.Dashboard.getFullTableData("Location");
-    const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+    const locConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
     const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
-    
     const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
 
     if (rowIndex !== -1) {
         const success = await window.deleteExcelRow("Location", rowIndex);
         if (success) {
+            // 4. REFRESH EVERYTHING
             await window.refreshLocationCache();
-            alert(`Location ${locName} removed. All items re-homed.`);
-            this.manageLocationMap();
+            alert("System Integrity Verified: Items re-homed and Location removed.");
+            
+            // Re-attach the listener now that it's safe
+            setTimeout(() => {
+                document.addEventListener('mousedown', globalClickOffHandler);
+                this.manageLocationMap();
+            }, 500);
         }
     }
 }

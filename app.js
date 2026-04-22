@@ -1541,6 +1541,9 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
             return String(cells[0]) === String(maeId);
         });
 
+      
+        console.log(`MAE DEBUG: Looking for ID [${maeId}] in [${tableName}]. Match found at row index: ${rowIndex}`);
+       
         if (rowIndex === -1) {
             console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}.`);
             return false;
