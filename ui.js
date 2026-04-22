@@ -1394,36 +1394,35 @@ async removeLocation(locName) {
 
 //====== Finalize Decommission: ensures location_id default to TBD if not selected ====
 async finalizeDecommission(locName) {
-    this.showLoading(`Finalizing System Integrity Update for ${locName}...`);
+    this.showLoading(`Syncing item changes to OneDrive...`);
 
     const selects = document.querySelectorAll('.rehome-select');
     
-    // RUGGED DISCIPLINE: We loop and WAIT for each sync to hit OneDrive
+    // 1. Process re-homing with a small delay to prevent 503 errors
     for (const select of selects) {
         const newLoc = select.value;
         const tableName = select.getAttribute('data-table');
         const maeId = select.getAttribute('data-id');
         
-        // We pass null for rowHtmlId because we are on the warning screen, not the audit screen
         await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+        
+        // RUGGED THROTTLE: Wait 300ms before the next request
+        await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // After all items are re-homed, we finally delete the foundation point
+    // 2. Proceed to delete the Location row only AFTER items are synced
+    this.showLoading(`Finalizing Location Deletion...`);
     const data = await window.Dashboard.getFullTableData("Location");
     const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
     const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
     
-    // Find the row in the Location table specifically
-    const rowIndex = data.findIndex(row => {
-        const rowCells = row.values[0]; 
-        return rowCells[locIdx] === locName;
-    });
+    const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
 
     if (rowIndex !== -1) {
         const success = await window.deleteExcelRow("Location", rowIndex);
         if (success) {
             await window.refreshLocationCache();
-            alert(`Location ${locName} successfully removed. Workshop Ledger is clean.`);
+            alert(`Location ${locName} removed. All items re-homed.`);
             this.manageLocationMap();
         }
     }

@@ -1504,34 +1504,21 @@ async function runLocationAudit() {
 
 //=====  Update "Engine" for TBD =========
 async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId = null) {
-    if (newLoc === "TBD" && !rowHtmlId) {
-        // If we are already TBD and just doing a silent pass, skip to save API calls
-        // UNLESS this is specifically being called to reset an item during deletion.
-    }
-
     try {
-        // RUGGED SYNC: This is the actual Graph API call
-        // Re-use your existing commit logic
         const success = await commitCellChange(tableName, maeId, "Location_ID", newLoc);
-
-        if (success) {
-            console.log(`MAE System: Successfully re-homed ${maeId} to ${newLoc}`);
-            
-            // Only perform animation if an ID was passed (The Audit View)
-            if (rowHtmlId) {
-                const row = document.getElementById(rowHtmlId);
-                if (row) {
-                    row.style.opacity = "0";
-                    setTimeout(() => row.remove(), 500);
-                }
+        
+        if (success && rowHtmlId) {
+            const row = document.getElementById(rowHtmlId);
+            if (row) {
+                row.style.opacity = "0";
+                setTimeout(() => row.remove(), 500);
             }
-            return true;
         }
+        return success;
     } catch (err) {
-        console.error("MAE System Sync Error:", err);
+        console.error("MAE Sync Error:", err);
         return false;
     }
-    return false;
 }
 
 // ==== HELPER function for the "Update Engine"=====
