@@ -1534,31 +1534,33 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
             account: window.account
         });
 
-        // 1. Fetch fresh table data
+        // 1. Fetch fresh table data via the Dashboard module
         const data = await Dashboard.getFullTableData(tableName);
         
-        // RUGGED LOOKUP: Graph API returns values as a 2D array: [[col1, col2, ...]]
+        // RUGGED LOOKUP: Graph API returns an array of row objects.
+        // Inside each object, 'values' is a 2D array: [[col0, col1, col2...]]
         const rowIndex = data.findIndex(row => {
-            // Dig into the first row of values returned for this specific row object
+            // Dig into the inner array if it exists, otherwise use values as-is
             const cells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
             
-            // Compare the mae_id (Index 0) as a trimmed string to prevent "phantom space" failures
+            // Compare the primary key (mae_id) at Index 0
             return String(cells[0]).trim() === String(maeId).trim();
         });
 
+        // INDUSTRIAL LOGGING: Essential for verifying the "Guardrail" found the item
         console.log(`MAE DEBUG: Looking for ID [${maeId}] in [${tableName}]. Match found at row index: ${rowIndex}`);
        
         if (rowIndex === -1) {
-            console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}. Check if user manually deleted it from Excel.`);
+            console.warn(`MAE System: mae_id [${maeId}] not found in ${tableName}.`);
             return false;
         }
 
-        // 2. Prepare the Sparse Update Array
-        // We only send the one column we want to change; others are null so Excel ignores them
+        // 2. Prepare Sparse Update Array
+        // Fills an array with 'null' so Excel only updates the changed cell
         const rowValues = new Array(sheetConfig.columns.length).fill(null);
         rowValues[colIdx] = newValue;
 
-        // 3. Execute the PATCH to the specific Table Row
+        // 3. Execute PATCH to the specific Table Row Index
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
      
         const response = await fetch(url, {

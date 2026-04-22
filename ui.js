@@ -1340,9 +1340,6 @@ async removeLocation(locName) {
     this.showLoading(`Scanning Workshop for items in ${locName}...`);
     
     const deps = await window.getLocationDependencies(locName);
-    //  Force the mae_id to a string so the data-id attribute is valid
-    const cleanMaeId = Array.isArray(item.mae_id) ? item.mae_id[0] : item.mae_id;
-
 
     if (deps.length > 0) {
         // SCENARIO A: Dependencies Found - Enforce Re-homing
@@ -1359,6 +1356,10 @@ async removeLocation(locName) {
                     <tbody>`;
         
         deps.forEach((item, idx) => {
+            // RUGGED FIX: Define cleanMaeId INSIDE the loop so it maps to the current 'item'
+            // We extract the first element if it's an array, otherwise use as-is
+            const cleanMaeId = Array.isArray(item.mae_id) ? item.mae_id[0] : item.mae_id;
+
             html += `
                 <tr>
                     <td>${item.itemName}</td>
