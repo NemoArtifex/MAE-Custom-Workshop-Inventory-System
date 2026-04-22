@@ -1360,7 +1360,7 @@ async removeLocation(locName) {
                 <tr>
                     <td>${item.itemName}</td>
                     <td>
-                        <select class="rehome-select" data-table="${item.tableName}" data-id="${item.mae_id}">
+                        <select class="rehome-select" data-table="${item.tableName}" data-id="${item.mae_id[0]}">
                             <option value="TBD">TBD (Unassigned)</option>
                             ${window.maeLocations.filter(l => l !== 'TBD' && l !== locName).map(l => `<option value="${l}">${l}</option>`).join('')}
                         </select>
@@ -1394,30 +1394,36 @@ async removeLocation(locName) {
 
 //====== Finalize Decommission: ensures location_id default to TBD if not selected ====
 async finalizeDecommission(locName) {
-    this.showLoading(`Finalizing System Integrity Update...`);
+    this.showLoading(`Finalizing System Integrity Update for ${locName}...`);
 
-    // 1. Process Re-homing if selects exist
     const selects = document.querySelectorAll('.rehome-select');
+    
+    // RUGGED DISCIPLINE: We loop and WAIT for each sync to hit OneDrive
     for (const select of selects) {
         const newLoc = select.value;
         const tableName = select.getAttribute('data-table');
         const maeId = select.getAttribute('data-id');
         
-        // Push update to OneDrive (Silent sync)
+        // We pass null for rowHtmlId because we are on the warning screen, not the audit screen
         await window.handleAuditUpdate(tableName, maeId, newLoc, null);
     }
 
-    // 2. Find and Delete the Location from the Location Table
+    // After all items are re-homed, we finally delete the foundation point
     const data = await window.Dashboard.getFullTableData("Location");
     const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
     const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
-    const rowIndex = data.findIndex(row => row.values[0][locIdx] === locName);
+    
+    // Find the row in the Location table specifically
+    const rowIndex = data.findIndex(row => {
+        const rowCells = row.values[0]; 
+        return rowCells[locIdx] === locName;
+    });
 
     if (rowIndex !== -1) {
         const success = await window.deleteExcelRow("Location", rowIndex);
         if (success) {
             await window.refreshLocationCache();
-            alert(`Location ${locName} decommissioned successfully.`);
+            alert(`Location ${locName} successfully removed. Workshop Ledger is clean.`);
             this.manageLocationMap();
         }
     }

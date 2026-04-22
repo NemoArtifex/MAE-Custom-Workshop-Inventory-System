@@ -1503,25 +1503,35 @@ async function runLocationAudit() {
 //=====  END scan all inventory tables to find "TBD items ======"
 
 //=====  Update "Engine" for TBD =========
-async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId) {
-    if (newLoc === "TBD") return;
-
-    const row = document.getElementById(rowHtmlId);
-    row.style.opacity = "0.5"; // Visual "Saving" hint
-
-    // Using your existing updateSingleRowFromForm logic or similar
-    const success = await commitCellChange(tableName, maeId, "Location_ID", newLoc);
-
-    if (success) {
-        row.style.opacity = "0";
-        setTimeout(() => {
-            row.remove();
-            // If table is now empty, re-run audit to show "Complete" message
-            if (document.querySelectorAll("#main-data-table tbody tr").length === 0) {
-                runLocationAudit();
-            }
-        }, 500);
+async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId = null) {
+    if (newLoc === "TBD" && !rowHtmlId) {
+        // If we are already TBD and just doing a silent pass, skip to save API calls
+        // UNLESS this is specifically being called to reset an item during deletion.
     }
+
+    try {
+        // RUGGED SYNC: This is the actual Graph API call
+        // Re-use your existing commit logic
+        const success = await commitCellChange(tableName, maeId, "Location_ID", newLoc);
+
+        if (success) {
+            console.log(`MAE System: Successfully re-homed ${maeId} to ${newLoc}`);
+            
+            // Only perform animation if an ID was passed (The Audit View)
+            if (rowHtmlId) {
+                const row = document.getElementById(rowHtmlId);
+                if (row) {
+                    row.style.opacity = "0";
+                    setTimeout(() => row.remove(), 500);
+                }
+            }
+            return true;
+        }
+    } catch (err) {
+        console.error("MAE System Sync Error:", err);
+        return false;
+    }
+    return false;
 }
 
 // ==== HELPER function for the "Update Engine"=====
