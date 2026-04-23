@@ -1469,9 +1469,80 @@ async finalizeDecommission(locName) {
         }
         this.showError("Location record not found for final deletion.");
     }
-}
+},
 //====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
 
+//========Virtual Search Hub for Multiple ITems on a Single Tag 
+renderVirtualSearchHub(auditData) {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    
+    title.innerText = "Search Results: Multiple Items on Scanned Tag";
+
+    // 1. Group the data by category for visual organization on the shop floor
+    const grouped = auditData.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    // 2. Build the grouped table
+    let html = `<table class="inventory-table" id="main-data-table">`;
+    
+    for (const [category, items] of Object.entries(grouped)) {
+        // Render Category Header and Sub-Headers
+        html += `
+            <thead>
+                <tr>
+                    <th colspan="2" style="background:var(--primary); color:white; padding:12px;">
+                        ${category.toUpperCase()} (${items.length} Items)
+                    </th>
+                </tr>
+                <tr>
+                    <th style="width:70%;">Item Description</th>
+                    <th style="width:30%;">Action</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        
+        items.forEach(item => {
+            html += `
+            <tr>
+                <td class="locked-cell">${item.itemName}</td>
+                <td style="text-align:center;">
+                    <button class="action-btn" 
+                            style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" 
+                            onclick="loadTableData('${item.tableName}')">
+                        ✏️ View / Edit in Table
+                    </button>
+                </td>
+            </tr>`;
+        });
+        html += `</tbody>`;
+    }
+    
+    html += `</table>`;
+    
+    // Add a back button to the bottom so they can clear the search
+    html += `
+        <div class="form-actions" style="margin-top: 20px; text-align: center;">
+            <button class="cancel-btn" style="width:50%;" onclick="loadTableData('Master_Dashboard')">
+                ← Back to Dashboard
+            </button>
+        </div>`;
+        
+    container.innerHTML = html;
+
+    // Render a localized back-to-dashboard command bar
+    const actionZone = document.getElementById("action-bar-zone");
+    if (actionZone) {
+        actionZone.innerHTML = `
+            <div class="command-bar" style="justify-content: center;">
+                <button class="action-btn" onclick="loadTableData('Master_Dashboard')">← Return to Dashboard</button>
+            </div>`;
+    }
+}
+//====== END Virtual Search Hub for Multiple ITems on a Single Tag 
 
 
 };

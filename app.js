@@ -1253,41 +1253,58 @@ async function handleUniversalLookup(scannedId) {
     const tables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
     
     try {
-        // Get fresh token once before the loop to save on resources
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account // Uses the account variable defined in app.js
-        });
+        const token = await windows.getGraphToken();
 
         for (const tableName of tables) {
             const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-            
+            if (!sheetConfig) continue;
             // API path to the specific table
             const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
             
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (response.ok) {
                 const data = await response.json();
                 
-                // Find row where Column 0 (mae_id) matches
-                const matchedRow = data.value.find(row => {
-                    const rowId = row.values[0][0]; 
-                    return String(rowId).trim() === cleanId;
+                // FInd index of the Tag_ID column
+                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                // Finds the first unhidden column containing "Name" or "Tool"
+                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
+                if (tagIdx === -1) continue;
+                
+                // Find ALL rows where Tag_ID matches (allows for "Multiple" tags)
+                const matchedRows = data.value.filter(row => {
+                    const rowCells = row.values[0]; 
+                    return String(rowCells[tagIdx]).trim() === cleanId;
                 });
-
-                if (matchedRow) {
-                    console.log(`MAE System: Match found in ${tableName} at index ${matchedRow.index}`);
+                
+                if (matchedRows.length > 0) {
+                    console.log(`MAE System: Found ${matchedRows.length} match(es) in ${tableName}`);
                     window.currentTable = tableName;
-                    // RUGGED TABLET UI: This replaces the 'Mobile' version
-                    UI.renderScanResultCard(matchedRow.values[0], tableName, sheetConfig, matchedRow.index);
+
+                    // If it is just ONE item (Unique), use your existing Card view
+                    if (matchedRows.length === 1) {
+                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
+                    } else {
+                        // 🌟 NEW CAPABILITY: If multiple items share this tag (like a drawer), 
+                        // map them and send them to the Virtual Table Hub we will build next.
+                        const auditData = matchedRows.map(row => {
+                            const rowCells = row.values[0];
+                            return {
+                                category: sheetConfig.tabName,
+                                itemName: rowCells[nameIdx] || "N/A",
+                                mae_id: rowCells[0], // Column 0
+                                tableName: tableName
+                            };
+                        });
+                        UI.renderVirtualSearchHub(auditData);
+                    }
                     return; 
                 }
             }
-        }
-        
+        }       
         // NO MATCH FOUND: Industrial Prompt
         UI.showError(`
             <div style="text-align:center; padding: 20px;">
