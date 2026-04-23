@@ -1408,6 +1408,7 @@ async finalizeDecommission(locName) {
     this.showLoading(`LOCKING SYSTEM: Re-homing items from ${locName}...`);
     
     const selects = document.querySelectorAll('.rehome-select');
+    
     console.log(`MAE System: Found ${selects.length} items to re-home.`); // Debug check
 
     if (selects.length === 0) {
