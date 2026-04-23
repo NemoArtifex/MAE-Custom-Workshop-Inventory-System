@@ -1560,8 +1560,12 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
         const rowValues = new Array(sheetConfig.columns.length).fill(null);
         rowValues[colIdx] = newValue;
 
-        // 3. Execute PATCH to the specific Table Row Index
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+        // 🌟 SAFETY FIX 1: Force the index to be a strict base-10 integer
+        const strictIndex = parseInt(rowIndex, 10);
+
+        // API endpoint targeting the specific Table Row Index directly
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${strictIndex})`;
+      //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
      
         const response = await fetch(url, {
             method: 'PATCH',
