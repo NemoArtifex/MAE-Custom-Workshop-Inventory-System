@@ -1253,7 +1253,7 @@ async function handleUniversalLookup(scannedId) {
     const tables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
     
     try {
-        const token = await windows.getGraphToken();
+        const token = await window.getGraphToken();
 
         for (const tableName of tables) {
             const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
