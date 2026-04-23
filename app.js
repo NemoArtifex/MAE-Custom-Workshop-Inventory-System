@@ -58,7 +58,7 @@ async function startup() {
 }
 
 //========END STARTUP LOGIC ===========
-//startup();
+
 
 //===========SIGN-IN FUNCTION ==========
 //Initiated after pushing the authButton after made active at the end of the Startup function
@@ -76,6 +76,38 @@ async function signIn() {
     }
 }
 //===========END SIGN-IN FUNCTION ==========
+
+// ===== Centralized Authentication Token Helper =============
+async function getGraphToken() {
+    try {
+        // Find the active account. Fallback to retrieving all accounts if global state is missing
+        let activeAccount = window.account;
+        if (!activeAccount) {
+            const accounts = myMSALObj.getAllAccounts();
+            if (accounts.length > 0) activeAccount = accounts[0];
+        }
+
+        if (!activeAccount) {
+            throw new Error("No active user account found. Please sign in.");
+        }
+
+        // Fetch the token silently
+        const tokenResponse = await myMSALObj.acquireTokenSilent({
+            scopes: ["Files.ReadWrite"],
+            account: activeAccount
+        });
+
+        // Return just the string token
+        return tokenResponse.accessToken;
+
+    } catch (error) {
+        console.error("MAE System Fail: Could not acquire token silently.", error);
+        UI.showError("Session expired. Please reconnect to Office 365.");
+        throw error;
+    }
+}
+
+//==== END Centralized Authentication Token Helper =============
 
 // ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
 // the startup() function calls updateUIForLoggedInUser() if successful 'login'
@@ -198,31 +230,30 @@ async function verifySpreadsheetExists(){
     // Logic here to check if maeSystemConfig.spreadsheetName exists
     // If 404: Call a function to CREATE the workbook using the config
     // If 200: All good, ready to work.
-    const tokenResponse = await myMSALObj.acquireTokenSilent({
-        scopes: ["Files.ReadWrite"],
-        account: account
-    });
-
-    // Check if file exists in the root of OneDrive
-    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
-
     try {
+        // 🌟 NEW CLEAN CALL
+        const token = await window.getGraphToken();
+        // Check if file exists in the root of OneDrive
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
         const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (response.status === 404) {
+         if (response.status === 404) {
             console.warn("File not found. MAE System: Initializing new workbook...");
-            await createInitialWorkbook(tokenResponse.accessToken);
+            // Pass the clean token directly to the next function
+            await createInitialWorkbook(token);
         } else {
             console.log("MAE System: Workbook verified and ready.");
-         //  Run health check even if file exists to ensure customer didn't break it
-            await initializeSheetAndTable(tokenResponse.accessToken);
+            // Pass the clean token directly to the next function
+            await initializeSheetAndTable(token);
         }
     } catch (error) {
         console.error("Verification Error:", error);
     }
 }
+
+    
 //=========FUNCTION createInitialWorkbook =============
 // Practical: Instead of building via API (brittle), we upload your Master Template.
 async function createInitialWorkbook(accessToken) {
@@ -331,21 +362,14 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
-
    window.currentTable = tableName;
    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
    UI.showLoading(tableName);
    try {
-    //Get fresh token
-    const tokenResponse = await myMSALObj.acquireTokenSilent({
-        scopes: ["Files.ReadWrite"],
-        account: account
-    });
-
-    //API request to Microsoft Graph
+    const token = await window.getGraphToken();
     const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
     const response = await fetch(url, {
-        headers: {'Authorization' : `Bearer ${tokenResponse.accessToken}`}
+        headers: {'Authorization' : `Bearer ${token}`}
     });
 
     if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
@@ -980,21 +1004,13 @@ async function submitNewRow(tableName, sheetConfig) {
         return input.value.trim();
     });
 
-
-
     try {
-        // 2. AUTH: Get fresh token
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
-        // 3. API CALL: Corrected URL path for Table Rows
+        const token = await window.getGraphToken();
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ values: [rowData] }) // Values must be 2D array
@@ -1003,11 +1019,6 @@ async function submitNewRow(tableName, sheetConfig) {
         if (response.ok) {
             console.log(`MAE System: Row successfully added to ${tableName}`);
             alert("Entry Saved Successfully!");
-            
-            // Clean up: Remove form and refresh table view
-            //const form = document.getElementById("add-entry-form");
-           // if (form) form.remove();
-            
             loadTableData(tableName); 
             return true;
         } else {
@@ -1102,23 +1113,20 @@ async function processInPlaceTableUpdate(tableName) {
 
     // 5. SYNC TO MICROSOFT GRAPH
     try {
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
+        const token = await window.getGraphToken();
         for (const update of updates) {
-            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`;
-                       
+            const strictIndex = parseInt(update.index, 10);
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${strictIndex})`;          
+
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ values: update.values })
             });
-
+        
             if (!response.ok) {
                 const errorBody = await response.json();
                 console.error("MAE System: Microsoft Graph Error during sync:", errorBody);
@@ -1155,18 +1163,13 @@ window.requestDelete = requestDelete;
 async function deleteExcelRow(tableName, rowIndex) {
     try {
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: account
-        });
-
+        const token = await window.getGraphToken();
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-       
         const response = await fetch(url, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-
+        
         if (response.ok) {
             alert("Row deleted successfully.");
             loadTableData(tableName); // Refresh the UI to reflect the removal
@@ -1529,10 +1532,7 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
     const colIdx = sheetConfig.columns.findIndex(c => c.header === columnName);
 
     try {
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: window.account
-        });
+        const token = await window.getGraphToken();
 
         // 1. Fetch fresh table data via the Dashboard module
         const data = await Dashboard.getFullTableData(tableName);
@@ -1565,12 +1565,11 @@ async function commitCellChange(tableName, maeId, columnName, newValue) {
 
         // API endpoint targeting the specific Table Row Index directly
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${strictIndex})`;
-      //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-     
+
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {
-                'Authorization': `Bearer ${tokenResponse.accessToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ values: [rowValues] })
@@ -1674,6 +1673,6 @@ window.runLocationAudit = runLocationAudit;
 window.handleAuditUpdate = handleAuditUpdate;
 window.getLocationDependencies = getLocationDependencies;
 window.globalClickOffHandler = globalClickOffHandler;
-
+window.getGraphToken = getGraphToken; 
 
 startup();

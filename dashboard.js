@@ -18,20 +18,13 @@ export const Dashboard = {
 
     //  SELF-SUSTAINING: Fetch all rows for charts or subdivided lists
     async getFullTableData(tableName) {
-        // AUTH: Request token internally
-        const accounts = myMSALObj.getAllAccounts();
-        if (accounts.length === 0) throw new Error("No active account.");
-
-        const tokenResponse = await myMSALObj.acquireTokenSilent({
-            scopes: ["Files.ReadWrite"],
-            account: accounts[0]
-        });
-
+        // USE GLOBAL HELPER in app.js
+        const token = await window.getGraphToken();
         const fileName = window.maeSystemConfig.spreadsheetName;
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
 
         const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${tokenResponse.accessToken}` }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (!response.ok) throw new Error(`MAE System: Failed to fetch table ${tableName}`);
