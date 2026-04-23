@@ -1398,39 +1398,46 @@ async removeLocation(locName) {
 
 //====== Finalize Decommission: ensures location_id default to TBD if not selected ====
 async finalizeDecommission(locName) {
-    // 1. SYSTEM LOCK: Prevent any other syncs from firing during re-homing
-    // Access via window to avoid circular dependency with app.js
+    // 🌟 1. HARVEST DATA FIRST: Grab the user's selections while they are still on the screen
+    const selects = document.querySelectorAll('.rehome-select');
+    
+    // Create an in-memory array of the changes to be made
+    const changesToProcess = [];
+    selects.forEach(select => {
+        changesToProcess.push({
+            newLoc: select.value,
+            tableName: select.getAttribute('data-table'),
+            maeId: select.getAttribute('data-id')
+        });
+    });
+
+    console.log(`MAE System: Found ${changesToProcess.length} items to re-home.`);
+
+    // 2. SYSTEM LOCK: Prevent any other syncs from firing during re-homing
     if (window.globalClickOffHandler) {
         document.removeEventListener('mousedown', window.globalClickOffHandler);
         console.log("MAE System: UI Locked for Decommissioning.");
     }
     
+    // Now it is perfectly safe to clear the table container and show loading
     this.showLoading(`LOCKING SYSTEM: Re-homing items from ${locName}...`);
-    
-    const selects = document.querySelectorAll('.rehome-select');
-    
-    console.log(`MAE System: Found ${selects.length} items to re-home.`); // Debug check
 
-    if (selects.length === 0) {
+    if (changesToProcess.length === 0) {
         console.warn("MAE System: No items found to re-home. Proceeding to direct deletion.");
     }
     
-    // 2. SEQUENTIAL SYNC: Loop and WAIT for each item to hit OneDrive
-    for (const select of selects) {
-        const newLoc = select.value;
-        const tableName = select.getAttribute('data-table');
-        const maeId = select.getAttribute('data-id'); 
-
-        console.log(`MAE System: Re-homing ${maeId} to ${newLoc} in ${tableName}`);
+    // 3. SEQUENTIAL SYNC: Loop and WAIT through our memory array, NOT the deleted DOM dropdowns
+    for (const item of changesToProcess) {
+        console.log(`MAE System: Re-homing ${item.maeId} to ${item.newLoc} in ${item.tableName}`);
         
         // Silent update (no row removal from UI)
-        await window.handleAuditUpdate(tableName, maeId, newLoc, null);
+        await window.handleAuditUpdate(item.tableName, item.maeId, item.newLoc, null);
         
         // Throttling: 400ms pause to respect Microsoft Graph API limits
         await new Promise(r => setTimeout(r, 400));
     }
 
-    // 3. FINAL DELETION: Only happens after the re-homing loop finishes
+    // 4. FINAL DELETION: Only happens after the re-homing loop finishes
     const data = await window.Dashboard.getFullTableData("Location");
     const locConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
     const locIdx = locConfig.columns.findIndex(c => c.header === "Location_ID");
@@ -1444,11 +1451,11 @@ async finalizeDecommission(locName) {
     if (rowIndex !== -1) {
         const success = await window.deleteExcelRow("Location", rowIndex);
         if (success) {
-            // 4. REFRESH EVERYTHING: Wipe cache and refresh local data
+            // 5. REFRESH EVERYTHING: Wipe cache and refresh local data
             await window.refreshLocationCache();
             alert("System Integrity Verified: Items re-homed and Location removed.");
             
-            // 5. SYSTEM UNLOCK: Re-attach the click-off listener
+            // 6. SYSTEM UNLOCK: Re-attach the click-off listener
             if (window.globalClickOffHandler) {
                 document.addEventListener('mousedown', window.globalClickOffHandler);
             }
