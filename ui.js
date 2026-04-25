@@ -167,7 +167,7 @@ renderMenu(activeWorksheets, onClickCallback) {
                         displayValue = parseInt(displayValue).toString(); 
                     }
                     // 2. THE BAD DATA FALLBACK: If the string "Number" exists, wipe it to "0"
-                    else if (displayValue === "Number") {
+                    else if (displayValue === "Number" || displayValue ==="") {
                         displayValue = "0"; 
                     }
 

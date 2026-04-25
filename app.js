@@ -1043,8 +1043,12 @@ async function submitNewRow(tableName, sheetConfig) {
             const select = document.getElementById(fieldId);
             const numInput = document.getElementById(`${fieldId}-num`);
     
-            // If "Number" is chosen, send as Integer. Else, send the string label.
-            return (select.value === "Number") ? (parseInt(numInput.value) || 0) : select.value;
+            // Only return the number if the dropdown is actually set to "Number"
+            if (select && select.value === "Number") {
+                return (numInput && numInput.value !== "") ? parseInt(numInput.value) : 0;
+            }
+            return select ? select.value : "PEND";
+
         }
 
         // Location ID: ensure defaults to "TBD" if empty

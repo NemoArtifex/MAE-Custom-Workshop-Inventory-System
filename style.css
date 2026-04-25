@@ -1043,3 +1043,20 @@ td[data-col-index].editable-cell:has(.edit-number-input),
         color: black !important;
     }
 }
+
+/* Force specific columns to be wider to prevent arrow overlap */
+.col-type-stock-alert,
+.col-type-reorder-point,
+.col-type-qty {
+    min-width: 130px !important;
+    white-space: nowrap !important;
+}
+
+/* Rugged Number Input: Align text left and add a "safe zone" for arrows */
+.edit-number-input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 5px 40px 5px 10px !important; /* 40px right padding clears the arrows */
+    text-align: left !important;
+    font-weight: bold;
+}
