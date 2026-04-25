@@ -504,12 +504,14 @@ renderCommandBar(tableName) {
 //====== HYBRID INVENTORY Helper (Show/Hide Number Input) ======
 handleHybridChange(select, numFieldId) {
     const numInput = document.getElementById(numFieldId);
+    const cell = select.closest('td');
+
     if (select.value === "Number") {
         numInput.style.display = "block";
         numInput.focus();
     } else {
         numInput.style.display = "none";
-        numInput.value = ""; 
+        if(cell) cell.innerText = select.value;
     }
 },
 

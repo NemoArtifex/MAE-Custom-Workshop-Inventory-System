@@ -1109,7 +1109,17 @@ async function processInPlaceTableUpdate(tableName) {
             const input = cell.querySelector('input[type="number"], input[type="text"]');
             const checkbox = cell.querySelector('input[type="checkbox"]');
 
-            if (checkbox) {
+            if (colDef.type === "hybrid-inventory") {
+                // MODULAR FIX: Look for the specific hybrid logic
+                if (select && select.value === "Number") {
+                    const hybridNum = cell.querySelector('.edit-number-input');
+                    val = (hybridNum && hybridNum.value !== "") ? parseInt(hybridNum.value) : 0;
+                } else if (select) {
+                 val = select.value; // "Few", "Many", etc.
+                } else {
+                    val = cell.innerText.trim(); // Fallback to raw text
+                }
+            }  else if (checkbox) {
                 // Returns true or false as boolean values
                 val = checkbox.checked;
             } else if (select) {
