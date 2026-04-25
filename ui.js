@@ -536,6 +536,7 @@ handleHybridChange(select, numFieldId) {
     cells.forEach(cell => {
         // --- A. Handle Number Inputs (The "Sticky" Culprit) ---
         const input = cell.querySelector('input');
+        const select = cell.querySelector('select');
         if (input) {
             //==== if checkbox, don't show "on"
             if (input.type === "checkbox"){
@@ -548,8 +549,8 @@ handleHybridChange(select, numFieldId) {
         }
 
         // --- B. Handle Dropdowns ---
-        const select = cell.querySelector('select');
-        if (select) {
+        //const select = cell.querySelector('select');
+        else if (select) {
             cell.innerText = select.value; // Capture the final choice
         }
 

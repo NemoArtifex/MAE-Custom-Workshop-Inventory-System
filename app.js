@@ -752,37 +752,38 @@ window.confirmMobileAdd = async (scannedId) => {
 
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
 // Centralized "Click-Off" handler for all edit modes
+let isSyncing = false;
+
 async function globalClickOffHandler(e) {
+    // THE LOCK: If already syncing, exit immediately to prevent double-firing
+    if (isSyncing) return;
+
     const table = document.getElementById("main-data-table");
-    const container = document.getElementById("table-container");// scrollbar area
+    const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     if (!table || !title) return;
  
-    // SCROLLBAR DETECTION 
-    // If the click is inside the container but the clientX is in the scrollbar gutter
     const rect = container.getBoundingClientRect();
     const isScrollbarClick = 
         (e.clientX > rect.left + container.clientWidth) || 
         (e.clientY > rect.top + container.clientHeight);
 
-
-    // 1. IDENTIFY SAFE ZONES
     const isInsideTable = table.contains(e.target);
     const isCommandBtn = e.target.closest('.action-btn');
     const isDeleteBtn = e.target.closest('.delete-row-btn');
     const isEntryForm = e.target.closest('#entry-form');
 
-    // 2. TRIGGER SYNC ONLY ON BACKGROUND CLICK
-    if (!isInsideTable && !isCommandBtn && !isDeleteBtn &&!isScrollbarClick && !isEntryForm) {
-        // DETACH IMMEDIATELY: Prevents double-syncing if they click twice
+    if (!isInsideTable && !isCommandBtn && !isDeleteBtn && !isScrollbarClick && !isEntryForm) {
+        
+        // SET THE LOCK
+        isSyncing = true;
+
         document.removeEventListener('mousedown', globalClickOffHandler);
         
         console.log("MAE System: Outside click detected. Syncing and Closing.");
         
-        // 3. CAPTURE ORIGINAL STATE
         const originalTitle = title.innerText;
 
-        // 4. SET VISUAL SAVING STATE
         title.innerText = "💾 Saving changes to OneDrive... Please wait.";
         title.classList.add("is-syncing");
         table.classList.add("saving-active");
@@ -790,18 +791,17 @@ async function globalClickOffHandler(e) {
         table.style.pointerEvents = "none";
 
         try {
-            // 5. ATTEMPT SYNC
             await processInPlaceTableUpdate(window.currentTable); 
             console.log("MAE System: Sync successful.");
         } catch (err) {
-            // 6. ERROR HANDLING
             console.error("MAE System: Sync failed, forcing UI reset.", err);
         } finally {
-            // 7. THE SAFETY RESET: This runs NO MATTER WHAT (success or fail)
+            // RELEASE THE LOCK
+            isSyncing = false;
+
             title.innerText = originalTitle;
             title.classList.remove("is-syncing");
             
-            // Force styles back to normal in case UI.exitEditMode misses them
             table.style.opacity = "1";
             table.style.pointerEvents = "auto";
             table.classList.remove("saving-active");
