@@ -756,7 +756,7 @@ let isSyncing = false;
 
 async function globalClickOffHandler(e) {
     // THE LOCK: If already syncing, exit immediately to prevent double-firing
-    if (isSyncing) return;
+    if (window.isSyncing) return;
 
     const table = document.getElementById("main-data-table");
     const container = document.getElementById("table-container");
@@ -776,7 +776,7 @@ async function globalClickOffHandler(e) {
     if (!isInsideTable && !isCommandBtn && !isDeleteBtn && !isScrollbarClick && !isEntryForm) {
         
         // SET THE LOCK
-        isSyncing = true;
+        window.isSyncing = true;
 
         document.removeEventListener('mousedown', globalClickOffHandler);
         
@@ -797,7 +797,7 @@ async function globalClickOffHandler(e) {
             console.error("MAE System: Sync failed, forcing UI reset.", err);
         } finally {
             // RELEASE THE LOCK
-            isSyncing = false;
+            window.isSyncing = false;
 
             title.innerText = originalTitle;
             title.classList.remove("is-syncing");
@@ -805,7 +805,7 @@ async function globalClickOffHandler(e) {
             table.style.opacity = "1";
             table.style.pointerEvents = "auto";
             table.classList.remove("saving-active");
-
+            window.isSyncing = false;
             UI.exitEditMode(); 
         }
     }
