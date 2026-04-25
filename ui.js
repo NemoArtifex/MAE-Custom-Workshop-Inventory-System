@@ -160,6 +160,13 @@ renderMenu(activeWorksheets, onClickCallback) {
                 
                 let displayValue = allCells[idx] ?? '';
 
+                //  If it's a hybrid field and it's a raw number, just show the number
+                if (colDef.type === 'hybrid-inventory') {
+                    if (displayValue !== "" && !isNaN(displayValue)) {
+                    displayValue = parseInt(displayValue); // Show "5" instead of "Number"
+                    }
+                }
+
                 const isLowStockText = displayValue === "Few";
 
 

@@ -878,10 +878,24 @@ function handleEditClick(tableName) {
             cell.innerHTML = selectHtml;
     
             const select = cell.querySelector('select');
+
             select.onchange = () => {
                 if (select.value === "Number") {
-                    cell.innerHTML = `<input type="number" class="edit-number-input" value="${isNumeric ? currentVal : 0}">`;
-                    cell.querySelector('input').focus();
+
+                    // 1. Inject the rugged number input
+                    cell.innerHTML = `<input type="number" class="edit-number-input" value="0" style="width:80%;">`;
+                    const numInput = cell.querySelector('input');
+                    numInput.focus();
+
+                    // 2. IMPORTANT: Save the value back to the cell when they finish typing
+                    numInput.onblur = () => {
+                        cell.innerText = numInput.value;
+                        // The globalClickOffHandler will now see the number and sync it to OneDrive
+                    };
+        
+                    // Prevent 'Enter' from breaking the layout
+                    numInput.onkeydown = (e) => { if(e.key === 'Enter') numInput.blur();}; 
+
                 } else {
                  cell.innerText = select.value;
                 }
