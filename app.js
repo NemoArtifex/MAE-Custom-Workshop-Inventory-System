@@ -867,48 +867,16 @@ function handleEditClick(tableName) {
         if (colDef.type === "hybrid-inventory") {
             cell.contentEditable = "false";
             const currentVal = cell.innerText.trim();
-            // Rugged Check: Is the cell currently holding a number (e.g., "15") or a label (e.g., "Few")?
-            const isNumeric = currentVal !== "" && !isNaN(currentVal);
 
-            // HELPER: Reusable function to inject the rugged number input
-            const switchToNumberInput = (startingVal) => {
-                // padding-right: 35px ensures the arrows don't block the numbers
-                cell.innerHTML = `<input type="number" class="edit-number-input" value="${startingVal}" 
-                    style="width:100%; padding-right:35px; text-align:left; box-sizing:border-box;">`;
-                const numInput = cell.querySelector('input');
-                numInput.focus();
-                if (numInput.value === "0") numInput.select(); // Highlight zero for quick entry
+            // Create a unique temporary ID for this specific cell's inputs
+            const tempId = `edit-hybrid-${idx}-${cell.closest('tr').getAttribute('data-row-index')}`;
+    
+            // CALL THE MODULAR COMPONENT
+            cell.innerHTML = UI.createHybridInventoryHTML(tempId, currentVal);
+    
+            // STOP PROPAGATION: Prevent the 'click-off' from firing too early when interacting with dropdown
+            cell.onmousedown = (e) => e.stopPropagation();
 
-                numInput.onblur = () => {
-                    cell.innerText = numInput.value;
-                };
-                numInput.onkeydown = (e) => { if(e.key === 'Enter') numInput.blur(); };
-            };
-
-            // LOGIC: If it's already a number, don't show the "Number" dropdown option, 
-            // go straight to the input box.
-            if (isNumeric) {
-                switchToNumberInput(currentVal);
-            } else {
-                // If it's a label (Few/Many), show the dropdown
-                let selectHtml = `<select class="edit-dropdown" style="width:100%; background:#fffde7; cursor:pointer;">`;
-                ["Few", "Adequate", "Many", "Number"].forEach(opt => {
-                    const isSelected = (opt === currentVal);
-                    selectHtml += `<option value="${opt}" ${isSelected ? 'selected' : ''}>${opt}</option>`;
-                });
-                selectHtml += `</select>`;
-
-                cell.innerHTML = selectHtml;
-                const select = cell.querySelector('select');
-
-                select.onchange = () => {
-                    if (select.value === "Number") {
-                        switchToNumberInput(0);
-                    } else {
-                        cell.innerText = select.value;
-                    }
-                };
-            }
             return; // Move to next cell
         }
 

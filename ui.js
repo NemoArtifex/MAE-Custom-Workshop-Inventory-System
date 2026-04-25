@@ -1567,8 +1567,36 @@ renderVirtualSearchHub(auditData) {
                 <button class="action-btn" onclick="loadTableData('Master_Dashboard')">← Return to Dashboard</button>
             </div>`;
     }
-}
+},
 //====== END Virtual Search Hub for Multiple ITems on a Single Tag 
+
+//========= DropDown for "few, adequate, many, number.."
+    createHybridInventoryHTML(fieldId, currentVal) {
+        const isNum = currentVal !== "" && !isNaN(currentVal);
+        const options = ["Few", "Adequate", "Many", "Number"];
+        
+        return `
+            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')">
+                ${options.map(opt => `
+                    <option value="${opt}" ${(opt === "Number" && isNum) || opt === currentVal ? 'selected' : ''}>
+                        ${opt}
+                    </option>`).join('')}
+            </select>
+            <input type="number" id="${fieldId}-num" value="${isNum ? currentVal : ''}" 
+                   style="display: ${isNum ? 'block' : 'none'};" class="hybrid-num-input">
+        `;
+    },
+    // Add this helper to ui.js to handle the "Edit Mode" back-sync
+    syncHybridToCell(numInput, selectId) {
+        const select = document.getElementById(selectId);
+        // If we are in 'Edit Table' mode (no modal form), we need to push value to the cell text
+        const cell = numInput.closest('td');
+        if (cell && select.value === "Number") {
+            cell.innerText = numInput.value;
+        }
+    }
+
+//======  END DropDown for "few, adequate, many, number.."
 
 
 };
