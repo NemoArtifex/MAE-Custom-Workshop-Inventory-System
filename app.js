@@ -1073,105 +1073,103 @@ async function processInPlaceTableUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    const rows = table.querySelectorAll("tbody tr:not(.repair-group-header tr)"); // Skip sub-headers
+    const rows = table.querySelectorAll("tbody tr:not(.repair-group-header tr)");
+    const title = document.getElementById("current-view-title");
     
     const updates = [];
 
+    // 1. DATA HARVESTING (The Scraper)
     rows.forEach(tr => {
         const rowIndex = tr.getAttribute("data-row-index");
         const rowValues = [];
 
         sheetConfig.columns.forEach((col, index) => {
-            // 1. RUGGED PROTECTION: Identify Formulas
-            if (col.type === "formula") {
-                rowValues.push(null);
-                return;
-            }
+            if (col.type === "formula") { rowValues.push(null); return; }
+            if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
 
-            // 2. PRIMARY KEY INTEGRITY: Pull mae_id from attribute
-            if (col.header === "mae_id") {
-                const anchoredId = tr.getAttribute('data-mae-id');
-                rowValues.push(anchoredId || ""); 
-                return;
-            }
-
-            // Find the specific cell for this column
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            if (!cell) {
-                const isNumeric = col.type === "number" || col.type === "date";
-                rowValues.push(isNumeric ? null : "");
-                return;
-            }
+            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
 
-            // 3. DATA EXTRACTION: Identify the UI element and grab the value
             let val = "";
             const select = cell.querySelector('select');
-            const input = cell.querySelector('input[type="number"], input[type="text"]');
+            const input = cell.querySelector('input:not([type="checkbox"])');
             const checkbox = cell.querySelector('input[type="checkbox"]');
 
-            if (colDef.type === "hybrid-inventory") {
-                // MODULAR FIX: Look for the specific hybrid logic
-                if (select && select.value === "Number") {
-                    const hybridNum = cell.querySelector('.edit-number-input');
+            // MODULAR FIX: Explicitly check for Hybrid Inventory first
+            if (col.type === "hybrid-inventory") {
+                const hybridSelect = cell.querySelector('select');
+                const hybridNum = cell.querySelector('.edit-number-input');
+                if (hybridSelect && hybridSelect.value === "Number") {
                     val = (hybridNum && hybridNum.value !== "") ? parseInt(hybridNum.value) : 0;
-                } else if (select) {
-                 val = select.value; // "Few", "Many", etc.
+                } else if (hybridSelect) {
+                    val = hybridSelect.value;
                 } else {
-                    val = cell.innerText.trim(); // Fallback to raw text
+                    val = cell.innerText.trim();
                 }
-            }  else if (checkbox) {
-                // Returns true or false as boolean values
+            } else if (checkbox) {
                 val = checkbox.checked;
             } else if (select) {
                 val = select.value;
             } else if (input) {
                 val = input.value;
             } else {
-                // Fallback to plain text, stripping currency symbols for processing
                 val = cell.innerText.replace(/[$,]/g, "").trim();
             }
 
-            // 4. TYPE ENFORCEMENT
+            // TYPE ENFORCEMENT
             if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
                 let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                
-                if (isNaN(cleanNum)) {
-                    val = 0;
-                } else {
-                    val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
-                }
+                val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
             }
             rowValues.push(val);
         });
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
-    // 5. SYNC TO MICROSOFT GRAPH
+    // 2. BATCHING & CHUNKING LOGIC
     try {
         const token = await window.getGraphToken();
-        for (const update of updates) {
-            const strictIndex = parseInt(update.index, 10);
-            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${strictIndex})`;          
+        const chunkSize = 20; // Graph API Limit
+        const totalRows = updates.length;
+        
+        for (let i = 0; i < totalRows; i += chunkSize) {
+            const chunk = updates.slice(i, i + chunkSize);
+            
+            // UI Progress Update
+            const percent = Math.round((i / totalRows) * 100);
+            if (title) title.innerText = `💾 Syncing to OneDrive: ${percent}%...`;
 
-            const response = await fetch(url, {
-                method: 'PATCH',
+            // Prepare the Batch Request
+            const batchRequests = chunk.map((update, idx) => ({
+                id: (i + idx).toString(),
+                method: "PATCH",
+                url: `/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`,
+                body: { values: update.values },
+                headers: { "Content-Type": "application/json" }
+            }));
+
+            const response = await fetch("https://microsoft.com", {
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ values: update.values })
+                body: JSON.stringify({ requests: batchRequests })
             });
-        
-            if (!response.ok) {
-                const errorBody = await response.json();
-                console.error("MAE System: Microsoft Graph Error during sync:", errorBody);
-            }
+
+            if (!response.ok) throw new Error("Batch request failed");
+
+            // RUGGED DELAY: Give OneDrive 400ms to breathe between chunks
+            await new Promise(r => setTimeout(r, 400));
         }
-        console.log("MAE System: Primary Key Integrity maintained. All changes synced.");
+
+        if (title) title.innerText = "✅ Sync Complete";
+        console.log("MAE System: Batch sync successful.");
+
     } catch (err) {
-        console.error("Sync Error:", err);
-        UI.showError("Failed to sync changes. Check internet connection.");
+        console.error("Batch Sync Error:", err);
+        UI.showError("Failed to sync changes. Check connection.");
     }
 }
 
