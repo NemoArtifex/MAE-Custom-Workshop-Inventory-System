@@ -163,12 +163,18 @@ renderMenu(activeWorksheets, onClickCallback) {
                 //  If it's a hybrid field and it's a raw number, just show the number
                 if (colDef.type === 'hybrid-inventory') {
                     if (displayValue !== "" && !isNaN(displayValue)) {
-                    displayValue = parseInt(displayValue); // Show "5" instead of "Number"
+                        // Force it to be a clean whole number, then a string for the HTML
+                        displayValue = parseInt(displayValue).toString(); 
                     }
                 }
+                
+                // 2. THE BAD DATA FALLBACK: If the string "Number" exists, wipe it to "0"
+                if (displayValue === "Number") {
+                    displayValue = "0"; 
+                }
+
 
                 const isLowStockText = displayValue === "Few";
-
 
                 if (isCurrency) {
                     displayValue = formatCurrency(displayValue);
