@@ -1145,11 +1145,12 @@ async function processInPlaceTableUpdate(tableName) {
                 id: (i + idx).toString(),
                 method: "PATCH",
                 url: `/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${update.index})`,
+                // const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
                 body: { values: update.values },
                 headers: { "Content-Type": "application/json" }
             }));
 
-            const response = await fetch("https://microsoft.com", {
+            const response = await fetch("https://graph.microsoft.com", {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
