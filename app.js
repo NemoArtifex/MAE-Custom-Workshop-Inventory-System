@@ -726,6 +726,9 @@ window.confirmMobileAdd = async (scannedId) => {
     // 1. Clear the selector UI first so the Add Form has a clean stage
     document.getElementById("table-container").innerHTML = ""; 
 
+    // Store the ID in the global "Mailbox"
+    window.pendingScanValue = scannedId;
+
     // 2. Open the standard Add Form
     await handleAddClick(tableName);
 
@@ -858,6 +861,32 @@ function handleEditClick(tableName) {
             select.onchange = finishEdit;
             select.onblur = finishEdit;
                     return; // Move to the next cell
+        }
+
+        // --- BRANCH: HYBRID INVENTORY (Consumables/Hand Tools) ---
+        if (colDef.type === "hybrid-inventory") {
+            cell.contentEditable = "false";
+            const currentVal = cell.innerText.trim();
+            const isNumeric = !isNaN(parseFloat(currentVal));
+
+            let selectHtml = `<select class="edit-dropdown" style="width:100%; background:#fffde7;">`;
+            ["Few", "Adequate", "Many", "Number"].forEach(opt => {
+                const isSelected = (opt === currentVal) || (opt === "Number" && isNumeric);
+                selectHtml += `<option value="${opt}" ${isSelected ? 'selected' : ''}>${opt}</option>`;
+            });
+            selectHtml += `</select>`;
+            cell.innerHTML = selectHtml;
+    
+            const select = cell.querySelector('select');
+            select.onchange = () => {
+                if (select.value === "Number") {
+                    cell.innerHTML = `<input type="number" class="edit-number-input" value="${isNumeric ? currentVal : 0}">`;
+                    cell.querySelector('input').focus();
+                } else {
+                 cell.innerText = select.value;
+                }
+            };
+            return; // Move to next cell
         }
 
 
@@ -1283,6 +1312,16 @@ async function handleUniversalLookup(scannedId) {
                 if (matchedRows.length > 0) {
                     console.log(`MAE System: Found ${matchedRows.length} match(es) in ${tableName}`);
                     window.currentTable = tableName;
+
+                    const uniqueTables = ["Resell_Inventory","Shop_Machinery", "Shop_Power_Tools"];
+                    if (uniqueTables.includes(tableName)) {
+                        console.log("MAE Integrity: Unique item detected. Blocking 'Add New'.");
+                        // Only allow View/Edit, do not show the "Register New Item" prompt
+                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
+                        return; 
+                    }
+
+
 
                     // If it is just ONE item (Unique), use your existing Card view
                     if (matchedRows.length === 1) {

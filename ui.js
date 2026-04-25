@@ -457,6 +457,20 @@ renderCommandBar(tableName) {
 
     container.insertAdjacentHTML('beforebegin', formHtml);
 
+    if (window.pendingScanValue) {
+        // Check for Tag_ID (priority) or mae_id (fallback)
+        const tagInput = document.getElementById("field-Tag_ID") || document.getElementById("field-mae_id");
+        if (tagInput) {
+            tagInput.value = window.pendingScanValue;
+            tagInput.style.backgroundColor = "#fffde7"; 
+            tagInput.style.border = "2px solid var(--accent)";
+            console.log("MAE System: Scan auto-filled into form.");
+        }
+        window.pendingScanValue = null; // Clear the mailbox
+    }
+
+
+
     // 4. SAVE HANDLER (Tightened Scope)
     const submitBtn = document.getElementById("submit-form-btn");
     if (submitBtn) {
