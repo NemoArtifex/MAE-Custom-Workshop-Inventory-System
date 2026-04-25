@@ -864,20 +864,22 @@ function handleEditClick(tableName) {
         }
 
         // --- BRANCH: HYBRID INVENTORY (Consumables/Hand Tools) ---
+       
         if (colDef.type === "hybrid-inventory") {
             cell.contentEditable = "false";
             const currentVal = cell.innerText.trim();
-
-            // Create a unique temporary ID for this specific cell's inputs
-            const tempId = `edit-hybrid-${idx}-${cell.closest('tr').getAttribute('data-row-index')}`;
+            const rowIndex = cell.closest('tr').getAttribute('data-row-index');
     
-            // CALL THE MODULAR COMPONENT
+            // Use 'colIdx' instead of 'idx' to fix the ReferenceError
+            const tempId = `edit-hybrid-${colIdx}-${rowIndex}`;
+    
+            // Call your new modular component
             cell.innerHTML = UI.createHybridInventoryHTML(tempId, currentVal);
     
-            // STOP PROPAGATION: Prevent the 'click-off' from firing too early when interacting with dropdown
+            // Prevent the click-off sync from firing when clicking the dropdown
             cell.onmousedown = (e) => e.stopPropagation();
-
-            return; // Move to next cell
+    
+            return; // Move to the next cell
         }
 
 
