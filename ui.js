@@ -166,13 +166,12 @@ renderMenu(activeWorksheets, onClickCallback) {
                         // Force it to be a clean whole number, then a string for the HTML
                         displayValue = parseInt(displayValue).toString(); 
                     }
-                }
-                
-                // 2. THE BAD DATA FALLBACK: If the string "Number" exists, wipe it to "0"
-                if (displayValue === "Number") {
-                    displayValue = "0"; 
-                }
+                    // 2. THE BAD DATA FALLBACK: If the string "Number" exists, wipe it to "0"
+                    else if (displayValue === "Number") {
+                        displayValue = "0"; 
+                    }
 
+                }
 
                 const isLowStockText = displayValue === "Few";
 

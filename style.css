@@ -563,11 +563,11 @@ input[type=number]::-webkit-outer-spin-button {
 
 .edit-number-input {
     /* 1. Layout - Fill the cell completely */
-    width: 100%;
+    width: 100% !important;
     height: 100%;
     display: block;
-    box-sizing: border-box;
-    padding: 5px 30px 5px 10px !important; /* Extra right padding to clear the arrows */
+    box-sizing: border-box !important;
+    padding: 5px 40px 5px 10px !important; /* Extra right padding to clear the arrows */
     padding-right: 25px !important;
     text-align: left !important; /* Keep the number on the left, away from the arrows */
     appearance: auto; /* Ensure standard browser arrows appear clearly */
