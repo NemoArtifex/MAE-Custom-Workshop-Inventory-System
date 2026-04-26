@@ -538,23 +538,18 @@ handleHybridChange(select, numFieldId) {
 
      // If we are discarding, don't even look at the inputs, just reload from OneDrive
     if (forceRefresh === true) {
-    console.log("MAE System: Discarding changes and wiping UI stage...");
-    
     const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
     
-    // 1. Physically clear the table so the browser CANNOT cache your edits
-    container.innerHTML = ""; 
-    
-    // 2. Show the loading state
-    this.showLoading("Restoring Ground Truth...");
-    
-    // 3. Reset buttons
+    // 1. Force a "Nuclear" UI wipe
+    container.innerHTML = `<div class="loader">Restoring Data from OneDrive...</div>`;
+    title.innerText = "Reverting Changes...";
+
+    // 2. Reset the command bar
     this.renderCommandBar(window.currentTable); 
     
-    // 4. Reload (with a tiny 50ms delay to ensure DOM is empty)
-    setTimeout(() => {
-        window.loadTableData(window.currentTable);
-    }, 50);
+    // 3. Trigger reload
+    window.loadTableData(window.currentTable);
     return; 
 }
 

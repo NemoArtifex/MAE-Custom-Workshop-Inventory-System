@@ -626,8 +626,14 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const currentTable = window.currentTable;
 
     if (btn.id === 'btn-commit-sync') {
-    // 1. Trigger the batch sync
-    processInPlaceTableUpdate(window.currentTable);
+        btn.disabled = true;
+        btn.innerText = "⌛ Syncing...";
+         // Force all inputs to "blur" so they save their values before the scraper runs
+        if (document.activeElement) document.activeElement.blur();
+        // 1. Trigger the batch sync
+        setTimeout(() => {
+        processInPlaceTableUpdate(window.currentTable);
+        }, 100)};
     } 
     else if (btn.id === 'btn-discard-edit') {
         if (confirm("Discard all unsaved changes?")){
@@ -1060,9 +1066,7 @@ async function submitNewRow(tableName, sheetConfig) {
 
 // ======= FUNCTION to scan html table and send updates to OneDrive ==========
 //=======  function processInPlaceTableUpdate ========
-
 // app.js - The "Brain" for In-Place Saving
-
 async function processInPlaceTableUpdate(tableName) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
@@ -1092,7 +1096,11 @@ async function processInPlaceTableUpdate(tableName) {
                 const hInput = cell.querySelector('.edit-number-input');
                 
                 if (hSelect && hSelect.value === "Number") {
-                    val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : null;
+                    // If the box is visible, TAKE THE VALUE. 
+                    // If it's null, we MUST take the innerText as a last resort.
+                    const liveValue = hInput ? hInput.value : cell.innerText.trim();
+                    val = (liveValue !== "") ? parseInt(liveValue) : 0;
+
                 } else if (hSelect) {
                     val = hSelect.value; 
                 } else {
