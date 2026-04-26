@@ -536,6 +536,15 @@ handleHybridChange(select, numFieldId) {
     // 1. Reset Global Flags
     window.isEditing = false; // TURNS OFF THE LOCK
 
+     // If we are discarding, don't even look at the inputs, just reload from OneDrive
+    if (forceRefresh) {
+        window.loadTableData(window.currentTable);
+        return; 
+    }
+
+
+
+
     // 1. Reset Global Table States
     table.classList.remove("is-editing", "is-quick-updating", "saving-active");
     table.style.opacity = "1";

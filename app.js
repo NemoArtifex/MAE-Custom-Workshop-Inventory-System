@@ -630,8 +630,9 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     processInPlaceTableUpdate(window.currentTable);
     } 
     else if (btn.id === 'btn-discard-edit') {
-        // 2. Just exit without saving
-        UI.exitEditMode();
+        if (confirm("Discard all unsaved changes?")){
+        UI.exitEditMode();// Passes true to trigger a full refresh
+        }
     }
     else if (btn.id === 'btn-add') {
         handleAddClick(currentTable); 
@@ -1077,47 +1078,59 @@ async function processInPlaceTableUpdate(tableName) {
         const rowValues = [];
 
         sheetConfig.columns.forEach((col, index) => {
-            if (col.type === "formula") { rowValues.push(null); return; }
-            if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
+    if (col.type === "formula") { rowValues.push(null); return; }
+    if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
 
-            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
+    const cell = tr.querySelector(`td[data-col-index="${index}"]`);
+    if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
 
-            let val = "";
-            const select = cell.querySelector('select');
-            const input = cell.querySelector('input:not([type="checkbox"])');
-            const checkbox = cell.querySelector('input[type="checkbox"]');
+    let val = "";
 
-            // MODULAR FIX: Explicitly check for Hybrid Inventory first
-            if (col.type === "hybrid-inventory") {
-                const hybridSelect = cell.querySelector('select');
-                const hybridNum = cell.querySelector('.edit-number-input');
-                if (hybridSelect && hybridSelect.value === "Number") {
-                    val = (hybridNum && hybridNum.value !== "") ? parseInt(hybridNum.value) : 0;
-                    //val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : cell.innerText.trim();
-                } else if (hybridSelect) {
-                    val = hybridSelect.value;
-                } else {
-                    val = cell.innerText.trim();
-                }
-            } else if (checkbox) {
-                val = checkbox.checked;
-            } else if (select) {
-                val = select.value;
-            } else if (input) {
-                val = input.value;
-            } else {
-                val = cell.innerText.replace(/[$,]/g, "").trim();
-            }
+    // --- 1. HYBRID INVENTORY (High Priority Check) ---
+    // We check this first so generic 'select' or 'input' lookups don't interfere
+    if (col.type === "hybrid-inventory") {
+        const hSelect = cell.querySelector('select');
+        const hInput = cell.querySelector('.edit-number-input');
+        
+        if (hSelect && hSelect.value === "Number") {
+            // Grab value from input, if empty send null to prevent zeroing
+            val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : null;
+        } else if (hSelect) {
+            val = hSelect.value; // "Few", "Adequate", etc.
+        } else {
+            val = cell.innerText.trim();
+        }
+    } 
+    // --- 2. GENERIC LOOKUPS (Fallbacks) ---
+    else {
+        const select = cell.querySelector('select');
+        const checkbox = cell.querySelector('input[type="checkbox"]');
+        const input = cell.querySelector('input:not([type="checkbox"])');
 
-            // TYPE ENFORCEMENT
-            if (col.type === "number") {
-                const isCurrency = col.format && col.format.includes("$");
-                let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
-            }
-            rowValues.push(val);
-        });
+        if (checkbox) {
+            val = checkbox.checked;
+        } else if (select) {
+            val = select.value;
+        } else if (input) {
+            val = input.value;
+        } else {
+            val = cell.innerText.replace(/[$,]/g, "").trim();
+        }
+    }
+
+    // --- 3. TYPE ENFORCEMENT ---
+    if (col.type === "number") {
+        const isCurrency = col.format && col.format.includes("$");
+        if (val === "" || val === null) {
+            val = null; // Tell Graph API to ignore this cell
+        } else {
+            let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
+            val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+        }
+    }
+    
+    rowValues.push(val);
+});
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
@@ -1188,7 +1201,7 @@ async function processInPlaceTableUpdate(tableName) {
         console.log("MAE System: Triggering verification refresh...");
         setTimeout(() => {
             loadTableData(tableName);
-        }, 1200); // 1.2s delay ensures OneDrive has processed the batch
+        }, 2000); // 2 s delay ensures OneDrive has processed the batch
 
     }
 }
