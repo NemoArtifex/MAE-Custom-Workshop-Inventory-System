@@ -1154,12 +1154,22 @@ async function processInPlaceTableUpdate(tableName) {
 
             if (!response.ok) throw new Error("Batch request failed");
 
+            const batchResult = await response.json();
+            batchResult.responses.forEach(res => {
+                if (res.status < 200 || res.status > 299) {
+                    console.error(`MAE Sync Fail: Row ID ${res.id} failed with status ${res.status}`, res.body);
+                }
+            });
+
             // RUGGED DELAY: Give OneDrive 400ms to breathe between chunks
-            await new Promise(r => setTimeout(r, 400));
+            await new Promise(r => setTimeout(r, 500));
         }
 
         if (title) title.innerText = "✅ Sync Complete";
         console.log("MAE System: Batch sync successful.");
+
+        // IMPORTANT: Small delay to let OneDrive finish its internal write lock
+        await new Promise(r => setTimeout(r, 600));
 
     } catch (err) {
         console.error("Batch Sync Error:", err);
