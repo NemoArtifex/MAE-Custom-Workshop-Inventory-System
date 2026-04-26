@@ -628,51 +628,45 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     if (btn.id === "btn-commit-sync") {
         btn.disabled = true;
         btn.innerText = "⌛ Syncing...";
-         // Force all inputs to "blur" so they save their values before the scraper runs
+        
+        // Force inputs to finalize their data
         if (document.activeElement) document.activeElement.blur();
-        // 1. Trigger the batch sync
+        
+        // Small delay to let the DOM "settle"
         setTimeout(() => {
-        processInPlaceTableUpdate(window.currentTable);
+            processInPlaceTableUpdate(currentTable);
         }, 100);
-    }
+    } 
     else if (btn.id === 'btn-discard-edit') {
-        if (confirm("Discard all unsaved changes?")){
-        UI.exitEditMode();// Passes true to trigger a full refresh
+        if (confirm("Discard all unsaved changes?")) {
+            // FIX: Pass 'true' so ui.js knows to force a refresh from OneDrive
+            UI.exitEditMode(true); 
         }
-    }
+    } 
     else if (btn.id === 'btn-add') {
         handleAddClick(currentTable); 
     } 
     else if (btn.id === 'btn-edit') {
         handleEditClick(currentTable);
     } 
-    // CONSOLIDATED PRINT LOGIC: Handles Table, Manual Log, and TBD Audit
     else if (btn.id === 'btn-print' || btn.id === 'btn-manual-print' || btn.id === 'btn-print-audit') {
         const sheetConfig = config.worksheets.find(s => s.tableName === currentTable);
         const today = new Date().toLocaleDateString('en-US');
-        
-        // RUGGED CHECK: Determine if we are looking at an Audit View or a standard Map/Table
         const table = document.getElementById("main-data-table");
         const isAuditViewActive = table && table.innerHTML.includes("Assign New Location");
 
         let finalPrintTitle;
-
         if (isAuditViewActive || btn.id === 'btn-print-audit') {
-            // Case 1: TBD Audit View (Two columns, grouped)
             finalPrintTitle = `Items with Location_ID: TBD (as of ${today})`;
         } else if (currentTable === "Location") {
-            // Case 2: Standard Workshop Location Map (4 columns)
             finalPrintTitle = `Workshop Location Map (as of ${today})`;
         } else {
-            // Case 3: Standard Inventory Tables (Consumables, Machinery, etc.)
             const titleElement = document.getElementById("current-view-title");
             const spanElement = titleElement.querySelector("span");
             const currentTitleText = spanElement ? spanElement.innerText : titleElement.innerText;
             finalPrintTitle = `${currentTitleText} (as of ${today})`;
         }
         
-        // Branch to appropriate UI function
-        // Note: For Audit view, we pass 'null' for sheetConfig so it prints exactly what's on screen
         if (btn.id === 'btn-print' || btn.id === 'btn-print-audit') {
             UI.printTable(currentTable, isAuditViewActive ? null : sheetConfig, finalPrintTitle);
         } else {
@@ -683,6 +677,8 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         handleQuickUpdate(currentTable);
     }
 });
+
+//=========== END GLOBAL CLICK LISTENER ==============
 
 //============= handle ADD Click function ===================
 async function handleAddClick(tableName) {
