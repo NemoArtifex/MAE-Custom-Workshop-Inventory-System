@@ -1078,76 +1078,73 @@ async function processInPlaceTableUpdate(tableName) {
         const rowValues = [];
 
         sheetConfig.columns.forEach((col, index) => {
-    if (col.type === "formula") { rowValues.push(null); return; }
-    if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
+            if (col.type === "formula") { rowValues.push(null); return; }
+            if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
 
-    const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-    if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
+            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
+            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
 
-    let val = "";
+            let val = "";
 
-    // --- 1. HYBRID INVENTORY (High Priority Check) ---
-    // We check this first so generic 'select' or 'input' lookups don't interfere
-    if (col.type === "hybrid-inventory") {
-        const hSelect = cell.querySelector('select');
-        const hInput = cell.querySelector('.edit-number-input');
-        
-        if (hSelect && hSelect.value === "Number") {
-            // Grab value from input, if empty send null to prevent zeroing
-            val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : null;
-        } else if (hSelect) {
-            val = hSelect.value; // "Few", "Adequate", etc.
-        } else {
-            val = cell.innerText.trim();
-        }
-    } 
-    // --- 2. GENERIC LOOKUPS (Fallbacks) ---
-    else {
-        const select = cell.querySelector('select');
-        const checkbox = cell.querySelector('input[type="checkbox"]');
-        const input = cell.querySelector('input:not([type="checkbox"])');
+            // --- 1. HYBRID INVENTORY (High Priority Check) ---
+            if (col.type === "hybrid-inventory") {
+                const hSelect = cell.querySelector('select');
+                const hInput = cell.querySelector('.edit-number-input');
+                
+                if (hSelect && hSelect.value === "Number") {
+                    val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : null;
+                } else if (hSelect) {
+                    val = hSelect.value; 
+                } else {
+                    val = cell.innerText.trim();
+                }
+            } 
+            // --- 2. BOOLEAN CHECK (Specific lookup) ---
+            else if (col.type === "boolean") {
+                const cb = cell.querySelector('input[type="checkbox"]');
+                val = cb ? cb.checked : (cell.innerText.trim().toUpperCase() === "TRUE");
+            }
+            // --- 3. GENERIC LOOKUPS (Else catch-all) ---
+            else {
+                const select = cell.querySelector('select');
+                const input = cell.querySelector('input:not([type="checkbox"])');
 
-        if (checkbox) {
-            val = checkbox.checked;
-        } else if (select) {
-            val = select.value;
-        } else if (input) {
-            val = input.value;
-        } else {
-            val = cell.innerText.replace(/[$,]/g, "").trim();
-        }
-    }
+                if (select) {
+                    val = select.value;
+                } else if (input) {
+                    val = input.value;
+                } else {
+                    val = cell.innerText.replace(/[$,]/g, "").trim();
+                }
+            }
 
-    // --- 3. TYPE ENFORCEMENT ---
-    if (col.type === "number") {
-        const isCurrency = col.format && col.format.includes("$");
-        if (val === "" || val === null) {
-            val = null; // Tell Graph API to ignore this cell
-        } else {
-            let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-            val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
-        }
-    }
-    
-    rowValues.push(val);
-});
+            // --- 4. TYPE ENFORCEMENT ---
+            if (col.type === "number") {
+                const isCurrency = col.format && col.format.includes("$");
+                if (val === "" || val === null || val === undefined) {
+                    val = null; 
+                } else {
+                    let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
+                    val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+                }
+            }
+            
+            rowValues.push(val);
+        });
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
     // 2. BATCHING & CHUNKING LOGIC
     try {
         const token = await window.getGraphToken();
-        const chunkSize = 20; // Graph API Limit
+        const chunkSize = 20; 
         const totalRows = updates.length;
         
         for (let i = 0; i < totalRows; i += chunkSize) {
             const chunk = updates.slice(i, i + chunkSize);
-            
-            // UI Progress Update
             const percent = Math.round((i / totalRows) * 100);
             if (title) title.innerText = `💾 Syncing to OneDrive: ${percent}%...`;
 
-            // Prepare the Batch Request
             const batchRequests = chunk.map((update, idx) => ({
                 id: (i + idx).toString(),
                 method: "PATCH",
@@ -1174,35 +1171,28 @@ async function processInPlaceTableUpdate(tableName) {
                 }
             });
 
-            // RUGGED DELAY: Give OneDrive 400ms to breathe between chunks
             await new Promise(r => setTimeout(r, 500));
         }
 
         if (title) title.innerText = "✅ Sync Complete";
         console.log("MAE System: Batch sync successful.");
-
-        // IMPORTANT: Small delay to let OneDrive finish its internal write lock
         await new Promise(r => setTimeout(r, 600));
 
     } catch (err) {
         console.error("Batch Sync Error:", err);
         UI.showError("Failed to sync changes. Check connection.");
     } finally {
-        // clean the UI inputs
         UI.exitEditMode();
-
-        //  Reset the Title (Removes "Sync Complete")
-        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-        if (title && sheetConfig) {
-            title.innerText = `View: ${sheetConfig.tabName}`;
+        
+        const sheetConfigFinal = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        if (title && sheetConfigFinal) {
+            title.innerText = `View: ${sheetConfigFinal.tabName}`;
         }
 
-        // Forced Refresh: Verify the "Ground Truth" from OneDrive
         console.log("MAE System: Triggering verification refresh...");
         setTimeout(() => {
             loadTableData(tableName);
-        }, 2000); // 2 s delay ensures OneDrive has processed the batch
-
+        }, 2000); 
     }
 }
 

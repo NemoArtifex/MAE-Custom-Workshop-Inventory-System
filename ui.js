@@ -539,6 +539,7 @@ handleHybridChange(select, numFieldId) {
      // If we are discarding, don't even look at the inputs, just reload from OneDrive
     if (forceRefresh === true) {
         console.log("MAE Syste: Discarding changes...");
+        document.getElementById("table-container").innerHTML = UI.showLoading("Restoring Data...");
         this.renderCommandBar(window.currentTable);
         window.loadTableData(window.currentTable);
         return; 
