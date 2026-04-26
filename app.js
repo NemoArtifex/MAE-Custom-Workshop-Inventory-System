@@ -14,6 +14,7 @@ window.currentTable = "";
 //attempt or has an existing session (ie, clicked refresh)  
 
 window.account = null;
+window.isEditing = false; // Initialize the global state
 
 async function startup() {
     try {
@@ -804,7 +805,7 @@ async function globalClickOffHandler(e) {
 
             //Re-enable clicks
             document.body.style.pointerEvents = "auto"; 
-            
+
             title.innerText = originalTitle;
             title.classList.remove("is-syncing");
             
@@ -820,6 +821,9 @@ async function globalClickOffHandler(e) {
 
 //========== Handle EDIT CLICK function ================
 function handleEditClick(tableName) {
+    window.isEditing = true; // Turn on the flag
+    UI.renderCommandBar(tableName); // Refresh the buttons immediately
+
     const table = document.getElementById("main-data-table");
     if (!table || table.classList.contains("is-editing")) return;
 

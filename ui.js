@@ -332,6 +332,17 @@ renderCommandBar(tableName) {
     const normalizedName = tableName.trim().toLowerCase();
     let buttons = "";
 
+    // --- NEW: EDIT MODE GUARDRAIL ---
+    // If the system is in Edit Mode, we ignore standard buttons and show the Commitment Bar
+    if (window.isEditing) {
+        buttons = `
+            <button class="action-btn" id="btn-commit-sync" style="background:#27ae60;">💾 Commit Changes</button>
+            <button class="action-btn" id="btn-discard-edit" style="background:#7f8c8d;">Discard Changes</button>
+        `;
+        container.innerHTML = `<div class="command-bar">${buttons}</div>`;
+        return; // EXIT: Standard buttons won't render while editing
+    }
+
     // --- VIRTUAL RULE 1: AUDIT VIEW (Check this BEFORE the sheetConfig guard) ---
     if (normalizedName === "location_audit") {
         buttons = `
