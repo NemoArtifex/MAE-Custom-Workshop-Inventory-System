@@ -626,16 +626,15 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const currentTable = window.currentTable;
 
     if (btn.id === "btn-commit-sync") {
+        // 1. Force the active input to commit its value
+        if (document.activeElement) document.activeElement.blur();
+        // 2. IMMEDIATE HARVEST: Grab data while inputs are still on screen
+        const capturedUpdates = harvestTableData(window.currentTable);
+        // 3. Visual Feedback
         btn.disabled = true;
         btn.innerText = "⌛ Syncing...";
-        
-        // Force inputs to finalize their data
-        if (document.activeElement) document.activeElement.blur();
-        
-        // Small delay to let the DOM "settle"
-        setTimeout(() => {
-            processInPlaceTableUpdate(currentTable);
-        }, 100);
+        // 4. Start Sync using the ALREADY captured data
+        processInPlaceTableUpdate(window.currentTable, capturedUpdates);
     } 
     else if (btn.id === 'btn-discard-edit') {
         if (confirm("Discard all unsaved changes?")) {
@@ -679,6 +678,58 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
 });
 
 //=========== END GLOBAL CLICK LISTENER ==============
+
+//=========== Harvest FUnction /helper 
+function harvestTableData(tableName) {
+    const table = document.getElementById("main-data-table");
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    const rows = table.querySelectorAll("tbody tr:not(.repair-group-header tr)");
+    const updates = [];
+
+    rows.forEach(tr => {
+        const rowIndex = tr.getAttribute("data-row-index");
+        const rowValues = [];
+
+        sheetConfig.columns.forEach((col, index) => {
+            if (col.type === "formula") { rowValues.push(null); return; }
+            if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
+
+            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
+            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
+
+            let val = "";
+            const hSelect = cell.querySelector('select');
+            const hInput = cell.querySelector('.edit-number-input');
+
+            // MISSION: Grab the values right now while the HTML is still "dirty"
+            if (col.type === "hybrid-inventory") {
+                if (hSelect && hSelect.value === "Number") {
+                    val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : 0;
+                } else {
+                    val = hSelect ? hSelect.value : cell.innerText.trim();
+                }
+            } else {
+                const genericInput = cell.querySelector('input');
+                const genericSelect = cell.querySelector('select');
+                if (genericSelect) val = genericSelect.value;
+                else if (genericInput) val = genericInput.value;
+                else val = cell.innerText.replace(/[$,]/g, "").trim();
+            }
+
+            // Standard Type Enforcement (Rugged)
+            if (col.type === "number") {
+                const isCurrency = col.format && col.format.includes("$");
+                let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
+                val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+            }
+            rowValues.push(val);
+        });
+        updates.push({ index: rowIndex, values: [rowValues] });
+    });
+    return updates;
+}
+
+// ===== END Harvest FUnction /helper 
 
 //============= handle ADD Click function ===================
 async function handleAddClick(tableName) {
@@ -1063,83 +1114,21 @@ async function submitNewRow(tableName, sheetConfig) {
 // ======= FUNCTION to scan html table and send updates to OneDrive ==========
 //=======  function processInPlaceTableUpdate ========
 // app.js - The "Brain" for In-Place Saving
-async function processInPlaceTableUpdate(tableName) {
+async function processInPlaceTableUpdate(tableName, preCapturedUpdates = null) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    const rows = table.querySelectorAll("tbody tr:not(.repair-group-header tr)");
     const title = document.getElementById("current-view-title");
-    
-    const updates = [];
 
-    // 1. DATA HARVESTING (The Scraper)
-    rows.forEach(tr => {
-        const rowIndex = tr.getAttribute("data-row-index");
-        const rowValues = [];
+    // RUGGED: Use the pre-captured snapshot. If none, run a fresh harvest.
+    const updates = preCapturedUpdates || harvestTableData(tableName);
 
-        sheetConfig.columns.forEach((col, index) => {
-            if (col.type === "formula") { rowValues.push(null); return; }
-            if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
-
-            const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
-
-            let val = "";
-
-            // --- 1. HYBRID INVENTORY (High Priority Check) ---
-            if (col.type === "hybrid-inventory") {
-                const hSelect = cell.querySelector('select');
-                const hInput = cell.querySelector('.edit-number-input');
-                
-                if (hSelect && hSelect.value === "Number") {
-                    // If the box is visible, TAKE THE VALUE. 
-                    // If it's null, we MUST take the innerText as a last resort.
-                    const liveValue = hInput ? hInput.value : cell.innerText.trim();
-                    val = (liveValue !== "") ? parseInt(liveValue) : 0;
-
-                } else if (hSelect) {
-                    val = hSelect.value; 
-                } else {
-                    val = cell.innerText.trim();
-                }
-            } 
-            // --- 2. BOOLEAN CHECK (Specific lookup) ---
-            else if (col.type === "boolean") {
-                const cb = cell.querySelector('input[type="checkbox"]');
-                val = cb ? cb.checked : (cell.innerText.trim().toUpperCase() === "TRUE");
-            }
-            // --- 3. GENERIC LOOKUPS (Else catch-all) ---
-            else {
-                const select = cell.querySelector('select');
-                const input = cell.querySelector('input:not([type="checkbox"])');
-
-                if (select) {
-                    val = select.value;
-                } else if (input) {
-                    val = input.value;
-                } else {
-                    val = cell.innerText.replace(/[$,]/g, "").trim();
-                }
-            }
-
-            // --- 4. TYPE ENFORCEMENT ---
-            if (col.type === "number") {
-                const isCurrency = col.format && col.format.includes("$");
-                // If val is null, undefined, or an empty string, 
-                // we send a literal empty string "". Excel interprets "" as "no change/blank" 
-                // better than it handles null in a batch patch.
-                if (val === "" || val === null || val === undefined) {
-                    val = 0; 
-                } else {
-                    let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                    val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
-                }
-            }
-            
-            rowValues.push(val);
-        });
-        updates.push({ index: rowIndex, values: [rowValues] });
-    });
+    // 1. SAFETY CHECK: If no rows were changed or found, just exit
+    if (!updates || updates.length === 0) {
+        console.log("MAE System: No data found to sync.");
+        UI.exitEditMode();
+        return;
+    }
 
     // 2. BATCHING & CHUNKING LOGIC
     try {
@@ -1149,9 +1138,12 @@ async function processInPlaceTableUpdate(tableName) {
         
         for (let i = 0; i < totalRows; i += chunkSize) {
             const chunk = updates.slice(i, i + chunkSize);
+            
+            // UI Progress Update
             const percent = Math.round((i / totalRows) * 100);
             if (title) title.innerText = `💾 Syncing to OneDrive: ${percent}%...`;
 
+            // Prepare the Batch Request
             const batchRequests = chunk.map((update, idx) => ({
                 id: (i + idx).toString(),
                 method: "PATCH",
@@ -1178,25 +1170,30 @@ async function processInPlaceTableUpdate(tableName) {
                 }
             });
 
+            // Wait 500ms between chunks to respect OneDrive's locking
             await new Promise(r => setTimeout(r, 500));
         }
 
         if (title) title.innerText = "✅ Sync Complete";
         console.log("MAE System: Batch sync successful.");
+        
+        // Final settle delay before UI cleanup
         await new Promise(r => setTimeout(r, 600));
 
     } catch (err) {
         console.error("Batch Sync Error:", err);
         UI.showError("Failed to sync changes. Check connection.");
     } finally {
+        // Clean the UI inputs
         UI.exitEditMode();
-        
+
+        // Restore original title
         const sheetConfigFinal = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
         if (title && sheetConfigFinal) {
             title.innerText = `View: ${sheetConfigFinal.tabName}`;
         }
 
-        console.log("MAE System: Triggering verification refresh...");
+        // Verification Refresh from Ground Truth (OneDrive)
         setTimeout(() => {
             loadTableData(tableName);
         }, 2000); 
