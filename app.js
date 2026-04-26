@@ -633,8 +633,8 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
         // 1. Trigger the batch sync
         setTimeout(() => {
         processInPlaceTableUpdate(window.currentTable);
-        }, 100)};
-    } 
+        }, 100);
+    }
     else if (btn.id === 'btn-discard-edit') {
         if (confirm("Discard all unsaved changes?")){
         UI.exitEditMode();// Passes true to trigger a full refresh
