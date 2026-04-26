@@ -625,7 +625,7 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const config = window.maeSystemConfig;
     const currentTable = window.currentTable;
 
-    if (btn.id === 'btn-commit-sync') {
+    if (btn.id === "btn-commit-sync") {
         btn.disabled = true;
         btn.innerText = "⌛ Syncing...";
          // Force all inputs to "blur" so they save their values before the scraper runs
