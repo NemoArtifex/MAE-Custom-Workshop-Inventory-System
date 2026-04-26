@@ -1121,11 +1121,14 @@ async function processInPlaceTableUpdate(tableName) {
             // --- 4. TYPE ENFORCEMENT ---
             if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
+                // If val is null, undefined, or an empty string, 
+                // we send a literal empty string "". Excel interprets "" as "no change/blank" 
+                // better than it handles null in a batch patch.
                 if (val === "" || val === null || val === undefined) {
-                    val = null; 
+                    val = ""; 
                 } else {
                     let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                    val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+                    val = isNaN(cleanNum) ? "" : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
                 }
             }
             
