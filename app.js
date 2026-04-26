@@ -778,6 +778,9 @@ async function globalClickOffHandler(e) {
         // SET THE LOCK
         window.isSyncing = true;
 
+        // NUCLEAR LOCK: Stop the browser (and extensions) from interacting with the table
+        document.body.style.pointerEvents = "none"; 
+
         document.removeEventListener('mousedown', globalClickOffHandler);
         
         console.log("MAE System: Outside click detected. Syncing and Closing.");
@@ -799,6 +802,9 @@ async function globalClickOffHandler(e) {
             // RELEASE THE LOCK
             window.isSyncing = false;
 
+            //Re-enable clicks
+            document.body.style.pointerEvents = "auto"; 
+            
             title.innerText = originalTitle;
             title.classList.remove("is-syncing");
             
@@ -1101,6 +1107,7 @@ async function processInPlaceTableUpdate(tableName) {
                 const hybridNum = cell.querySelector('.edit-number-input');
                 if (hybridSelect && hybridSelect.value === "Number") {
                     val = (hybridNum && hybridNum.value !== "") ? parseInt(hybridNum.value) : 0;
+                    //val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : cell.innerText.trim();
                 } else if (hybridSelect) {
                     val = hybridSelect.value;
                 } else {
