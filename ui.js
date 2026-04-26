@@ -529,7 +529,7 @@ handleHybridChange(select, numFieldId) {
 //=====END HYBRID INVENTORY Helper ===========
 
 //========== EXIT EDIT MODE ==============
-    exitEditMode() {
+    exitEditMode(forceRefresh = false) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
@@ -537,13 +537,12 @@ handleHybridChange(select, numFieldId) {
     window.isEditing = false; // TURNS OFF THE LOCK
 
      // If we are discarding, don't even look at the inputs, just reload from OneDrive
-    if (forceRefresh) {
+    if (forceRefresh === true) {
+        console.log("MAE Syste: Discarding changes...");
+        this.renderCommandBar(window.currentTable);
         window.loadTableData(window.currentTable);
         return; 
     }
-
-
-
 
     // 1. Reset Global Table States
     table.classList.remove("is-editing", "is-quick-updating", "saving-active");
