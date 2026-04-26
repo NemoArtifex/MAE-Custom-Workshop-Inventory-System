@@ -625,7 +625,15 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const config = window.maeSystemConfig;
     const currentTable = window.currentTable;
 
-    if (btn.id === 'btn-add') {
+    if (btn.id === 'btn-commit-sync') {
+    // 1. Trigger the batch sync
+    processInPlaceTableUpdate(window.currentTable);
+    } 
+    else if (btn.id === 'btn-discard-edit') {
+        // 2. Just exit without saving
+        UI.exitEditMode();
+    }
+    else if (btn.id === 'btn-add') {
         handleAddClick(currentTable); 
     } 
     else if (btn.id === 'btn-edit') {

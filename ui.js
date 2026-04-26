@@ -533,6 +533,9 @@ handleHybridChange(select, numFieldId) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
+    // 1. Reset Global Flags
+    window.isEditing = false; // TURNS OFF THE LOCK
+
     // 1. Reset Global Table States
     table.classList.remove("is-editing", "is-quick-updating", "saving-active");
     table.style.opacity = "1";
@@ -575,6 +578,8 @@ handleHybridChange(select, numFieldId) {
         cell.onkeydown = null;
         cell.onblur = null;
     });
+
+    this.renderCommandBar(window.currentTable);
 
     console.log("MAE System: UI Sanitized. All inputs removed.");
 },
