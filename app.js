@@ -1114,7 +1114,7 @@ async function processInPlaceTableUpdate(tableName) {
             if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
                 let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+                val = isNaN(cleanNum) ? null : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
             }
             rowValues.push(val);
         });
@@ -1175,7 +1175,21 @@ async function processInPlaceTableUpdate(tableName) {
         console.error("Batch Sync Error:", err);
         UI.showError("Failed to sync changes. Check connection.");
     } finally {
+        // clean the UI inputs
         UI.exitEditMode();
+
+        //  Reset the Title (Removes "Sync Complete")
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+        if (title && sheetConfig) {
+            title.innerText = `View: ${sheetConfig.tabName}`;
+        }
+
+        // Forced Refresh: Verify the "Ground Truth" from OneDrive
+        console.log("MAE System: Triggering verification refresh...");
+        setTimeout(() => {
+            loadTableData(tableName);
+        }, 1200); // 1.2s delay ensures OneDrive has processed the batch
+
     }
 }
 
