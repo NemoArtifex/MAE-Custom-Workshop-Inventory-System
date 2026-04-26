@@ -760,68 +760,43 @@ window.confirmMobileAdd = async (scannedId) => {
 //======= END Helper to bridge Scan to Add Form ===============
 
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
-// Centralized "Click-Off" handler for all edit modes
-let isSyncing = false;
-
 async function globalClickOffHandler(e) {
-    // THE LOCK: If already syncing, exit immediately to prevent double-firing
-    if (window.isSyncing) return;
+    // 1. If we aren't in Edit Mode, this handler does nothing
+    if (!window.isEditing) return;
 
     const table = document.getElementById("main-data-table");
     const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
-    if (!table || !title) return;
- 
+    if (!table || !container) return;
+
+    // SCROLLBAR DETECTION 
     const rect = container.getBoundingClientRect();
     const isScrollbarClick = 
         (e.clientX > rect.left + container.clientWidth) || 
         (e.clientY > rect.top + container.clientHeight);
 
+    // 2. IDENTIFY SAFE ZONES
     const isInsideTable = table.contains(e.target);
-    const isCommandBtn = e.target.closest('.action-btn');
-    const isDeleteBtn = e.target.closest('.delete-row-btn');
+    const isCommitBtn = e.target.closest('#btn-commit-sync');
+    const isDiscardBtn = e.target.closest('#btn-discard-edit');
     const isEntryForm = e.target.closest('#entry-form');
 
-    if (!isInsideTable && !isCommandBtn && !isDeleteBtn && !isScrollbarClick && !isEntryForm) {
+    // 3. THE GUARDRAIL: If they click outside the "Safe Zones"
+    if (!isInsideTable && !isCommitBtn && !isDiscardBtn && !isScrollbarClick && !isEntryForm) {
         
-        // SET THE LOCK
-        window.isSyncing = true;
-
-        // NUCLEAR LOCK: Stop the browser (and extensions) from interacting with the table
-        document.body.style.pointerEvents = "none"; 
-
-        document.removeEventListener('mousedown', globalClickOffHandler);
+        // Use the rugged browser confirm dialog
+        const confirmDiscard = confirm("MAE System: You have uncommitted changes. Discard all changes and exit Edit Mode?");
         
-        console.log("MAE System: Outside click detected. Syncing and Closing.");
-        
-        const originalTitle = title.innerText;
-
-        title.innerText = "💾 Saving changes to OneDrive... Please wait.";
-        title.classList.add("is-syncing");
-        table.classList.add("saving-active");
-        table.style.opacity = "0.5";
-        table.style.pointerEvents = "none";
-
-        try {
-            await processInPlaceTableUpdate(window.currentTable); 
-            console.log("MAE System: Sync successful.");
-        } catch (err) {
-            console.error("MAE System: Sync failed, forcing UI reset.", err);
-        } finally {
-            // RELEASE THE LOCK
-            window.isSyncing = false;
-
-            //Re-enable clicks
-            document.body.style.pointerEvents = "auto"; 
-
-            title.innerText = originalTitle;
-            title.classList.remove("is-syncing");
+        if (confirmDiscard) {
+            console.log("MAE System: User chose to discard changes.");
             
-            table.style.opacity = "1";
-            table.style.pointerEvents = "auto";
-            table.classList.remove("saving-active");
-            window.isSyncing = false;
-            UI.exitEditMode(); 
+            // Immediately stop listening for clicks to prevent loops
+            document.removeEventListener('mousedown', globalClickOffHandler);
+            
+            // Clean up the UI without saving to OneDrive
+            UI.exitEditMode();
+        } else {
+            // User clicked 'Cancel', keep everything exactly as it is
+            console.log("MAE System: Discard cancelled. Continuing edit session.");
         }
     }
 }
@@ -1189,6 +1164,8 @@ async function processInPlaceTableUpdate(tableName) {
     } catch (err) {
         console.error("Batch Sync Error:", err);
         UI.showError("Failed to sync changes. Check connection.");
+    } finally {
+        UI.exitEditMode();
     }
 }
 
