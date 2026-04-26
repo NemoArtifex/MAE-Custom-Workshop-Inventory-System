@@ -1125,10 +1125,10 @@ async function processInPlaceTableUpdate(tableName) {
                 // we send a literal empty string "". Excel interprets "" as "no change/blank" 
                 // better than it handles null in a batch patch.
                 if (val === "" || val === null || val === undefined) {
-                    val = ""; 
+                    val = 0; 
                 } else {
                     let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                    val = isNaN(cleanNum) ? "" : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+                    val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
                 }
             }
             

@@ -538,12 +538,25 @@ handleHybridChange(select, numFieldId) {
 
      // If we are discarding, don't even look at the inputs, just reload from OneDrive
     if (forceRefresh === true) {
-        console.log("MAE System: Discarding changes...");
-        this.showLoading("Restored Date");
-        this.renderCommandBar(window.currentTable);
+    console.log("MAE System: Discarding changes and wiping UI stage...");
+    
+    const container = document.getElementById("table-container");
+    
+    // 1. Physically clear the table so the browser CANNOT cache your edits
+    container.innerHTML = ""; 
+    
+    // 2. Show the loading state
+    this.showLoading("Restoring Ground Truth...");
+    
+    // 3. Reset buttons
+    this.renderCommandBar(window.currentTable); 
+    
+    // 4. Reload (with a tiny 50ms delay to ensure DOM is empty)
+    setTimeout(() => {
         window.loadTableData(window.currentTable);
-        return; 
-    }
+    }, 50);
+    return; 
+}
 
     // 1. Reset Global Table States
     table.classList.remove("is-editing", "is-quick-updating", "saving-active");
