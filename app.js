@@ -363,155 +363,139 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
-   window.currentTable = tableName;
-   const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-   UI.showLoading(tableName);
-   try {
-    const token = await window.getGraphToken();
-    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-    const response = await fetch(url, {
-        headers: {'Authorization' : `Bearer ${token}`}
-    });
-
-    if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
-    const data = await response.json();
-
-    let displayTitle = `View: ${sheetConfig.tabName}`;
-
-    //==== DASHBOARD BRIDGE ===============
-    if(tableName === "Master_Dashboard"){
-        // Did Graph API return any rows?
-        const hasData = data.value && data.value.length>0;
-
-        //===first data row (under header) data.value[0] is index 0
-        const summaryValues = (hasData && data.value[0].values[0]) ? data.value[0].values[0] : [0,0,0,0,0,0,0];
-
-        // RUGGED SIDEBAR RESET: Ensure "Home" button is highlighted
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        const homeBtn = document.querySelector('.home-btn');
-        if (homeBtn) homeBtn.classList.add('active');
-
-
-        UI.renderDashboard(summaryValues, sheetConfig);
-        UI.renderCommandBar(tableName);
-        return; // EXIT HERE: stops rest of function from running
-    }
-
-    // Process rows to format dates before rendering
-     //  We update the values but keep the row object so UI.js 
-    // can still find the row index and metadata.
-    let formattedRows = data.value.map(rowObj => {
-     // RUGGED: Graph API returns values as [[val1, val2]]. 
-    // We extract the inner array immediately.
-    const rawCells = Array.isArray(rowObj.values[0]) ? rowObj.values[0] : rowObj.values; 
+    window.currentTable = tableName;
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
-    const cleanValues = rawCells.map((cellValue, index) => {
-        const colDef = sheetConfig.columns[index];
-        if (colDef && colDef.type === 'date') {
-            return excelSerialToDate(cellValue);
+    // RUGGED: Reset UI state before fetching new data
+    UI.exitEditMode(); 
+    UI.showLoading(tableName);
+
+    try {
+        const token = await window.getGraphToken();
+        
+        // RUGGED: Explicit path including /drive/ to ensure Ledger connectivity
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+        const response = await fetch(url, {
+            headers: { 'Authorization' : `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
+        const data = await response.json();
+
+        let displayTitle = `View: ${sheetConfig.tabName}`;
+
+        // ==========================================
+        // 1. DASHBOARD BRIDGE
+        // ==========================================
+        if (tableName === "Master_Dashboard") {
+            const hasData = data.value && data.value.length > 0;
+            
+            // Extract values from the first row [0] and nested array [0]
+            const summaryValues = (hasData && data.value[0].values) 
+                ? data.value[0].values[0] 
+                : [0, 0, 0, 0, 0, 0, 0];
+
+            // Update sidebar visual state
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            const homeBtn = document.querySelector('.home-btn');
+            if (homeBtn) homeBtn.classList.add('active');
+
+            UI.renderDashboard(summaryValues, sheetConfig);
+            UI.renderCommandBar(tableName);
+            return; 
         }
-        return cellValue;
-    });
 
-    return {
-        ...rowObj,
-        values: cleanValues // Flatten it here for the UI to read easily
-    };
-});
+        // ==========================================
+        // 2. DATA FLATTENING BRIDGE
+        // ==========================================
+        let formattedRows = data.value.map(rowObj => {
+            // Dig into Graph's nested array [[v1, v2]]
+            const rawCells = (rowObj.values && Array.isArray(rowObj.values[0])) 
+                ? rowObj.values[0] 
+                : rowObj.values;
+            
+            const cleanValues = rawCells.map((cellValue, index) => {
+                const colDef = sheetConfig.columns[index];
+                
+                // Convert Excel serial numbers to readable dates
+                if (colDef && colDef.type === 'date') {
+                    return excelSerialToDate(cellValue);
+                }
+                return cellValue;
+            });
 
-    //=Apply smart filters
-    if (filterType){
-        formattedRows = applyDashboardFilters(tableName, formattedRows,filterType);
-    }
-    //let displayTitle = null;
-    if (filterType === 'resell-active'){
-        displayTitle = "RESELL INVENTORY: Work In-Progress, Complete and For Sale";
-    } else if (filterType === 'low-stock'){
-        displayTitle = "Shop Consumables Low Stock";
-    } else if (filterType === 'needs-repair'){
-        // Map the technical table name to your specific "Operational Issues" title
-        const repairTitles = {
-            'Shop_Machinery': "Shop Machinery: Operational Issues",
-            'Shop_Power_Tools': "Shop Power Tools: Operational Issues",
-            'Shop_Hand_Tools': "Shop Hand Tools: Operational Issues"
-        };
+            return {
+                ...rowObj,
+                values: cleanValues 
+            };
+        });
 
-        const baseTitle = repairTitles[tableName] || "Equipment With Operational Issues";
+        // ==========================================
+        // 3. SMART FILTERS
+        // ==========================================
+        if (filterType) {
+            formattedRows = applyDashboardFilters(tableName, formattedRows, filterType);
+        }
 
-        // Add the "Back to Dashboard" button logic also used in Overhead
-        displayTitle = `
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="action-btn" 
-                    style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
-                    onclick="loadTableData('Master_Dashboard')">
-                ← Back to Dashboard
-            </button>
-            <span>${baseTitle}</span>
-        </div>`;        
-    }
-    // Shop Overhead title logic
-      else if (tableName === 'Shop_Overhead' && filterType) {
-        const titleMap = {
-            'due-7': "Bills Due In The Next 7 Days",
-            'due-30': "Bills Due In The Next 30 Days",
-            'due-90': "Bills Due In The Next 90 Days",
-            'due-180': "Bills Due In The Next 180 Days"
-        };
-        // If the filterType exists in our map, use that title
-        if (titleMap[filterType]) {
-            // RUGGED NAVIGATION: Injects a compact back button next to the custom title
+        // ==========================================
+        // 4. DYNAMIC TITLE LOGIC
+        // ==========================================
+        if (filterType === 'resell-active') {
+            displayTitle = "RESELL INVENTORY: WIP, Complete and For Sale";
+        } 
+        else if (filterType === 'low-stock') {
+            displayTitle = "Shop Consumables: Low Stock Alerts";
+        } 
+        else if (filterType === 'needs-repair') {
+            const repairTitles = {
+                'Shop_Machinery': "Shop Machinery: Operational Issues",
+                'Shop_Power_Tools': "Shop Power Tools: Operational Issues",
+                'Shop_Hand_Tools': "Shop Hand Tools: Operational Issues"
+            };
+            
+            const baseTitle = repairTitles[tableName] || "Equipment Issues";
+            
             displayTitle = `
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <button class="action-btn" 
                             style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
                             onclick="loadTableData('Master_Dashboard')">
-                        ← Back to All Bills
+                        ← Back
                     </button>
-                    <span>${titleMap[filterType]}</span>
+                    <span>${baseTitle}</span>
+                </div>`;        
+        } 
+        else if (tableName === 'Shop_Overhead' && filterType) {
+            const titleMap = {
+                'due-7': "Next 7 Days", 
+                'due-30': "Next 30 Days", 
+                'due-90': "Next 90 Days", 
+                'due-180': "Next 180 Days"
+            };
+            
+            displayTitle = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="action-btn" 
+                            style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
+                            onclick="loadTableData('Master_Dashboard')">
+                        ← Back
+                    </button>
+                    <span>Bills Due: ${titleMap[filterType]}</span>
                 </div>`;       
         }
+
+        // ==========================================
+        // 5. UI HANDOFF
+        // ==========================================
+        UI.renderTable(formattedRows, tableName, sheetConfig, displayTitle);
+        UI.renderCommandBar(tableName);
+
+    } catch (error) {
+        console.error("MAE System: Error loading table data:", error);
+        UI.showError("Error: Could not load data. Ensure spreadsheet is closed in Excel.");
     }
-    //========== END Shop Overhead TItle logic ============
-
-    //========== SHOP MAINTENANCE title logic ==============
-    else if (tableName === 'Maintenance_Log' && filterType?.startsWith('maint-')) {
-    const maintTitles = {
-        'maint-7': "Maintenance Due In Next 7 Days",
-        'maint-30': "Maintenance Due In Next 30 Days",
-        'maint-90': "Maintenance Due In Next 90 Days",
-        'maint-180': "Maintenance Due In Next 180 Days"
-    };
-    
-    const selectedTitle = maintTitles[filterType] || "Upcoming Maintenance Tasks";
-
-    displayTitle = `
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="action-btn" 
-                    style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
-                    onclick="loadTableData('Master_Dashboard')">
-                ← Back to Dashboard
-            </button>
-            <span>${selectedTitle}</span>
-        </div>`;        
 }
-    //====== END Shop Maintenance title logic ==============
 
-    
-
-
-    // Hand off cleaned data to to UI module
-    //Pass 1. The Rows, 2. The Table Name, 3. The Config Blueprint
-    UI.renderTable(formattedRows, tableName, sheetConfig, displayTitle);
-
-    // Draw command bar at the bottom
-    UI.renderCommandBar(tableName);
-
-
-   } catch (error) {
-    console.error("MAE System: Error loading table data:", error);
-    UI.showError("Error: Could not load data.  Ensure spreadsheet is closed in Excel");
-   }
-} 
 //=========== END loadTableData ===================
 
 
