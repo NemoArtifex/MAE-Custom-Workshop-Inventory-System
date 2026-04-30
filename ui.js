@@ -138,6 +138,10 @@ renderMenu(activeWorksheets, onClickCallback) {
         rows.forEach((row) => {
             const persistentIndex = row.index; 
             const allCells = row.values; 
+
+            // Safety Check: If allCells is empty, something went wrong in the fetch
+            if (!allCells || allCells.length === 0) return;
+
             const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
 
             html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
