@@ -23,12 +23,14 @@
  *                 Inventory related worksheets, adjusted column placement; made Location_ID type: "dropdown"
  * Version 1.5.3: changed quantity/current stock in hand tools and consumables to "hybrid inventory" type to 
  *                support both dropdown and number input
+ * Version 1.5.4: removed hybrid-inventory and added column in Shop_Hand_Tool and Shop_Consumables
+ *                for Stock_Level and Stock_Count to make app more ruggen
  * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.3",
+    version: "1.5.4",
 
     features: {
         enableScanning: true
@@ -356,10 +358,16 @@ export const maeSystemConfig = {
                     locked: false
                 },
                 { 
-                    header: "Quantity", 
-                    type: "hybrid-inventory", 
-                    options: ["Few", "Adequate", "Many", "Number"], 
+                    header: "Stock_Level", 
+                    type: "dropdown", 
+                    options: ["Few", "Adequate", "Many", "Counted"], 
                     locked: false },
+                {
+                    header: "Stock_Count",
+                    type: "number",
+                    format: "0",
+                    locked: false
+                },
                 { header: "Remarks", type: "string", locked: false }
             ]
         },
@@ -384,10 +392,16 @@ export const maeSystemConfig = {
                 },
                 { header: "Unit of Measure", type: "string", locked: false },
                 { 
-                    header: "Current Stock",
-                    type: "hybrid-inventory", 
-                    options: ["Few", "Adequate", "Many", "Number"], 
+                    header: "Stock_Level",
+                    type: "dropdown", 
+                    options: ["Few", "Adequate", "Many", "Counted"], 
                     locked: false 
+                },
+                {
+                    header: "Stock_Count",
+                    type: "number",
+                    format: "0",
+                    locked: false
                 },
                 { header: "Reorder Point", type: "number", format: "0", locked: false },
                 { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },

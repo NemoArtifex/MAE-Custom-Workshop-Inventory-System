@@ -691,41 +691,58 @@ function harvestTableData(tableName) {
         const rowValues = [];
 
         sheetConfig.columns.forEach((col, index) => {
+            // 1. PROTECTIVE GUARDRAILS: Skip formulas and IDs
             if (col.type === "formula") { rowValues.push(null); return; }
             if (col.header === "mae_id") { rowValues.push(tr.getAttribute('data-mae-id') || ""); return; }
 
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
-            if (!cell) { rowValues.push(col.type === "number" ? null : ""); return; }
-
-            let val = "";
-            const hSelect = cell.querySelector('select');
-            const hInput = cell.querySelector('.edit-number-input');
-
-            // MISSION: Grab the values right now while the HTML is still "dirty"
-            if (col.type === "hybrid-inventory") {
-                if (hSelect && hSelect.value === "Number") {
-                    val = (hInput && hInput.value !== "") ? parseInt(hInput.value) : 0;
-                } else {
-                    val = hSelect ? hSelect.value : cell.innerText.trim();
-                }
-            } else {
-                const genericInput = cell.querySelector('input');
-                const genericSelect = cell.querySelector('select');
-                if (genericSelect) val = genericSelect.value;
-                else if (genericInput) val = genericInput.value;
-                else val = cell.innerText.replace(/[$,]/g, "").trim();
+            if (!cell) { 
+                rowValues.push(col.type === "number" ? 0 : ""); 
+                return; 
             }
 
-            // Standard Type Enforcement (Rugged)
+            // 2. UNIVERSAL HARVEST: Grab current value from Input, Select, or Text
+            const input = cell.querySelector('input');
+            const select = cell.querySelector('select');
+            
+            let val;
+            if (select) {
+                val = select.value;
+            } else if (input) {
+                // If it's a checkbox, we need the checked state, otherwise the value
+                val = (input.type === 'checkbox') ? input.checked : input.value;
+            } else {
+                // Fallback for non-input cells (clean currency/commas)
+                val = cell.innerText.replace(/[$,]/g, "").trim();
+            }
+
+            // 3. RUGGED TYPE ENFORCEMENT: Strictly follow the Config Blueprint
             if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
+                // Remove any leftover non-numeric characters for safety
                 let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                val = isNaN(cleanNum) ? 0 : (isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum));
+                
+                if (isNaN(cleanNum)) {
+                    val = 0;
+                } else {
+                    // Currency keeps 2 decimals, standard numbers are floored to Integers
+                    val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
+                }
+            } else if (col.type === "boolean") {
+                // Ensure Excel receives TRUE/FALSE instead of checkbox objects
+                val = (val === true || val.toString().toUpperCase() === "TRUE");
+            } else {
+                // Standard Strings
+                val = val.toString().trim();
             }
+
             rowValues.push(val);
         });
+
         updates.push({ index: rowIndex, values: [rowValues] });
     });
+
+    console.log(`MAE System: Harvested ${updates.length} rows from ${tableName}. Ready for Sync.`);
     return updates;
 }
 
@@ -859,7 +876,7 @@ async function globalClickOffHandler(e) {
 //========== Handle EDIT CLICK function ================
 function handleEditClick(tableName) {
     window.isEditing = true; // Turn on the flag
-    UI.renderCommandBar(tableName); // Refresh the buttons immediately
+    UI.renderCommandBar(tableName); // Refresh the buttons immediately (Commit/Discard)
 
     const table = document.getElementById("main-data-table");
     if (!table || table.classList.contains("is-editing")) return;
@@ -881,16 +898,14 @@ function handleEditClick(tableName) {
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
-        //===Location_ID: treat as "Dropdown READ-Only" to prevent accidental changes whe bulk editing
+        // --- BRANCH 1: LOCATION_ID (Special Foundation Handling) ---
         if (colDef.header === "Location_ID") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
 
-            // RUGGED: Create a dropdown using the established Location Map cache
             const currentVal = cell.innerText.trim();
             let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7;">`;
     
-            // Always pull from the window.maeLocations cache we refreshed on startup
             window.maeLocations.forEach(loc => {
                 selectHtml += `<option value="${loc}" ${loc === currentVal ? 'selected' : ''}>${loc}</option>`;
             });
@@ -899,7 +914,6 @@ function handleEditClick(tableName) {
             cell.innerHTML = selectHtml;
             const select = cell.querySelector('select');
     
-            // Save the change when they pick a new one or click away
             const finishEdit = () => {
                 cell.innerText = select.value;
                 cell.classList.remove("dropdown-edit-zone");
@@ -907,30 +921,10 @@ function handleEditClick(tableName) {
 
             select.onchange = finishEdit;
             select.onblur = finishEdit;
-                    return; // Move to the next cell
+            return; 
         }
 
-        // --- BRANCH: HYBRID INVENTORY (Consumables/Hand Tools) ---
-       
-        if (colDef.type === "hybrid-inventory") {
-            cell.contentEditable = "false";
-            const currentVal = cell.innerText.trim();
-            const rowIndex = cell.closest('tr').getAttribute('data-row-index');
-    
-            // Use 'colIdx' instead of 'idx' to fix the ReferenceError
-            const tempId = `edit-hybrid-${colIdx}-${rowIndex}`;
-    
-            // Call your new modular component
-            cell.innerHTML = UI.createHybridInventoryHTML(tempId, currentVal);
-    
-            // Prevent the click-off sync from firing when clicking the dropdown
-            cell.onmousedown = (e) => e.stopPropagation();
-    
-            return; // Move to the next cell
-        }
-
-
-        // --- BRANCH 1: NUMBERS (Integer & Currency) ---
+        // --- BRANCH 2: NUMBERS (Includes your new Stock_Count column) ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
@@ -946,24 +940,21 @@ function handleEditClick(tableName) {
 
             input.onblur = () => {
                 let val = parseFloat(input.value) || 0;
-                cell.innerText = isCurrency ? val.toFixed(2) : Math.floor(val).toString();
+                cell.innerText = isCurrency ? UI.formatCurrency(val) : Math.floor(val).toString();
             };
         } 
-        // ---- BRANCH 2: BOOLEAN CHECKBOXES ---
+        
+        // ---- BRANCH 3: BOOLEAN CHECKBOXES ---
         else if (colDef.type === "boolean") {
-            cell.contentEditable = "false"; // Rugged: No typing allowed
+            cell.contentEditable = "false"; 
             const isChecked = cell.innerText.trim().toUpperCase() === "TRUE" || 
                       (cell.querySelector('input') && cell.querySelector('input').checked);
     
-            // Inject the checkbox
             cell.innerHTML = `<input type="checkbox" class="mae-checkbox" ${isChecked ? 'checked' : ''}>`;
     
             const checkbox = cell.querySelector('input');
-    
-            // Stop propagation: clicking the checkbox shouldn't trigger the global "Click-Off" sync immediately
             checkbox.onmousedown = (e) => e.stopPropagation();
-    
-            // Ensure clicking the cell toggles the checkbox
+
             cell.onclick = (e) => {
                 if (e.target !== checkbox) {
                     checkbox.checked = !checkbox.checked;
@@ -971,7 +962,7 @@ function handleEditClick(tableName) {
             };
         }
 
-        // --- BRANCH 3: DROPDOWNS ---
+        // --- BRANCH 4: DROPDOWNS (Includes your new Stock_Level column) ---
         else if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
@@ -982,7 +973,10 @@ function handleEditClick(tableName) {
 
                 const currentVal = cell.innerText.trim();
                 let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
-                colDef.options.forEach(opt => {
+                
+                // Use options from config (Few, Adequate, Many, Counted)
+                const options = colDef.options || [];
+                options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
                 });
                 selectHtml += `</select>`;
@@ -992,8 +986,7 @@ function handleEditClick(tableName) {
                 select.focus();
        
                 const finishEdit = () => {
-                    const selectedText = select.options[select.selectedIndex].text;
-                    cell.innerHTML = selectedText; 
+                    cell.innerHTML = select.value; 
                     cell.classList.remove("dropdown-edit-zone");  
                 };
        
@@ -1005,12 +998,13 @@ function handleEditClick(tableName) {
             cell.onclick = startDropdownEdit;
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         } 
-        // --- BRANCH 3: STANDARD TEXT ---
+        
+        // --- BRANCH 5: STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
             cell.classList.add("text-edit-focus"); 
         }
-    }); // This correctly closes the cells.forEach
+    }); 
 
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
@@ -1053,19 +1047,6 @@ async function submitNewRow(tableName, sheetConfig) {
             // RUGGED: If Location_ID is empty, force it to the "Intake" bucket (TBD)
             if (col.header === "Location_ID") return "TBD";
             return (col.type === "date") ? null : "";
-        }
-
-        // Hybrid-Inventory
-        if (col.type === "hybrid-inventory") {
-            const select = document.getElementById(fieldId);
-            const numInput = document.getElementById(`${fieldId}-num`);
-    
-            // Only return the number if the dropdown is actually set to "Number"
-            if (select && select.value === "Number") {
-                return (numInput && numInput.value !== "") ? parseInt(numInput.value) : 0;
-            }
-            return select ? select.value : "PEND";
-
         }
 
         // Location ID: ensure defaults to "TBD" if empty

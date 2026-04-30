@@ -903,28 +903,21 @@ td[data-col-index].editable-cell:has(.edit-number-input),
 /*====== END Mobile phone specific adjustments ======*/
 
 /*===== Hybrid Inventory styling ========= */
-.hybrid-num-input {
-    margin-top: 8px;
-    border: 2px solid var(--accent) !important;
-    background-color: #fffde7 !important; /* Soft yellow action color */
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
 
-/* Visual cue for subjective labels in the table */
-.inventory-table td:contains("Few"),
-.inventory-table td:contains("Adequate"),
-.inventory-table td:contains("Many") {
+
+/* Visual cue for subjective labels (Few, Adequate, Many) */
+.col-subjective-level {
     font-style: italic;
     color: var(--primary);
     font-weight: 600;
 }
 
-/* Highlight "Few" in the table as a mini-alert */
-.inventory-table td:contains("Few") {
-    color: #c0392b; /* Safety Red */
+/* Highlight "Few" as a high-visibility Safety Red alert */
+.col-stock-alert-red {
+    color: #c0392b !important; 
+    font-weight: 800 !important;
 }
-/*==== END Hybrid Inventory styling ======*/
+/*==== END visual cues for subjective======*/
 
 /* =====Location Control Tower Styling */
 .location-control-group {

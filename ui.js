@@ -116,7 +116,7 @@ renderMenu(activeWorksheets, onClickCallback) {
         return; 
     }
 
-    // NEW: Find the index of the mae_id column to protect it
+    // PRIMARY KEY ANCHOR: Find the index of the mae_id column
     const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
 
     // 1. Identify visible columns from the Manifest
@@ -139,8 +139,6 @@ renderMenu(activeWorksheets, onClickCallback) {
             const persistentIndex = row.index; 
             const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
 
-            // RUGGED: Extract the actual ID and anchor it to the row attribute
-            // This prevents data loss if the cell text is edited or cleared
             const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
 
             html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
@@ -153,30 +151,16 @@ renderMenu(activeWorksheets, onClickCallback) {
                 const colDef = sheetConfig.columns[idx];
                 const isEditable = !colDef.locked && colDef.type !== 'formula';
                 
-                const isCurrentStock = colDef.header === "Current Stock";
-                const isReorderPoint = colDef.header === "Reorder Point";
-                const isQuantity = colDef.header === "Quantity" || colDef.header === "Current Stock";
+                // Visual Alert Logic
                 const isCurrency = colDef.format && colDef.format.includes("$");
-                
                 let displayValue = allCells[idx] ?? '';
 
-                //  If it's a hybrid field and it's a raw number, just show the number
-                if (colDef.type === 'hybrid-inventory') {
-                    if (displayValue !== "" && !isNaN(displayValue)) {
-                        // Force it to be a clean whole number, then a string for the HTML
-                        displayValue = parseInt(displayValue).toString(); 
-                    }
-                    // 2. THE BAD DATA FALLBACK: If the string "Number" exists, wipe it to "0"
-                    else if (displayValue === "Number" || displayValue ==="") {
-                        displayValue = "0"; 
-                    }
-
-                }
-
+                // Identify Subjective Levels for styling
                 const isLowStockText = displayValue === "Few";
+                const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
 
                 if (isCurrency) {
-                    displayValue = formatCurrency(displayValue);
+                    displayValue = this.formatCurrency(displayValue);
                 }
 
                 if (colDef.type === 'boolean') {
@@ -184,12 +168,11 @@ renderMenu(activeWorksheets, onClickCallback) {
                     displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
                 }
 
+                // Apply MAE Rugged Styling Classes
                 html += `<td 
                         class="${isEditable ? 'editable-cell' : 'locked-cell'}
-                               ${isLowStockText ? 'col-type-stock-alert' : ''}
-                               ${isCurrentStock ? 'col-type-stock-alert' : ''}
-                               ${isReorderPoint ? 'col-type-reorder-point' : ''}
-                               ${isQuantity ? 'col-type-qty' : ''} 
+                               ${isLowStockText ? 'col-stock-alert-red' : ''}
+                               ${isSubjective ? 'col-subjective-level' : ''}
                                ${isCurrency ? 'col-type-currency' : ''}" 
                         data-col-index="${idx}">${displayValue}</td>`;
             });
@@ -417,12 +400,12 @@ renderCommandBar(tableName) {
         else {
             formHtml += `<div class="input-group"><label>${col.header}</label>`;
 
-            // 1. BOOLEAN FIX
+            // 1. BOOLEAN
             if (col.type === "boolean") {
                 const isChecked = val.toString().toUpperCase() === "TRUE";
                 formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
             }
-            // 2. LOCATION DISCIPLINE FIX
+            // 2. LOCATION_ID (Foundation Discipline)
             else if (col.header === "Location_ID") {
                 formHtml += `
                     <div class="location-control-group">
@@ -434,36 +417,26 @@ renderCommandBar(tableName) {
                         <span class="foundation-alert">FOUNDATION FIELD: Managed via Location Table</span>
                     </div>`;
             }
-            // 3. HYBRID INVENTORY (Unified Branch)
-            else if (col.type === "hybrid-inventory") {
-                const isNum = val !== "" && !isNaN(val); 
-                formHtml += `
-                    <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')" required>
-                        <option value="">-- Select Level --</option>
-                        ${col.options.map(opt => `<option value="${opt}" ${(opt === "Number" && isNum) || opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
-                    </select>
-                    <input type="number" id="${fieldId}-num" value="${isNum ? val : ''}" 
-                        placeholder="Enter Count" 
-                        class="hybrid-num-input"
-                        style="display: ${isNum ? 'block' : 'none'};">`;
-            }
+            // 3. DROPDOWNS (Includes your new Stock_Level column)
             else if (col.type === "dropdown") {
-                const availableOptions = col.options || window.maeLocations || ["TBD"];
+                const availableOptions = col.options || [];
                 formHtml += `
                     <select id="${fieldId}" required>
                         <option value="">-- Select ${col.header} --</option>
                         ${availableOptions.map(opt => `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`).join('')}
                     </select>`;
             }
+            // 4. NUMBERS (Includes your new Stock_Count column)
             else if (col.type === "number") {
                 const isCurrency = col.format && col.format.includes("$");
                 formHtml += `<input type="number" step="${isCurrency ? '0.01' : '1'}" id="${fieldId}" value="${val}" placeholder="${isCurrency ? '0.00' : 'Whole number'}">`;
             } 
+            // 5. DATE
             else if (col.type === "date") {
                 formHtml += `<input type="date" id="${fieldId}" value="${val}">`;
             } 
+            // 6. STANDARD TEXT
             else {
-                // ADD AUTOFOCUS TO TAG_ID FOR SCANNER DISCIPLINE
                 const isTag = col.header === "Tag_ID";
                 formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
             }
@@ -480,8 +453,8 @@ renderCommandBar(tableName) {
 
     container.insertAdjacentHTML('beforebegin', formHtml);
 
+    // RUGGED SCANNER INJECTION: Auto-fills Tag_ID if a scan is pending
     if (window.pendingScanValue) {
-        // Check for Tag_ID (priority) or mae_id (fallback)
         const tagInput = document.getElementById("field-Tag_ID") || document.getElementById("field-mae_id");
         if (tagInput) {
             tagInput.value = window.pendingScanValue;
@@ -489,44 +462,26 @@ renderCommandBar(tableName) {
             tagInput.style.border = "2px solid var(--accent)";
             console.log("MAE System: Scan auto-filled into form.");
         }
-        window.pendingScanValue = null; // Clear the mailbox
+        window.pendingScanValue = null; 
     }
 
-
-
-    // 4. SAVE HANDLER (Tightened Scope)
+    // 7. SAVE HANDLER
     const submitBtn = document.getElementById("submit-form-btn");
     if (submitBtn) {
         submitBtn.onclick = async () => {
             submitBtn.disabled = true;
-            submitBtn.innerText = "Saving...";
+            submitBtn.innerText = "Syncing with Ledger...";
             
             await onSaveCallback(rowIndex, existingData); 
 
-            if (document.getElementById("submit-form-btn")) {
-                submitBtn.disabled = false;
-                submitBtn.innerText = isEdit ? 'Update to OneDrive' : 'Save to OneDrive';
+            if (document.getElementById("entry-form")) {
+                document.getElementById("entry-form").remove();
             }
         };
     }
 },
 //======= END RENDER ENTRY FORM ============
 
-//====== HYBRID INVENTORY Helper (Show/Hide Number Input) ======
-handleHybridChange(select, numFieldId) {
-    const numInput = document.getElementById(numFieldId);
-    const cell = select.closest('td');
-
-    if (select.value === "Number") {
-        numInput.style.display = "block";
-        numInput.focus();
-    } else {
-        numInput.style.display = "none";
-        if(cell) cell.innerText = select.value;
-    }
-},
-
-//=====END HYBRID INVENTORY Helper ===========
 
 //========== EXIT EDIT MODE ==============
     exitEditMode(forceRefresh = false) {
@@ -1605,34 +1560,6 @@ renderVirtualSearchHub(auditData) {
     }
 },
 //====== END Virtual Search Hub for Multiple ITems on a Single Tag 
-
-//========= DropDown for "few, adequate, many, number.."
-    createHybridInventoryHTML(fieldId, currentVal) {
-        const isNum = currentVal !== "" && !isNaN(currentVal);
-        const options = ["Few", "Adequate", "Many", "Number"];
-        
-        return `
-            <select id="${fieldId}" onchange="UI.handleHybridChange(this, '${fieldId}-num')">
-                ${options.map(opt => `
-                    <option value="${opt}" ${(opt === "Number" && isNum) || opt === currentVal ? 'selected' : ''}>
-                        ${opt}
-                    </option>`).join('')}
-            </select>
-            <input type="number" id="${fieldId}-num" value="${isNum ? currentVal : ''}" 
-                   style="display: ${isNum ? 'block' : 'none'};" class="hybrid-num-input">
-        `;
-    },
-    // Add this helper to ui.js to handle the "Edit Mode" back-sync
-    syncHybridToCell(numInput, selectId) {
-        const select = document.getElementById(selectId);
-        // If we are in 'Edit Table' mode (no modal form), we need to push value to the cell text
-        const cell = numInput.closest('td');
-        if (cell && select.value === "Number") {
-            cell.innerText = numInput.value;
-        }
-    }
-
-//======  END DropDown for "few, adequate, many, number.."
 
 
 };
