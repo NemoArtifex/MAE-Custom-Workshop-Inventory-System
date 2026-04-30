@@ -512,7 +512,7 @@ function applyDashboardFilters(tableName, rows, filterType) {
     
     return rows.filter(row => {
         // RUGGED: Extract the inner array [cleanValues]
-        const values = row.values[0]; 
+        const values = row.values; 
         
         switch (filterType) {
             case 'low-stock':

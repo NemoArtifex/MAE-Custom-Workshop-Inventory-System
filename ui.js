@@ -211,7 +211,7 @@ renderMenu(activeWorksheets, onClickCallback) {
 
     conditions.forEach(status => {
         const groupRows = rows.filter(r => {
-            const rowCells = r.values[0]; 
+            const rowCells = r.values; 
             return rowCells && rowCells[condIdx] === status;
         });
 
@@ -228,7 +228,7 @@ renderMenu(activeWorksheets, onClickCallback) {
                 <tbody>`;
 
             groupRows.forEach(row => {
-                const rowData = row.values[0]; 
+                const rowData = row.values; 
                 
                 // 2. RUGGED ANCHOR: Attach ID to the row attribute
                 const rawMaeId = (idIndex !== -1) ? rowData[idIndex] : '';
