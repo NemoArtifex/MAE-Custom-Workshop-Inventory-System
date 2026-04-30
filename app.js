@@ -516,23 +516,20 @@ function applyDashboardFilters(tableName, rows, filterType) {
         
         switch (filterType) {
             case 'low-stock':
-                const stockIdx = sheetConfig.columns.findIndex(c => c.header === "Current Stock");
+                const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
+                const countIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Count");
                 const reorderIdx = sheetConfig.columns.findIndex(c => c.header === "Reorder Point");
+                 // FIX: row.values is already flat. No [0] needed.
+                const stockLevel = row.values[levelIdx];
+                const stockCount = parseFloat(row.values[countIdx]);
+                const reorderPoint = parseFloat(row.values[reorderIdx]);
+
+                // Trigger if Level is "Few" OR if Count is less than/equal to Reorder Point
+                if (stockLevel === "Few") return true;
+                if (!isNaN(stockCount) && !isNaN(reorderPoint) && stockCount <= reorderPoint) return true;
     
-                // RUGGED: Extract the raw value from the cell
-                const stockVal = values[stockIdx];
-    
-                // 1. Text-Based Trigger: If the owner feels there are "Few," it's a Low Stock alert.
-                if (stockVal === "Few") return true;
-    
-                // 2. Text-Based Pass: If it's "Adequate" or "Many," it's not an alert.
-                if (stockVal === "Adequate" || stockVal === "Many") return false;
-    
-                // 3. Number-Based Trigger: Standard logic for numeric entries
-                const numericStock = parseFloat(stockVal);
-                const numericReorder = parseFloat(values[reorderIdx]);
-    
-                return !isNaN(numericStock) && numericStock <= numericReorder;
+                return false;
+
             
             case 'needs-repair':
                 const conditionIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
@@ -583,11 +580,11 @@ function applyDashboardFilters(tableName, rows, filterType) {
 function isWithinDays(rowValues, sheetConfig, days, colName = "Due Date") {
     const dateIdx = sheetConfig.columns.findIndex(c => c.header === colName);
     
-    // Safety check: if no "Due Date" column exists in this table, skip
-    if (dateIdx === -1 || !rowValues[dateIdx]) return false;
+     // FIX: rowValues is a flat array. Access index directly, NOT rowValues[dateIdx][0]
+    const rawDateVal = rowValues[dateIdx];
+    if (dateIdx === -1 || !rawDateVal) return false;
 
-    // Convert Excel serial to JS Date
-    const dueDate = new Date(excelSerialToDate(rowValues[dateIdx]));
+    const dueDate = new Date(excelSerialToDate(rawDateVal));
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);

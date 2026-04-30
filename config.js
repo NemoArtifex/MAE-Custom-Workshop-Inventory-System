@@ -24,7 +24,7 @@
  * Version 1.5.3: changed quantity/current stock in hand tools and consumables to "hybrid inventory" type to 
  *                support both dropdown and number input
  * Version 1.5.4: removed hybrid-inventory and added column in Shop_Hand_Tool and Shop_Consumables
- *                for Stock_Level and Stock_Count to make app more ruggen
+ *                for Stock_Level and Stock_Count to make app more rugged; changed low stock formula
  * Version xxxxxx
  */
 
@@ -149,8 +149,8 @@ export const maeSystemConfig = {
                     type: "formula",
                     formula: `
                         =SUMPRODUCT(
-                            --( (ISNUMBER(Shop_Consumables[Current Stock])*(Shop_Consumables[Current Stock]<=Shop_Consumables[Reorder Point])) 
-                            + (Shop_Consumables[Current Stock]="Few") )
+                            --( (ISNUMBER(Shop_Consumables[Stock_Count])*(Shop_Consumables[Stock_Count]<=Shop_Consumables[Reorder Point])) 
+                            + (Shop_Consumables[Stock_Level]="Few") )
                         )
                     `.trim(),
                     format: "0",       
