@@ -564,10 +564,10 @@ function applyDashboardFilters(tableName, rows, filterType) {
             case 'due-90':  return isWithinDays(row.values[0], sheetConfig, 90);
             case 'due-180': return isWithinDays(row.values[0], sheetConfig, 180);
             // Filter logic for Shop Maintenance Dashboard buttons
-            case 'maint-7':   return isWithinDays(row.values[0], sheetConfig, 7, "Next Service Date");
-            case 'maint-30':  return isWithinDays(row.values[0], sheetConfig, 30, "Next Service Date");
-            case 'maint-90':  return isWithinDays(row.values[0], sheetConfig, 90, "Next Service Date");
-            case 'maint-180': return isWithinDays(row.values[0], sheetConfig, 180, "Next Service Date");
+            case 'maint-7':   return isWithinDays(row.values, sheetConfig, 7, "Next Service Date");
+            case 'maint-30':  return isWithinDays(row.values, sheetConfig, 30, "Next Service Date");
+            case 'maint-90':  return isWithinDays(row.values, sheetConfig, 90, "Next Service Date");
+            case 'maint-180': return isWithinDays(row.values, sheetConfig, 180, "Next Service Date");
 
             default: return true;
         }
