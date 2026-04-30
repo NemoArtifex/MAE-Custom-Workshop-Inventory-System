@@ -137,8 +137,7 @@ renderMenu(activeWorksheets, onClickCallback) {
     if (rows && rows.length > 0) {
         rows.forEach((row) => {
             const persistentIndex = row.index; 
-            const allCells = Array.isArray(row.values[0]) ? row.values[0] : row.values; 
-
+            const allCells = row.values; 
             const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
 
             html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;

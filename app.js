@@ -401,8 +401,9 @@ async function loadTableData(tableName, filterType = null) {
      //  We update the values but keep the row object so UI.js 
     // can still find the row index and metadata.
     let formattedRows = data.value.map(rowObj => {
-    // Graph API returns values as rowObj.values[0]
-    const rawCells = rowObj.values[0]; 
+     // RUGGED: Graph API returns values as [[val1, val2]]. 
+    // We extract the inner array immediately.
+    const rawCells = Array.isArray(rowObj.values[0]) ? rowObj.values[0] : rowObj.values; 
     
     const cleanValues = rawCells.map((cellValue, index) => {
         const colDef = sheetConfig.columns[index];
