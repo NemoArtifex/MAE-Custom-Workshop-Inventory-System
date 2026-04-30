@@ -483,6 +483,26 @@ async function loadTableData(tableName, filterType = null) {
                     <span>Bills Due: ${titleMap[filterType]}</span>
                 </div>`;       
         }
+        else if (tableName === 'Maintenance_Log' && filterType && filterType.startsWith('maint-')) {
+            const maintTitles = {
+                'maint-7': "Maintenance Due: Next 7 Days",
+                'maint-30': "Maintenance Due: Next 30 Days",
+                'maint-90': "Maintenance Due: Next 90 Days",
+                'maint-180': "Maintenance Due: Next 180 Days"
+            };
+    
+            const selectedTitle = maintTitles[filterType] || "Upcoming Maintenance Tasks";
+
+            displayTitle = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                 <button class="action-btn" 
+                            style="padding: 5px 12px; font-size: 0.8rem; background: #7f8c8d;" 
+                            onclick="loadTableData('Master_Dashboard')">
+                        ← Back
+                    </button>
+                    <span>${selectedTitle}</span>
+                </div>`;        
+        }
 
         // ==========================================
         // 5. UI HANDOFF
