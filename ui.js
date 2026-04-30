@@ -160,7 +160,7 @@ renderMenu(activeWorksheets, onClickCallback) {
                 const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
 
                 if (isCurrency) {
-                    displayValue = this.formatCurrency(displayValue);
+                    displayValue = formatCurrency(displayValue);
                 }
 
                 if (colDef.type === 'boolean') {

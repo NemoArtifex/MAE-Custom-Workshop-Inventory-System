@@ -401,21 +401,22 @@ async function loadTableData(tableName, filterType = null) {
      //  We update the values but keep the row object so UI.js 
     // can still find the row index and metadata.
     let formattedRows = data.value.map(rowObj => {
-        // Map the inner values array (Graph API returns values as a 2D array [[]])
-        const cleanValues = rowObj.values[0].map((cellValue, index) => {
-            const colDef = sheetConfig.columns[index];
-            if (colDef && colDef.type === 'date') {
-                return excelSerialToDate(cellValue);
-            }
-            return cellValue;
-        });
-
-        // Return the original object but with the formatted values
-        return {
-            ...rowObj,
-            values: [cleanValues] 
-        };
+    // Graph API returns values as rowObj.values[0]
+    const rawCells = rowObj.values[0]; 
+    
+    const cleanValues = rawCells.map((cellValue, index) => {
+        const colDef = sheetConfig.columns[index];
+        if (colDef && colDef.type === 'date') {
+            return excelSerialToDate(cellValue);
+        }
+        return cellValue;
     });
+
+    return {
+        ...rowObj,
+        values: cleanValues // Flatten it here for the UI to read easily
+    };
+});
 
     //=Apply smart filters
     if (filterType){
