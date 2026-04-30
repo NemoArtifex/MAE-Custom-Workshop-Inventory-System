@@ -410,7 +410,7 @@ async function loadTableData(tableName, filterType = null) {
         // ==========================================
         let formattedRows = data.value.map(rowObj => {
             // Dig into Graph's nested array [[v1, v2]]
-            const rawCells = (rowObj.values && Array.isArray(rowObj.values[0])) 
+            const rawCells = (rowObj.values && Array.isArray(rowObj.values)) 
                 ? rowObj.values[0] 
                 : rowObj.values;
             
