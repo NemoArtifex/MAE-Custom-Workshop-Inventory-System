@@ -153,7 +153,7 @@ renderMenu(activeWorksheets, onClickCallback) {
             visibleIndices.forEach(idx => {
                 const colDef = sheetConfig.columns[idx];
                 const isEditable = !colDef.locked && colDef.type !== 'formula';
-                
+    
                 // Visual Alert Logic
                 const isCurrency = colDef.format && colDef.format.includes("$");
                 let displayValue = allCells[idx] ?? '';
@@ -161,6 +161,19 @@ renderMenu(activeWorksheets, onClickCallback) {
                 // Identify Subjective Levels for styling
                 const isLowStockText = displayValue === "Few";
                 const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
+
+                // --- MAE SYSTEM: OVERDUE LOGIC ---
+                let overdueClass = "";
+                if (colDef.type === 'date' && displayValue) {
+                    const dueDate = new Date(displayValue);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    // If the date is valid and in the past, flag it
+                    if (!isNaN(dueDate) && dueDate < today) {
+                        overdueClass = "col-date-overdue";
+                    }
+                }
 
                 if (isCurrency) {
                     displayValue = formatCurrency(displayValue);
@@ -171,13 +184,13 @@ renderMenu(activeWorksheets, onClickCallback) {
                     displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
                 }
 
-                // Apply MAE Rugged Styling Classes
-                html += `<td 
-                        class="${isEditable ? 'editable-cell' : 'locked-cell'}
-                               ${isLowStockText ? 'col-stock-alert-red' : ''}
-                               ${isSubjective ? 'col-subjective-level' : ''}
-                               ${isCurrency ? 'col-type-currency' : ''}" 
-                        data-col-index="${idx}">${displayValue}</td>`;
+                // Apply MAE Rugged Styling Classes - merged with the new overdue class
+                html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
+                                ${overdueClass}
+                                ${isLowStockText ? 'col-stock-alert-red' : ''}
+                                ${isSubjective ? 'col-subjective-level' : ''}
+                                ${isCurrency ? 'col-type-currency' : ''}" 
+                            data-col-index="${idx}">${displayValue}</td>`;
             });
             html += `</tr>`;
         });

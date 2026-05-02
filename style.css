@@ -1053,3 +1053,8 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     text-align: left !important;
     font-weight: bold;
 }
+/* style.css - Overdue Alert */
+.col-date-overdue {
+    color: #c0392b !important; /* Safety Red */
+    font-weight: 800 !important;
+}
