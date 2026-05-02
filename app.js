@@ -622,16 +622,32 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     const currentTable = window.currentTable;
 
     if (btn.id === "btn-commit-sync") {
-        // 1. Force the active input to commit its value
-        if (document.activeElement) document.activeElement.blur();
-        // 2. IMMEDIATE HARVEST: Grab data while inputs are still on screen
-        const capturedUpdates = harvestTableData(window.currentTable);
-        // 3. Visual Feedback
-        btn.disabled = true;
-        btn.innerText = "⌛ Syncing...";
-        // 4. Start Sync using the ALREADY captured data
-        processInPlaceTableUpdate(window.currentTable, capturedUpdates);
-    } 
+        try {
+            // 1. Force the active input to commit its value (triggers the onblur)
+            if (document.activeElement) document.activeElement.blur();
+
+            // 2. IMMEDIATE HARVEST: This now includes the "Sold with $0" confirm dialog
+            const capturedUpdates = harvestTableData(window.currentTable);
+
+            // 3. Visual Feedback: Only happens if harvesting succeeded
+            btn.disabled = true;
+            btn.innerText = "⌛ Syncing...";
+
+            // 4. Start Sync
+            processInPlaceTableUpdate(window.currentTable, capturedUpdates);
+
+     } catch (err) {
+            // RUGGED RECOVERY: If the user clicked "Cancel" on the warning, 
+            // the harvest throws an error. we catch it here to reset the UI.
+            console.warn("MAE System:", err.message);
+        
+            // Reset the button so the user can fix the price and try again
+            btn.disabled = false;
+            btn.innerText = "💾 Commit Changes";
+        
+            // No alert needed here because harvestTableData already showed the confirm/error
+        }
+    }
     else if (btn.id === 'btn-discard-edit') {
         if (confirm("Discard all unsaved changes?")) {
             // FIX: Pass 'true' so ui.js knows to force a refresh from OneDrive
