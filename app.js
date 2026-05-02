@@ -735,6 +735,26 @@ function harvestTableData(tableName) {
             rowValues.push(val);
         });
 
+        // --- NEW: VALIDATION CHECK FOR INCOMPLETE SALES ---
+        // This stops the sync if a 'Sold' item has no price, unless the user confirms.
+        if (tableName === "Resell_Inventory") {
+            const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
+            const priceIdx = sheetConfig.columns.findIndex(c => c.header === "Actual Sale Price");
+            
+            const currentStatus = (rowValues[statusIdx] || "").toString().trim();
+            const currentPrice = rowValues[priceIdx] || 0;
+
+            if (currentStatus === "Sold" && currentPrice <= 0) {
+                const itemNameIdx = sheetConfig.columns.findIndex(c => c.header === "Item Name");
+                const itemName = rowValues[itemNameIdx] || "this item";
+                
+                const proceed = confirm(`MAE System: "${itemName}" is marked SOLD but has a $0.00 price.\n\nSync anyway and leave the orange highlight as a reminder?`);
+                if (!proceed) {
+                    throw new Error("Sync cancelled to correct price.");
+                }
+            }
+        }
+
         updates.push({ index: rowIndex, values: [rowValues] });
     });
 
@@ -935,8 +955,18 @@ function handleEditClick(tableName) {
             };
 
             input.onblur = () => {
-                let val = parseFloat(input.value) || 0;
-                cell.innerText = isCurrency ? UI.formatCurrency(val) : Math.floor(val).toString();
+                // RUGGED GUARD: Only attempt to update the text if the input is still attached.
+                // This prevents the "NotFoundError" if a background sync clears the table
+                // while the user is still focused on this field.
+                if (cell.contains(input)) {
+                    let val = parseFloat(input.value) || 0;
+                    cell.innerText = isCurrency ? UI.formatCurrency(val) : Math.floor(val).toString();
+        
+                    // Optional: Clean up visual state
+                    cell.style.zIndex = ""; 
+                } else {
+                    console.log("MAE System: Blur ignored - Cell already refreshed by sync.");
+                }
             };
         } 
         
