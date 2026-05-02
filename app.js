@@ -539,55 +539,36 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
                 const countIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Count");
                 const reorderIdx = sheetConfig.columns.findIndex(c => c.header === "Reorder Point");
-                 // FIX: row.values is already flat. No [0] needed.
-                const stockLevel = row.values[levelIdx];
-                const stockCount = parseFloat(row.values[countIdx]);
-                const reorderPoint = parseFloat(row.values[reorderIdx]);
+        
+                const stockLevel = values[levelIdx];
+                const stockCount = parseFloat(values[countIdx]);
+                const reorderPoint = parseFloat(values[reorderIdx]);
 
-                // Trigger if Level is "Few" OR if Count is less than/equal to Reorder Point
                 if (stockLevel === "Few") return true;
                 if (!isNaN(stockCount) && !isNaN(reorderPoint) && stockCount <= reorderPoint) return true;
-    
                 return false;
 
-            
             case 'needs-repair':
                 const conditionIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
                 const condition = (values[conditionIdx] || "").toLowerCase();
-                // MISSION: Sum of Needs Repair, Repair In-Progress, and Unusable/Junk
                 return ["needs repair", "repair in-progress", "unusable/junk"].includes(condition);
 
             case 'resell-active':
                 const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
-    
-                // Graph API rows store cell data in row.values[0] 
-                // row.values is a 2D array [["Item", "Status", ...]]
-                const rowCells = Array.isArray(row.values[0]) ? row.values[0] : row.values;
-                // 2. Clean the value to ensure NO hidden spaces break the match
-                 const rawStatus = (rowCells[statusIdx] || "").toString().trim();
-                // 3. Match against your exact dropdown options
-                const activeStatuses = ["In-Progress", "Complete", "For Sale"];
-                // DEBUG: This will show you exactly what the app is seeing in your browser console
-                console.log(`MAE System: Row status is [${rawStatus}]`); 
+                const rawStatus = (values[statusIdx] || "").toString().trim();
+                return ["In-Progress", "Complete", "For Sale"].includes(rawStatus);
 
-                return activeStatuses.includes(rawStatus);
+            // Consolidated Date Filters: These all now use the updated 'isWithinDays'
+            // which includes Past Due items.
+            case 'due-7':   return isWithinDays(values, sheetConfig, 7);
+            case 'due-30':  return isWithinDays(values, sheetConfig, 30);
+            case 'due-90':  return isWithinDays(values, sheetConfig, 90);
+            case 'due-180': return isWithinDays(values, sheetConfig, 180);
 
-            case 'maint-30':
-                // index 8 = Next Service Date
-                const nextDate = new Date(values[8]);
-                const thirtyDays = new Date();
-                thirtyDays.setDate(now.getDate() + 30);
-                return nextDate >= now && nextDate <= thirtyDays;
-            // Filter logic for Shop Overhead Dashboard buttons
-            case 'due-7':   return isWithinDays(row.values, sheetConfig, 7);
-            case 'due-30':  return isWithinDays(row.values, sheetConfig, 30);
-            case 'due-90':  return isWithinDays(row.values, sheetConfig, 90);
-            case 'due-180': return isWithinDays(row.values, sheetConfig, 180);
-            // Filter logic for Shop Maintenance Dashboard buttons
-            case 'maint-7':   return isWithinDays(row.values, sheetConfig, 7, "Next Service Date");
-            case 'maint-30':  return isWithinDays(row.values, sheetConfig, 30, "Next Service Date");
-            case 'maint-90':  return isWithinDays(row.values, sheetConfig, 90, "Next Service Date");
-            case 'maint-180': return isWithinDays(row.values, sheetConfig, 180, "Next Service Date");
+            case 'maint-7':   return isWithinDays(values, sheetConfig, 7, "Next Service Date");
+            case 'maint-30':  return isWithinDays(values, sheetConfig, 30, "Next Service Date");
+            case 'maint-90':  return isWithinDays(values, sheetConfig, 90, "Next Service Date");
+            case 'maint-180': return isWithinDays(values, sheetConfig, 180, "Next Service Date");
 
             default: return true;
         }
@@ -599,10 +580,16 @@ function applyDashboardFilters(tableName, rows, filterType) {
 // WORKER function to check if a row's date is within a certain number of days
 function isWithinDays(rowValues, sheetConfig, days, colName = "Due Date") {
     const dateIdx = sheetConfig.columns.findIndex(c => c.header === colName);
+    const completeIdx = sheetConfig.columns.findIndex(c => c.header === "Complete");
     
-     // FIX: rowValues is a flat array. Access index directly, NOT rowValues[dateIdx][0]
     const rawDateVal = rowValues[dateIdx];
     if (dateIdx === -1 || !rawDateVal) return false;
+
+    // RUGGED: If the item is marked Complete (checkbox/boolean), exclude it from "Upcoming" views
+    if (completeIdx !== -1) {
+        const isDone = rowValues[completeIdx];
+        if (isDone === true || String(isDone).toUpperCase() === "TRUE") return false;
+    }
 
     const dueDate = new Date(excelSerialToDate(rawDateVal));
     
@@ -613,7 +600,13 @@ function isWithinDays(rowValues, sheetConfig, days, colName = "Due Date") {
     limitDate.setDate(today.getDate() + days);
     limitDate.setHours(23, 59, 59, 999);
 
-    return dueDate >= today && dueDate <= limitDate;
+    /**
+     * RUGGED LOGIC:
+     * We removed "dueDate >= today".
+     * Now, any date from the past (Overdue) up to the future limit (Upcoming) 
+     * will return true, keeping the shop owner focused on all pending tasks.
+     */
+    return dueDate <= limitDate;
 }
 // ====== END WORKER FUNCTION ===============
 
