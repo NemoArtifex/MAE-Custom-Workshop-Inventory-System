@@ -27,12 +27,13 @@
  *                for Stock_Level and Stock_Count to make app more rugged; changed low stock formula
  * Version 1.5.5: Changed formula in Master Dashboard, Total Actual Sales to factor in "Sold"
  *                deleted Header: "Sold"
- * Version xxxxx: 
+ * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
+ * Version xxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.4",
+    version: "1.5.6",
 
     features: {
         enableScanning: true
@@ -391,28 +392,44 @@ export const maeSystemConfig = {
                             ],
                   locked: false 
                 },
-                { header: "Unit of Measure", type: "string", locked: false },
                 { 
                     header: "Stock_Level",
                     type: "dropdown", 
-                    options: ["Few", "Adequate", "Many", "Counted"], 
+                    options: ["None","Few", "Adequate", "Many", "Counted"], 
                     locked: false 
                 },
+                { header: "Unit of Measure", type: "string", locked: false },
+                { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },
                 {
                     header: "Stock_Count",
                     type: "number",
                     format: "0",
                     locked: false
                 },
+                {
+                    header:"Bulk_Value",
+                    type: "number",
+                    format: "$#,##0.00",
+                    locked: false
+                },
                 { header: "Reorder Point", type: "number", format: "0", locked: false },
-                { header: "Unit Cost", type: "number", format: "$#,##0.00", locked: false },
                 {
                   header: "Current Inventory Value",
                   type: "formula",
                   formula: `
-                            =IF(ISNUMBER([@[Current Stock]]), 
-                            [@[Current Stock]] * [@[Unit Cost]], 
-                            IFS([@[Current Stock]]="Many", 1.0, [@[Current Stock]]="Adequate", 0.5, [@[Current Stock]]="Few", 0.1, TRUE, 0) * [@[Unit Cost]]
+                            =IF(
+                                [@[Stock_Level]]="Counted",
+                                [@[Stock_Count]] * [@[Unit Cost]],
+                                IF(
+                                    [@[Stock_Level]]="None",
+                                    0,
+                                    [@[Bulk_Value]] * IFS(
+                                        [@[Stock_Level]]="Many", 1.0, 
+                                        [@[Stock_Level]]="Adequate", 0.5, 
+                                        [@[Stock_Level]]="Few", 0.25, 
+                                        TRUE, 0
+                                    )
+                                )
                             )
                             `.trim(),
                   format: "$#,##0.00",

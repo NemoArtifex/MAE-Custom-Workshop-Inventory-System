@@ -500,6 +500,68 @@ renderCommandBar(tableName) {
         window.pendingScanValue = null; 
     }
 
+    //====== SILO CONTROLLER for Methodology Enforcement in Shop_Consumables 
+    if (tableName === "Shop_Consumables") {
+    const levelSelect = document.getElementById('field-Stock_Level');
+    
+    // Methodology Silo Mapping
+    const unitSiloIds = ['field-UnitCost', 'field-Stock_Count'];
+    const bulkSiloIds = ['field-Bulk_Value'];
+
+    const applySiloGovernance = () => {
+        const method = levelSelect.value; // "None", "Few", "Adequate", "Many", "Counted"
+        
+        // 1. Reset all fields to 'Active' first
+        const allSiloIds = [...unitSiloIds, ...bulkSiloIds];
+        allSiloIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = false;
+            el.parentElement.classList.remove('silo-locked', 'silo-active');
+        });
+
+        // 2. ENFORCE SILOS
+        if (method === "Counted") {
+            // SILO A: Unit-Based is Active
+            bulkSiloIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    el.parentElement.classList.add('silo-locked');
+                    el.value = ""; // Methodology Wipe
+                }
+            });
+            unitSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
+        } 
+        else if (["Few", "Adequate", "Many"].includes(method)) {
+            // SILO B: Bulk-Based is Active
+            unitSiloIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    el.parentElement.classList.add('silo-locked');
+                    el.value = ""; // Methodology Wipe
+                }
+            });
+            bulkSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
+        }
+        else {
+            // "None" or Empty: Lock both to prevent accidental data entry
+            allSiloIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    el.parentElement.classList.add('silo-locked');
+                }
+            });
+        }
+    };
+
+    // Initialize state on form open and listen for changes
+    levelSelect.addEventListener('change', applySiloGovernance);
+    applySiloGovernance();
+}
+
     // 7. SAVE HANDLER
     const submitBtn = document.getElementById("submit-form-btn");
     if (submitBtn) {

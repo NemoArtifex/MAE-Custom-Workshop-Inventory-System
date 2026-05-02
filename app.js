@@ -709,43 +709,51 @@ function harvestTableData(tableName) {
 
             const cell = tr.querySelector(`td[data-col-index="${index}"]`);
             if (!cell) { 
-                rowValues.push(col.type === "number" ? 0 : ""); 
+                rowValues.push(col.type === "number" ? null : ""); 
                 return; 
+            }
+
+            // --- STEP 7: VALUATION GOVERNANCE GUARD ---
+            // If the cell is locked by the methodology silo, force NULL to wipe 'Zombie Data'
+            if (cell.classList.contains('silo-locked')) {
+             rowValues.push(null);
+                return;
             }
 
             // 2. UNIVERSAL HARVEST: Grab current value from Input, Select, or Text
             const input = cell.querySelector('input');
             const select = cell.querySelector('select');
-            
+    
             let val;
             if (select) {
                 val = select.value;
             } else if (input) {
-                // If it's a checkbox, we need the checked state, otherwise the value
                 val = (input.type === 'checkbox') ? input.checked : input.value;
             } else {
-                // Fallback for non-input cells (clean currency/commas)
                 val = cell.innerText.replace(/[$,]/g, "").trim();
             }
 
-            // 3. RUGGED TYPE ENFORCEMENT: Strictly follow the Config Blueprint
+            // 3. RUGGED TYPE ENFORCEMENT & NULL PROTECTION
             if (col.type === "number") {
+                // RUGGED: If the field is empty, send null (not 0) to keep Excel formulas healthy
+                if (val === "" || val === null) {
+                    rowValues.push(null);
+                    return;
+                }
+
                 const isCurrency = col.format && col.format.includes("$");
-                // Remove any leftover non-numeric characters for safety
                 let cleanNum = parseFloat(val.toString().replace(/[^0-9.-]+/g, ""));
-                
+        
                 if (isNaN(cleanNum)) {
-                    val = 0;
+                    val = null; // Send null for invalid entries to prevent formula corruption
                 } else {
-                    // Currency keeps 2 decimals, standard numbers are floored to Integers
                     val = isCurrency ? parseFloat(cleanNum.toFixed(2)) : Math.floor(cleanNum);
                 }
             } else if (col.type === "boolean") {
-                // Ensure Excel receives TRUE/FALSE instead of checkbox objects
                 val = (val === true || val.toString().toUpperCase() === "TRUE");
             } else {
-                // Standard Strings
                 val = val.toString().trim();
+                if (val === "") val = null; // Standardize empty strings as null
             }
 
             rowValues.push(val);
@@ -1013,10 +1021,12 @@ function handleEditClick(tableName) {
                 e.stopPropagation();
                 if (cell.querySelector('select')) return;
 
+                // RUGGED: Capture the current value as the 'anchor' for methodology comparison
                 const currentVal = cell.innerText.trim();
+                cell.setAttribute('data-old-value', currentVal);
+
                 let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
-                
-                // Use options from config (Few, Adequate, Many, Counted)
+        
                 const options = colDef.options || [];
                 options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
@@ -1026,21 +1036,66 @@ function handleEditClick(tableName) {
                 cell.innerHTML = selectHtml;
                 const select = cell.querySelector('select');
                 select.focus();
-       
+
                 const finishEdit = () => {
                     cell.innerHTML = select.value; 
                     cell.classList.remove("dropdown-edit-zone");  
                 };
-       
-                select.onchange = finishEdit;
+
+                // --- BRANCH: METHODOLOGY OBSERVER (Steps 5 & 6) ---
+                select.onchange = () => {
+                    const newVal = select.value;
+                    const oldVal = cell.getAttribute('data-old-value');
+
+                    if (tableName === "Shop_Consumables" && colDef.header === "Stock_Level") {
+                        const wasCounted = oldVal === "Counted";
+                        const isCounted = newVal === "Counted";
+                        const wasBulk = ["Few", "Adequate", "Many"].includes(oldVal);
+                        const isBulk = ["Few", "Adequate", "Many"].includes(newVal);
+
+                        // Detect Silo Jump
+                        if ((wasCounted && isBulk) || (wasBulk && isCounted)) {
+                            const proceed = confirm(
+                                `MAE SYSTEM ALERT: Methodology Switch!\n\n` +
+                                `Switching between UNIT-BASED and BULK-BASED silos.\n\n` +
+                                `This will WIPE the abandoned data to ensure valuation integrity. Proceed?`
+                            );
+
+                            if (!proceed) {
+                                select.value = oldVal; // Revert the dropdown
+                                finishEdit();
+                                return;
+                            }
+
+                            // NUCLEAR WIPE: Clear the abandoned silo cells in this row
+                            const row = cell.closest('tr');
+                            const unitIndices = ["Unit Cost", "Stock_Count"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
+                            const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
+                    
+                            const targets = isCounted ? bulkIndices : unitIndices;
+                            targets.forEach(idx => {
+                                const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
+                                if (targetCell) {
+                                    targetCell.innerText = ""; // Clear data
+                                    targetCell.classList.add('silo-active-orange'); // Visual cue for new data
+                                }
+                            });
+                        }
+                    }
+                    finishEdit();
+                    // Trigger UI refresh to update grayouts/locks
+                    if (typeof UI.refreshSiloLocks === "function") {
+                        UI.refreshSiloLocks(cell.closest('tr'), tableName, sheetConfig);
+                    }
+                };
+
                 select.onblur = finishEdit;
                 select.onkeydown = (k) => { if(k.key === 'Enter') finishEdit(); };
             };
 
             cell.onclick = startDropdownEdit;
             cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
-        } 
-        
+        }
         // --- BRANCH 5: STANDARD TEXT ---
         else {
             cell.contentEditable = "true";
@@ -1054,6 +1109,19 @@ function handleEditClick(tableName) {
 }
 
 // ====== END handleEditClick function =================
+
+//========Helper function to trigger "Nuclear Wipe" warning before clearing data
+function confirmMethodologySwitch(oldMethod, newMethod) {
+    const from = oldMethod === "Counted" ? "UNIT-BASED (Count)" : "BULK-BASED (Subjective)";
+    const to = newMethod === "Counted" ? "UNIT-BASED (Count)" : "BULK-BASED (Subjective)";
+    
+    return confirm(
+        `MAE SYSTEM ALERT: Methodology Switch Detected!\n\n` +
+        `Changing from ${from} to ${to}.\n\n` +
+        `This will permanently WIPE the data in the abandoned silo to ensure system integrity. Proceed?`
+    );
+}
+//====== END Helper function to trigger "Nuclear Wipe" warning before clearing data
 
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========

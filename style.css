@@ -1065,3 +1065,38 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     font-weight: 800 !important;
     border: 2px dashed #d35400 !important;
 }
+/* ==== Methodology Switch:  The "Nuclear Wipe" Silo Lock */
+.silo-locked {
+    background-color: #eeeeee !important; /* Gray out background */
+    opacity: 0.5;                          /* Visual fade */
+    pointer-events: none !important;      /* THE SHIELD: Prevents all clicks/focus */
+    user-select: none;                    /* Prevents text highlighting */
+    cursor: not-allowed;
+    color: #888888 !important;            /* Dimmed text color */
+}
+
+/*  The "Silo Active" Safety Highlight */
+/* This guides the owner to the required input in the active silo */
+.silo-active-orange {
+    border: 2px solid var(--accent) !important; /* Safety Orange Border */
+    background-color: #fff9f4 !important;       /* Very light orange tint */
+    font-weight: bold !important;
+}
+
+/* Specific styling for the Active Silo when in the Entry Form (Modal) */
+#entry-form .input-group.silo-active label {
+    color: var(--accent); /* Turn the label orange to match */
+    font-weight: 800;
+}
+
+#entry-form .input-group.silo-active input,
+#entry-form .input-group.silo-active select {
+    outline: 2px solid var(--accent);
+    background-color: #fffde7; /* Yellow highlight for active entry */
+}
+
+/* RUGGED: Add a transition for smooth methodology switching */
+.input-group, .inventory-table td {
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+/* END Methodology Switch */
