@@ -1058,3 +1058,10 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     color: #c0392b !important; /* Safety Red */
     font-weight: 800 !important;
 }
+/* style.css - Incomplete Sale Alert */
+.col-resell-price-missing {
+    background-color: #fff3e0 !important; /* Very light orange background */
+    color: #d35400 !important;            /* Safety Orange text */
+    font-weight: 800 !important;
+    border: 2px dashed #d35400 !important;
+}

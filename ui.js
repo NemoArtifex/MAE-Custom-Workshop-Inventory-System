@@ -153,7 +153,7 @@ renderMenu(activeWorksheets, onClickCallback) {
             visibleIndices.forEach(idx => {
                 const colDef = sheetConfig.columns[idx];
                 const isEditable = !colDef.locked && colDef.type !== 'formula';
-    
+
                 // Visual Alert Logic
                 const isCurrency = colDef.format && colDef.format.includes("$");
                 let displayValue = allCells[idx] ?? '';
@@ -161,6 +161,22 @@ renderMenu(activeWorksheets, onClickCallback) {
                 // Identify Subjective Levels for styling
                 const isLowStockText = displayValue === "Few";
                 const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
+
+                // --- MAE SYSTEM: SAFETY ORANGE ALERT FOR INCOMPLETE SALES ---
+                let sellPriceAlert = "";
+                if (tableName === "Resell_Inventory" && colDef.header === "Actual Sale Price") {
+                    // Find the index for Current Status to check if it is "Sold"
+                    const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
+                    const itemStatus = allCells[statusIdx];
+        
+                    // Clean the price value to check if it's effectively $0.00
+                    const itemPrice = parseFloat(displayValue.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+                    // Trigger Alert: If status is 'Sold' but price is missing or zero
+                    if (itemStatus === "Sold" && itemPrice <= 0) {
+                        sellPriceAlert = "col-resell-price-missing";
+                    }
+                }
 
                 // --- MAE SYSTEM: OVERDUE LOGIC ---
                 let overdueClass = "";
@@ -186,9 +202,10 @@ renderMenu(activeWorksheets, onClickCallback) {
                     displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
                 }
 
-                // Apply MAE Rugged Styling Classes - merged with the new overdue class
+                // Apply MAE Rugged Styling Classes - combining all specialized alerts
                 html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
                                 ${overdueClass}
+                                ${sellPriceAlert}
                                 ${isLowStockText ? 'col-stock-alert-red' : ''}
                                 ${isSubjective ? 'col-subjective-level' : ''}
                                 ${isCurrency ? 'col-type-currency' : ''}" 
