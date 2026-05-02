@@ -169,8 +169,10 @@ renderMenu(activeWorksheets, onClickCallback) {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
 
-                    // If the date is valid and in the past, flag it
-                    if (!isNaN(dueDate) && dueDate < today) {
+                    // RUGGED FIX: Only alert if the date is in the past AND it is a "Due" or "Service" column
+                    const isDeadlineCol = colDef.header.includes("Due") || colDef.header.includes("Service");
+
+                    if (isDeadlineCol && !isNaN(dueDate) && dueDate < today) {
                         overdueClass = "col-date-overdue";
                     }
                 }

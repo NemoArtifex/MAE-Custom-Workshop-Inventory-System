@@ -25,7 +25,9 @@
  *                support both dropdown and number input
  * Version 1.5.4: removed hybrid-inventory and added column in Shop_Hand_Tool and Shop_Consumables
  *                for Stock_Level and Stock_Count to make app more rugged; changed low stock formula
- * Version xxxxxx
+ * Version 1.5.5: Changed formula in Master Dashboard, Total Actual Sales to factor in "Sold"
+ *                deleted Header: "Sold"
+ * Version xxxxx: 
  */
 
 export const maeSystemConfig = {
@@ -107,7 +109,7 @@ export const maeSystemConfig = {
                 {
                     header: "Total Machinery Value",
                     type: "formula",
-                    formula: "=SUM(Shop_Machinery[Purchase Cost])",
+                    formula: "=SUMIFS(Resell_Inventory[Actual Sale Price], Resell_Inventory[Current Status], Sold)",
                     format: "$#,#00.00",
                     locked: true,
                     hidden: true
@@ -241,8 +243,7 @@ export const maeSystemConfig = {
                 },
                 { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Location", type: "string", hidden:true,locked: false },
-                { header: "Sold", type: "boolean", locked: false }
+                { header: "Location", type: "string", hidden:true,locked: false }
             ]
         },
         {
