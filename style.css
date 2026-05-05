@@ -559,38 +559,6 @@ input[type=number]::-webkit-outer-spin-button {
     height: 30px; /*make big enough to hit on a tablet */
 }
 
-/* Give the input room for the arrows so they don't disappear */
-
-.edit-number-input {
-    /* 1. Layout - Fill the cell completely */
-    width: 100% !important;
-    height: 100%;
-    display: block;
-    box-sizing: border-box !important;
-    padding: 5px 40px 5px 10px !important; /* Extra right padding to clear the arrows */
-    padding-right: 25px !important;
-    text-align: left !important; /* Keep the number on the left, away from the arrows */
-    appearance: auto; /* Ensure standard browser arrows appear clearly */
-    
-    /* 2. Visual Style - "MAE" Branded Highlight */
-    background: #fffde7 !important; /* Soft yellow "Action" color */
-    border: 2px solid var(--accent) !important; /* Safety Orange Border */
-    border-radius: 4px;
-    
-    /* 3. Typography - Match the table font */
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: bold;
-    color: var(--primary);
-    text-align: right;
-
-    /* 4. Rugged Interaction - The "Click Fix" */
-    position: relative !important;
-    z-index: 999 !important; /* Sit on top of all table layers */
-    pointer-events: auto !important; /* Force browser to register the click */
-    cursor: pointer !important;
-    outline: none;
-}
 
 /* Ensure the cell doesn't clip the arrows */
 td.quick-edit-focus {
@@ -610,12 +578,6 @@ td.quick-edit-focus {
     z-index: 101;
 }
 
-/*  Give currency columns a comfortable minimum width */
-/* This ensures the $0,000.00 + Arrows all fit on one line */
-td[data-col-index].editable-cell:has(.edit-number-input),
-.inventory-table td:contains("$") {
-    min-width: 120px !important; 
-}
 
 /*==== END progress state for clicking off ==== */
 
@@ -626,11 +588,7 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     padding-right: 30px !important; /* Prevents arrows from overlapping the cents */
 }
 
-/* Ensure the number input inside doesn't shrink */
-.col-type-currency .edit-number-input {
-    text-align: right;
-    width: 100%;
-}
+
 /*======= END currency view alignment ==== */
 
 /*========== DASHBOARD ==============*/
@@ -1045,14 +1003,6 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     white-space: nowrap !important;
 }
 
-/* Rugged Number Input: Align text left and add a "safe zone" for arrows */
-.edit-number-input {
-    width: 100% !important;
-    box-sizing: border-box !important;
-    padding: 5px 40px 5px 10px !important; /* 40px right padding clears the arrows */
-    text-align: left !important;
-    font-weight: bold;
-}
 /* style.css - Overdue Alert */
 .col-date-overdue {
     color: #c0392b !important; /* Safety Red */
@@ -1100,3 +1050,55 @@ td[data-col-index].editable-cell:has(.edit-number-input),
     transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 /* END Methodology Switch */
+/* ============================================================
+   MAE RUGGED FIX: UNIFIED NUMBER & CURRENCY INPUT
+   Purpose: Fixes invisible numbers and overlaps in Edit Mode.
+   ============================================================ */
+
+/* 1. The Input Field Logic */
+.edit-number-input {
+    /* Layout & Box Model */
+    width: 100% !important;
+    height: 100%;
+    display: block;
+    box-sizing: border-box !important;
+    
+    /* THE VISIBILITY FIX: Left align and 35px padding clears ALL arrows */
+    text-align: left !important; 
+    padding: 5px 35px 5px 10px !important; 
+    
+    /* Visual Style: Safety Orange & Action Yellow */
+    background: #fffde7 !important;
+    border: 2px solid var(--accent) !important;
+    border-radius: 4px;
+    appearance: auto; /* Ensures browser arrows are visible */
+
+    /* Typography */
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--primary);
+
+    /* Rugged Interaction */
+    position: relative !important;
+    z-index: 999 !important; /* Forces input to the very front */
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    outline: none;
+}
+
+/* 2. The Browser Arrows (Spin Buttons) */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    opacity: 1 !important; 
+    cursor: pointer !important;
+    height: 30px; /* Large touch target for shop floor usage */
+}
+
+/* 3. The Cell Width (The reliable replacement for :has and :contains) */
+.col-type-currency, 
+.col-type-qty, 
+.col-type-reorder-point,
+td.editable-cell:has(.edit-number-input) {
+    min-width: 140px !important; /* Wide enough for $0,000.00 + Arrows */
+}

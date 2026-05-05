@@ -915,8 +915,8 @@ async function globalClickOffHandler(e) {
 
 //========== Handle EDIT CLICK function ================
 function handleEditClick(tableName) {
-    window.isEditing = true; // Turn on the flag
-    UI.renderCommandBar(tableName); // Refresh the buttons immediately (Commit/Discard)
+    window.isEditing = true; 
+    UI.renderCommandBar(tableName); 
 
     const table = document.getElementById("main-data-table");
     if (!table || table.classList.contains("is-editing")) return;
@@ -931,88 +931,65 @@ function handleEditClick(tableName) {
         const colIdx = parseInt(cell.getAttribute('data-col-index'));
         const colDef = sheetConfig.columns[colIdx];
 
-        // RUGGED: Ensure EVERY cell is interactive and "on top"
         cell.style.position = "relative";
         cell.style.zIndex = "100";
         cell.style.pointerEvents = "auto";
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
-        // --- BRANCH 1: LOCATION_ID (Special Foundation Handling) ---
+        // --- BRANCH 1: LOCATION_ID ---
         if (colDef.header === "Location_ID") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
-
             const currentVal = cell.innerText.trim();
             let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7;">`;
-    
             window.maeLocations.forEach(loc => {
                 selectHtml += `<option value="${loc}" ${loc === currentVal ? 'selected' : ''}>${loc}</option>`;
             });
             selectHtml += `</select>`;
-
             cell.innerHTML = selectHtml;
             const select = cell.querySelector('select');
-    
             const finishEdit = () => {
                 cell.innerText = select.value;
                 cell.classList.remove("dropdown-edit-zone");
             };
-
             select.onchange = finishEdit;
             select.onblur = finishEdit;
             return; 
         }
 
-        // --- BRANCH 2: NUMBERS (Includes your new Stock_Count column) ---
+        // --- BRANCH 2: NUMBERS ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
-
             cell.contentEditable = "false"; 
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
-    
             const input = cell.querySelector('input');
             input.onkeydown = (e) => {
                 if (e.key.toLowerCase() === "e") e.preventDefault();
                 if (!isCurrency && (e.key === "." || e.key === ",")) e.preventDefault();
             };
-
             input.onblur = () => {
-                // RUGGED GUARD: Only attempt to update the text if the input is still attached.
-                // This prevents the "NotFoundError" if a background sync clears the table
-                // while the user is still focused on this field.
                 if (cell.contains(input)) {
                     let val = parseFloat(input.value) || 0;
                     cell.innerText = isCurrency ? UI.formatCurrency(val) : Math.floor(val).toString();
-        
-                    // Optional: Clean up visual state
                     cell.style.zIndex = ""; 
-                } else {
-                    console.log("MAE System: Blur ignored - Cell already refreshed by sync.");
                 }
             };
         } 
         
-        // ---- BRANCH 3: BOOLEAN CHECKBOXES ---
+        // ---- BRANCH 3: BOOLEAN ---
         else if (colDef.type === "boolean") {
             cell.contentEditable = "false"; 
             const isChecked = cell.innerText.trim().toUpperCase() === "TRUE" || 
                       (cell.querySelector('input') && cell.querySelector('input').checked);
-    
             cell.innerHTML = `<input type="checkbox" class="mae-checkbox" ${isChecked ? 'checked' : ''}>`;
-    
             const checkbox = cell.querySelector('input');
             checkbox.onmousedown = (e) => e.stopPropagation();
-
-            cell.onclick = (e) => {
-                if (e.target !== checkbox) {
-                    checkbox.checked = !checkbox.checked;
-                }
-            };
+            cell.onclick = (e) => { if (e.target !== checkbox) checkbox.checked = !checkbox.checked; };
         }
 
-        // --- BRANCH 4: DROPDOWNS (Includes your new Stock_Level column) ---
+        // --- BRANCH 4: DROPDOWNS (METHODOLOGY OBSERVER) ---
         else if (colDef.type === "dropdown") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
@@ -1021,12 +998,10 @@ function handleEditClick(tableName) {
                 e.stopPropagation();
                 if (cell.querySelector('select')) return;
 
-                // RUGGED: Capture the current value as the 'anchor' for methodology comparison
                 const currentVal = cell.innerText.trim();
                 cell.setAttribute('data-old-value', currentVal);
 
                 let selectHtml = `<select class="edit-dropdown" style="width:100%; height:100%; border:none; background:#fffde7; font:inherit; cursor:pointer;">`;
-        
                 const options = colDef.options || [];
                 options.forEach(opt => {
                     selectHtml += `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt}</option>`;
@@ -1042,33 +1017,40 @@ function handleEditClick(tableName) {
                     cell.classList.remove("dropdown-edit-zone");  
                 };
 
-                // --- BRANCH: METHODOLOGY OBSERVER (Steps 5 & 6) ---
                 select.onchange = () => {
                     const newVal = select.value;
                     const oldVal = cell.getAttribute('data-old-value');
+                    const row = cell.closest('tr');
 
                     if (tableName === "Shop_Consumables" && colDef.header === "Stock_Level") {
+                        
+                        // 🌟 RUGGED FIX: RESET ALL LOCKS FIRST
+                        // This clears existing 'silo-locked' classes in the row so you can pivot methodologies
+                        const siloHeaders = ["Unit Cost", "Stock_Count", "Bulk_Value"];
+                        siloHeaders.forEach(h => {
+                            const idx = sheetConfig.columns.findIndex(c => c.header === h);
+                            const target = row.querySelector(`td[data-col-index="${idx}"]`);
+                            if (target) {
+                                target.classList.remove('silo-locked');
+                                target.style.opacity = "1";
+                                target.style.pointerEvents = "auto";
+                            }
+                        });
+
                         const wasCounted = oldVal === "Counted";
                         const isCounted = newVal === "Counted";
-                        const wasBulk = ["Few", "Adequate", "Many"].includes(oldVal);
-                        const isBulk = ["Few", "Adequate", "Many"].includes(newVal);
+                        const wasBulk = ["None", "Few", "Adequate", "Many"].includes(oldVal);
+                        const isBulk = ["None", "Few", "Adequate", "Many"].includes(newVal);
 
-                        // Detect Silo Jump
                         if ((wasCounted && isBulk) || (wasBulk && isCounted)) {
-                            const proceed = confirm(
-                                `MAE SYSTEM ALERT: Methodology Switch!\n\n` +
-                                `Switching between UNIT-BASED and BULK-BASED silos.\n\n` +
-                                `This will WIPE the abandoned data to ensure valuation integrity. Proceed?`
-                            );
+                            const proceed = confirm(`MAE SYSTEM ALERT: Methodology Switch!\n\nThis will WIPE the abandoned silo data to ensure valuation integrity. Proceed?`);
 
                             if (!proceed) {
-                                select.value = oldVal; // Revert the dropdown
+                                select.value = oldVal; 
                                 finishEdit();
                                 return;
                             }
 
-                            // NUCLEAR WIPE: Clear the abandoned silo cells in this row
-                            const row = cell.closest('tr');
                             const unitIndices = ["Unit Cost", "Stock_Count"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                     
@@ -1076,14 +1058,13 @@ function handleEditClick(tableName) {
                             targets.forEach(idx => {
                                 const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
                                 if (targetCell) {
-                                    targetCell.innerText = ""; // Clear data
-                                    targetCell.classList.add('silo-active-orange'); // Visual cue for new data
+                                    targetCell.innerText = ""; 
+                                    targetCell.classList.add('silo-active-orange');
                                 }
                             });
                         }
                     }
                     finishEdit();
-                    // Trigger UI refresh to update grayouts/locks
                     if (typeof UI.refreshSiloLocks === "function") {
                         UI.refreshSiloLocks(cell.closest('tr'), tableName, sheetConfig);
                     }
@@ -1094,7 +1075,6 @@ function handleEditClick(tableName) {
             };
 
             cell.onclick = startDropdownEdit;
-            cell.onkeydown = (k) => { if(k.key === 'Enter') startDropdownEdit(k); };
         }
         // --- BRANCH 5: STANDARD TEXT ---
         else {
