@@ -28,12 +28,13 @@
  * Version 1.5.5: Changed formula in Master Dashboard, Total Actual Sales to factor in "Sold"
  *                deleted Header: "Sold"
  * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
- * Version xxxxx
+ * Version 1.5.7: Updated Master Dashboard Low Stock Level formula
+ * Version xxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.6",
+    version: "1.5.7",
 
     features: {
         enableScanning: true
@@ -152,8 +153,8 @@ export const maeSystemConfig = {
                     type: "formula",
                     formula: `
                         =SUMPRODUCT(
-                            --( (ISNUMBER(Shop_Consumables[Stock_Count])*(Shop_Consumables[Stock_Count]<=Shop_Consumables[Reorder Point])) 
-                            + (Shop_Consumables[Stock_Level]="Few") )
+                            ((Shop_Consumables[Stock_Level]="Counted") * (ISNUMBER(Shop_Consumables[Stock_Count])) * (Shop_Consumables[Stock_Count]<=Shop_Consumables[Reorder Point])) +
+                            ((ISNUMBER(MATCH(Shop_Consumables[Stock_Level], {"Few","None"}, 0))))
                         )
                     `.trim(),
                     format: "0",       

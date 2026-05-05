@@ -539,14 +539,22 @@ function applyDashboardFilters(tableName, rows, filterType) {
                 const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
                 const countIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Count");
                 const reorderIdx = sheetConfig.columns.findIndex(c => c.header === "Reorder Point");
-        
+
                 const stockLevel = values[levelIdx];
                 const stockCount = parseFloat(values[countIdx]);
                 const reorderPoint = parseFloat(values[reorderIdx]);
 
-                if (stockLevel === "Few") return true;
-                if (!isNaN(stockCount) && !isNaN(reorderPoint) && stockCount <= reorderPoint) return true;
-                return false;
+                // RUGGED SILO LOGIC:
+                // 1. Bulk Items: Only trigger alert if specifically marked "None" or "Few"
+                if (["None", "Few"].includes(stockLevel)) return true;
+
+                // 2. Counted Items: Only trigger alert if methodology is "Counted" AND it's below the reorder point
+                if (stockLevel === "Counted") {
+                    return !isNaN(stockCount) && !isNaN(reorderPoint) && stockCount <= reorderPoint;
+                }
+
+    // Otherwise (Adequate, Many, or unassigned), do not show in Low Stock list
+    return false;
 
             case 'needs-repair':
                 const conditionIdx = sheetConfig.columns.findIndex(c => c.header === "Condition");
