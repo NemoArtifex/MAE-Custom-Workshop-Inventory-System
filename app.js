@@ -1066,7 +1066,7 @@ function handleEditClick(tableName) {
                     if (tableName === "Shop_Consumables" && colDef.header === "Stock_Level") {
         
                         // 1. RUGGED RESET: Clear all existing locks in this row to allow a fresh state
-                        const siloHeaders = ["Unit Cost", "Stock_Count", "Bulk_Value"];
+                        const siloHeaders = ["Unit Cost", "Stock_Count", "Bulk_Value", "Reorder Point"];
                         siloHeaders.forEach(h => {
                             const idx = sheetConfig.columns.findIndex(c => c.header === h);
                             const target = row.querySelector(`td[data-col-index="${idx}"]`);

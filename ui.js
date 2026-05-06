@@ -204,9 +204,16 @@ renderMenu(activeWorksheets, onClickCallback) {
                         displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
                     }
 
+                    let stockAlertClasses = "";
+                    if (tableName === "Shop_Consumables") {
+                        if (colDef.header === "Stock_Count") stockAlertClasses = "col-type-stock-alert";
+                        if (colDef.header === "Reorder Point") stockAlertClasses = "col-type-reorder-point";
+                    }
+
                     html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
                                     ${overdueClass}
                                     ${sellPriceAlert}
+                                    ${stockAlertClasses}
                                     ${isLowStockText ? 'col-stock-alert-red' : ''}
                                     ${isSubjective ? 'col-subjective-level' : ''}
                                     ${isCurrency ? 'col-type-currency' : ''}" 

@@ -685,14 +685,14 @@ td.quick-edit-focus {
 /* ======= for LOW STOCK ALERT borders ========*/
 /* Red Border for Current Stock (The "Low" alert) */
 .col-type-stock-alert {
-    border: 5px solid #e74c3c !important; /* Red */
+    border: 3px solid #e74c3c !important; /* Red */
     font-weight: bold;
     color: #c0392b;
 }
 
 /* Green Border for Reorder Point (The "Safety" threshold) */
 .col-type-reorder-point {
-    border: 5px solid #27ae60 !important; /* Green */
+    border: 3px solid #27ae60 !important; /* Green */
     font-weight: bold;
     color: #1e8449;
 }
@@ -701,6 +701,13 @@ td.quick-edit-focus {
 .inventory-table tr:hover .col-type-stock-alert,
 .inventory-table tr:hover .col-type-reorder-point {
     background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* style.css - Add this rule */
+.silo-locked.col-type-stock-alert,
+.silo-locked.col-type-reorder-point {
+    border: 1px solid #ccc !important; /* Revert to standard gray border when locked */
+    color: #888 !important;
 }
 /* =========== END LOW STOCK ALERT borders ==========*/
 
