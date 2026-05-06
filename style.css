@@ -1031,12 +1031,10 @@ td.quick-edit-focus {
 }
 /* ==== Methodology Switch:  The "Nuclear Wipe" Silo Lock */
 .silo-locked {
-    background-color: #eeeeee !important; /* Gray out background */
-    opacity: 0.5;                          /* Visual fade */
-    pointer-events: none !important;      /* THE SHIELD: Prevents all clicks/focus */
-    user-select: none;                    /* Prevents text highlighting */
-    cursor: not-allowed;
-    color: #888888 !important;            /* Dimmed text color */
+    background-color: #f2f2f2 !important; 
+    opacity: 0.4 !important;
+    pointer-events: none !important; /* THE SHIELD: Essential to prevent focus */
+    cursor: not-allowed !important;
 }
 
 /*  The "Silo Active" Safety Highlight */
@@ -1119,4 +1117,17 @@ td.editable-cell:has(.edit-number-input) {
 /* Gray out abandoned silo cells even in View Mode */
 .inventory-table td:empty {
     background-color: #f9f9f9;
+}
+/* style.css - Rugged Input Focus */
+.edit-number-input:focus {
+    background-color: #fff9c4 !important; /* Bright Yellow when active */
+    transform: scale(1.02); /* Subtle "Pop" to show focus */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+    transition: transform 0.1s ease;
+}
+
+/* Ensure invalid entries are impossible to ignore */
+.edit-number-input:invalid, .input-error {
+    background-color: #fadbd8 !important;
+    border: 2px solid #e74c3c !important;
 }

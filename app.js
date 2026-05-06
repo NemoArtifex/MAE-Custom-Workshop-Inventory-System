@@ -966,25 +966,58 @@ function handleEditClick(tableName) {
             return; 
         }
 
-        // --- BRANCH 2: NUMBERS ---
+        // --- BRANCH 2: NUMBERS & RUGGED VALIDATION ---
         if (colDef.type === "number") {
             const isCurrency = colDef.format && colDef.format.includes("$");
+            // RUGGED: Extract raw numeric value, preserving decimals only for currency
             const currentVal = cell.innerText.replace(/[^0-9.-]+/g, "") || 0;
+            
             cell.contentEditable = "false"; 
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="${isCurrency ? '0.01' : '1'}" min="0">`;
+            
             const input = cell.querySelector('input');
+
+            // 1. REAL-TIME VALIDATION (Fat-Finger Guardrail)
+            input.oninput = () => {
+                // Strips non-numeric characters immediately
+                const regex = isCurrency ? /[^0-9.]/g : /[^0-9]/g;
+                if (regex.test(input.value)) {
+                    input.value = input.value.replace(regex, "");
+                }
+
+                // Visual feedback: Red for empty/invalid, Green for valid
+                if (input.value === "" || isNaN(parseFloat(input.value))) {
+                    input.style.border = "2px solid #e74c3c";
+                    input.style.backgroundColor = "#fadbd8";
+                } else {
+                    input.style.border = "2px solid #27ae60";
+                    input.style.backgroundColor = "#e8f8f5";
+                }
+            };
+
+            // 2. KEYBOARD PROTECTION
             input.onkeydown = (e) => {
-                if (e.key.toLowerCase() === "e") e.preventDefault();
+                // Prevent 'e', '+', and '-' which are valid in scientific notation but break inventory
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                // Prevent decimals if this is a whole-number count field
                 if (!isCurrency && (e.key === "." || e.key === ",")) e.preventDefault();
             };
+
+            // 3. BLUR HANDLER (Commit to UI)
             input.onblur = () => {
                 if (cell.contains(input)) {
                     let val = parseFloat(input.value) || 0;
+                    // Format correctly for display, but keep the cell ready for re-edit
                     cell.innerText = isCurrency ? UI.formatCurrency(val) : Math.floor(val).toString();
                     cell.style.zIndex = ""; 
+                    
+                    // RUGGED: If this is part of a methodology silo, ensure the UI state is refreshed
+                    if (tableName === "Shop_Consumables") {
+                        UI.refreshSiloLocks(cell.closest('tr'), tableName, sheetConfig);
+                    }
                 }
             };
-        } 
+        }
         
         // ---- BRANCH 3: BOOLEAN ---
         else if (colDef.type === "boolean") {
@@ -1031,9 +1064,8 @@ function handleEditClick(tableName) {
                     const row = cell.closest('tr');
 
                     if (tableName === "Shop_Consumables" && colDef.header === "Stock_Level") {
-                        
-                        // 🌟 RUGGED FIX: RESET ALL LOCKS FIRST
-                        // This clears existing 'silo-locked' classes in the row so you can pivot methodologies
+        
+                        // 1. RUGGED RESET: Clear all existing locks in this row to allow a fresh state
                         const siloHeaders = ["Unit Cost", "Stock_Count", "Bulk_Value"];
                         siloHeaders.forEach(h => {
                             const idx = sheetConfig.columns.findIndex(c => c.header === h);
@@ -1050,6 +1082,7 @@ function handleEditClick(tableName) {
                         const wasBulk = ["None", "Few", "Adequate", "Many"].includes(oldVal);
                         const isBulk = ["None", "Few", "Adequate", "Many"].includes(newVal);
 
+                        // 2. NUCLEAR WIPE GUARD: Confirm if pivoting between Counted and Bulk
                         if ((wasCounted && isBulk) || (wasBulk && isCounted)) {
                             const proceed = confirm(`MAE SYSTEM ALERT: Methodology Switch!\n\nThis will WIPE the abandoned silo data to ensure valuation integrity. Proceed?`);
 
@@ -1061,9 +1094,10 @@ function handleEditClick(tableName) {
 
                             const unitIndices = ["Unit Cost", "Stock_Count"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
-                    
-                            const targets = isCounted ? bulkIndices : unitIndices;
-                            targets.forEach(idx => {
+    
+                            // Wipe the data in the abandoned silo
+                            const targetsToWipe = isCounted ? bulkIndices : unitIndices;
+                            targetsToWipe.forEach(idx => {
                                 const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
                                 if (targetCell) {
                                     targetCell.innerText = ""; 
@@ -1071,10 +1105,43 @@ function handleEditClick(tableName) {
                                 }
                             });
                         }
+
+                        // 3. FAT-FINGER RE-ENTRY: Force the active silo to stay interactive
+                        // We run this AFTER the potential wipe to ensure the cells are "unlocked"
+                        const activeHeaders = isCounted ? ["Unit Cost", "Stock_Count"] : ["Bulk_Value"];
+                        const inactiveHeaders = isCounted ? ["Bulk_Value"] : ["Unit Cost", "Stock_Count"];
+
+                        activeHeaders.forEach(h => {
+                            const idx = sheetConfig.columns.findIndex(c => c.header === h);
+                            const target = row.querySelector(`td[data-col-index="${idx}"]`);
+                            if (target) {
+                                target.style.pointerEvents = "auto";
+                                target.style.opacity = "1";
+                                target.classList.remove('silo-locked');
+                                // Ensure text fields are editable even if they lost focus once
+                                if (sheetConfig.columns[idx].type !== "dropdown") {
+                                    target.contentEditable = "true";
+                                }
+                            }
+                        });
+
+                        inactiveHeaders.forEach(h => {
+                            const idx = sheetConfig.columns.findIndex(c => c.header === h);
+                            const target = row.querySelector(`td[data-col-index="${idx}"]`);
+                            if (target) {
+                            target.style.pointerEvents = "none";
+                            target.style.opacity = "0.5";
+                            target.classList.add('silo-locked');
+                            target.contentEditable = "false";
+                            }
+                        });
                     }
+
                     finishEdit();
+
+                    // 4. SYNC LOCKS: Call the UI helper to ensure styles match the new state
                     if (typeof UI.refreshSiloLocks === "function") {
-                        UI.refreshSiloLocks(cell.closest('tr'), tableName, sheetConfig);
+                        UI.refreshSiloLocks(row, tableName, sheetConfig);
                     }
                 };
 

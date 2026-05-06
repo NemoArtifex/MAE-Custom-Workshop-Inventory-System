@@ -223,6 +223,56 @@ renderMenu(activeWorksheets, onClickCallback) {
         container.innerHTML = html;
     },
     // ============ END RENDER TABLE ============
+    //=======  refreshSiloLocks ===========
+    refreshSiloLocks(row, tableName, sheetConfig) {
+        // Only apply this logic to the Consumables methodology silos
+        if (tableName !== "Shop_Consumables") return;
+
+        // 1. Identify current methodology by looking at the Stock_Level cell
+        const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
+        const levelCell = row.querySelector(`td[data-col-index="${levelIdx}"]`);
+        if (!levelCell) return;
+
+        const currentMethod = (levelCell.innerText || "").trim();
+        const isCounted = currentMethod === "Counted";
+    
+        // 2. Define the Silos
+        const unitSilo = ["Unit Cost", "Stock_Count"];
+        const bulkSilo = ["Bulk_Value"];
+
+        // 3. Loop through columns and enforce the "Active" state
+        sheetConfig.columns.forEach((col, idx) => {
+            const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
+            if (!targetCell) return;
+
+            const isUnitCol = unitSilo.includes(col.header);
+            const isBulkCol = bulkSilo.includes(col.header);
+
+            if ((isCounted && isBulkCol) || (!isCounted && isUnitCol)) {
+                // LOCK the inactive silo
+                targetCell.classList.add('silo-locked');
+                targetCell.style.pointerEvents = "none";
+                targetCell.style.opacity = "0.5";
+                targetCell.contentEditable = "false";
+            } 
+            else if (isUnitCol || isBulkCol) {
+                // RUGGED UNLOCK: Ensure active silo stays interactive for corrections
+                targetCell.classList.remove('silo-locked');
+                targetCell.style.pointerEvents = "auto"; 
+                targetCell.style.opacity = "1";
+            
+                // Re-enable editing for text/number fields
+                if (col.type !== 'formula' && col.type !== 'dropdown') {
+                    targetCell.contentEditable = "true";
+                    // Optional: add a visual hint that this cell is corrected/ready
+                    targetCell.style.boxShadow = "inset 0 0 8px rgba(211, 84, 0, 0.15)";
+                    targetCell.style.backgroundColor = "#fffde7"; 
+                }
+            }
+        });
+        console.log(`MAE System: Silo state enforced for ${currentMethod} mode.`);
+    },
+    //====== END refreshSiloLocks ==========
 
     //=========== RENDER SUBDIVIDED REPAIRS Specialized Renderer ==============
     renderSubdividedRepairs(rows, tableName, sheetConfig) {
