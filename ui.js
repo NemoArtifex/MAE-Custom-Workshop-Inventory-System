@@ -256,17 +256,23 @@ renderMenu(activeWorksheets, onClickCallback) {
                 targetCell.contentEditable = "false";
             } 
             else if (isUnitCol || isBulkCol) {
-                // RUGGED UNLOCK: Ensure active silo stays interactive for corrections
+                // 1. UNLOCK the active side
                 targetCell.classList.remove('silo-locked');
-                targetCell.style.pointerEvents = "auto"; 
+                targetCell.style.pointerEvents = "auto";
                 targetCell.style.opacity = "1";
             
-                // Re-enable editing for text/number fields
-                if (col.type !== 'formula' && col.type !== 'dropdown') {
-                    targetCell.contentEditable = "true";
-                    // Optional: add a visual hint that this cell is corrected/ready
-                    targetCell.style.boxShadow = "inset 0 0 8px rgba(211, 84, 0, 0.15)";
-                    targetCell.style.backgroundColor = "#fffde7"; 
+                // 2. THE REPAIR (Modified section): 
+                // If the user is in Edit Mode, but the cell only has text (no input box),
+                // we "repair" it by injecting the input box back in.
+                if (window.isEditing === true && !targetCell.querySelector('input')) {
+                    const isCurrency = col.format && col.format.includes("$");
+                    const currentVal = targetCell.innerText.replace(/[^0-9.-]+/g, "") || 0;
+                
+                    targetCell.innerHTML = `
+                        <input type="number" 
+                            class="edit-number-input" 
+                            value="${currentVal}" 
+                            step="${isCurrency ? '0.01' : '1'}">`;
                 }
             }
         });

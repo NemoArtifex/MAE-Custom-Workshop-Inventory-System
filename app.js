@@ -1094,14 +1094,38 @@ function handleEditClick(tableName) {
 
                             const unitIndices = ["Unit Cost", "Stock_Count"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
-    
+                                                          
                             // Wipe the data in the abandoned silo
-                            const targetsToWipe = isCounted ? bulkIndices : unitIndices;
-                            targetsToWipe.forEach(idx => {
+                            const activeIndices = isCounted ? unitIndices : bulkIndices;
+                            const inactiveIndices = isCounted ? bulkIndices : unitIndices;
+
+                            // A. LOCK the inactive side
+                            inactiveIndices.forEach(idx => {
                                 const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
                                 if (targetCell) {
-                                    targetCell.innerText = ""; 
-                                    targetCell.classList.add('silo-active-orange');
+                                    targetCell.innerHTML = ""; // Clear it
+                                    targetCell.classList.add('silo-locked');
+                                    targetCell.style.pointerEvents = "none";
+                                }
+                            });
+
+                            // B. RE-ACTIVATE the active side with a fresh Input box
+                            activeIndices.forEach(idx => {
+                                const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
+                                if (targetCell) {
+                                    const colDef = sheetConfig.columns[idx];
+                                    const isCurrency = colDef.format && colDef.format.includes("$");
+
+                                    targetCell.classList.remove('silo-locked');
+                                    targetCell.style.pointerEvents = "auto";
+        
+                                    // This puts the actual number box back into the cell
+                                    targetCell.innerHTML = `
+                                        <input type="number" 
+                                            class="edit-number-input" 
+                                            value="0" 
+                                            step="${isCurrency ? '0.01' : '1'}" 
+                                            min="0">`;
                                 }
                             });
                         }
