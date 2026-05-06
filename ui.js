@@ -699,25 +699,40 @@ printManualLog(tableName, sheetConfig) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 1. Identify "Pertinent" Headers for the Shop Floor
-    const pertinentHeaders = ["Location_ID", "Tool Name/Brand/Model/Description", "Item Name", "Stock_Count"];
+    // 1. Define the "Keep List"
+    const keepHeaders = ["Location_ID", "Machine Name", "Tool Name", "Item Name", "Stock_Count"];
 
-    // 2. TAG THE TABLE: Add a class so CSS knows to hide everything else
-    table.classList.add("manual-log-print-mode");
+    // 2. Identify the indices of columns to hide and find the Stock_Count index
+    let stockCountIdx = -1;
+    const hideIndices = [];
 
-    // 3. TAG THE COLUMNS: Loop through columns and mark 'non-pertinent' ones
     sheetConfig.columns.forEach((col, idx) => {
-        const cells = table.querySelectorAll(`[data-col-index="${idx}"]`);
-        const isPertinent = pertinentHeaders.some(h => col.header.includes(h));
+        const isKeep = keepHeaders.some(h => col.header.includes(h));
+        if (col.header === "Stock_Count") stockCountIdx = idx;
         
-        cells.forEach(cell => {
-            if (!isPertinent) {
-                cell.classList.add("print-hide");
-            }
-        });
+        if (!isKeep || col.hidden) {
+            hideIndices.push(idx);
+        }
     });
 
-    // 4. TRIGGER PRINT: Using your existing header logic
+    // 3. APPLY PRINT CLASSES
+    table.classList.add("manual-log-mode");
+    // Mark specifically which columns the CSS should "Nuclear Hide"
+    hideIndices.forEach(idx => {
+        table.querySelectorAll(`[data-col-index="${idx}"]`).forEach(el => el.classList.add("print-force-hide"));
+        // Also hide the corresponding header
+        const header = table.querySelectorAll(`th`)[idx + 1]; // +1 for Action column
+        if (header) header.classList.add("print-force-hide");
+    });
+    
+    // Mark the Stock_Count column so CSS can anchor the blank box to it
+    if (stockCountIdx !== -1) {
+        table.querySelectorAll(`[data-col-index="${stockCountIdx}"]`).forEach(el => el.classList.add("anchor-manual-entry"));
+        const stockHeader = table.querySelectorAll(`th`)[stockCountIdx + 1];
+        if (stockHeader) stockHeader.classList.add("anchor-manual-entry");
+    }
+
+    // 4. TRIGGER PRINT
     const container = document.getElementById("app-content");
     const printHeader = document.createElement("div");
     printHeader.className = "print-only-title";
@@ -726,10 +741,10 @@ printManualLog(tableName, sheetConfig) {
     container.prepend(printHeader);
     window.print();
 
-    // 5. RUGGED CLEANUP: Restore the UI for screen viewing
+    // 5. RUGGED CLEANUP
     printHeader.remove();
-    table.classList.remove("manual-log-print-mode");
-    table.querySelectorAll(".print-hide").forEach(el => el.classList.remove("print-hide"));
+    table.classList.remove("manual-log-mode");
+    table.querySelectorAll(".print-force-hide, .anchor-manual-entry").forEach(el => el.classList.remove("print-force-hide", "anchor-manual-entry"));
 },
 
 //========== END PRINT MANUAL LOG ==============
