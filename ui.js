@@ -700,31 +700,27 @@ printManualLog(tableName, sheetConfig) {
     if (!table) return;
 
     // 1. THE WHITE-LIST: Exactly what the shop owner needs to see
-    const keepHeaders = ["Location_ID", "Tool Name/Brand/Model/Description", "Item Name", "Stock_Count"];
+    const keepHeaders = ["Location_ID", "Machine Name", "Tool Name", "Item Name", "Stock_Count"];
 
-    // 2. LOGIC: Find indices to hide and the anchor for the "New Count" box
-    let stockCountIdx = -1;
+    // 2. Identify indices to hide
     const hideIndices = [];
-
     sheetConfig.columns.forEach((col, idx) => {
-        // Check if the header matches any of our 'keep' keywords
         const isKeep = keepHeaders.some(h => col.header.includes(h));
-        if (col.header === "Stock_Count") stockCountIdx = idx;
-        
         if (!isKeep || col.hidden) {
             hideIndices.push(idx);
         }
     });
 
-    // 3. APPLY PRINT CLASSES
+    // 3. APPLY NUCLEAR HIDE CLASSES
     table.classList.add("manual-log-mode");
     
-    // Nuclear Hide: Targets the specific columns and their headers
     hideIndices.forEach(idx => {
-        // Hide Data Cells
+        // Hide the Data Cells for this index
         table.querySelectorAll(`td[data-col-index="${idx}"]`).forEach(el => el.classList.add("print-force-hide"));
-        // Hide Headers (Find the TH by looking at its children or index)
-        const header = table.querySelector(`thead th:nth-child(${idx + 2})`); // +2 accounts for the 'Action' column
+        
+        // Hide the Header: We find the specific TH at this position.
+        // We use idx + 2 because: +1 for 1-based CSS indexing, +1 for the 'Action' column.
+        const header = table.querySelector(`thead th:nth-child(${idx + 2})`);
         if (header) header.classList.add("print-force-hide");
     });
 
@@ -736,14 +732,13 @@ printManualLog(tableName, sheetConfig) {
     
     container.prepend(printHeader);
     
-    // Small delay to ensure CSS styles apply before the dialog opens
     setTimeout(() => {
         window.print();
         // 5. RUGGED CLEANUP
         printHeader.remove();
         table.classList.remove("manual-log-mode");
         table.querySelectorAll(".print-force-hide").forEach(el => el.classList.remove("print-force-hide"));
-    }, 100);
+    }, 200); // 200ms delay to ensure the browser registers the hidden headers
 },
 
 //========== END PRINT MANUAL LOG ==============

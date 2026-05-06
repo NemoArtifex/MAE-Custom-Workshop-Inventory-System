@@ -365,6 +365,19 @@ main, #table-container, .inventory-table {
    Covers: Standard Tables, Manual Logs, and TBD Audits
    ============================================================ */
 @media print {
+    /* 1. NUCLEAR HIDE: This is the most important rule for the headers */
+    .print-force-hide, 
+    .edit-only-cell,
+    th.print-force-hide,
+    td.print-force-hide { 
+        display: none !important; 
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
     /* 1. PAGE SETUP: Standard landscape for shop floor visibility */
     @page {
         size: landscape;
