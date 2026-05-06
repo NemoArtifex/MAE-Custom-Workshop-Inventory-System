@@ -360,194 +360,122 @@ main, #table-container, .inventory-table {
 
 
 /* =========== PRINT TABLE - RUGGED GRID RESTORE =================== */
-/* style.css - MASTER PRINT STYLING (Including Manual Log) */
-
+/* ============================================================
+   MAE RUGGED PRINT ENGINE: CONSOLIDATED V1.8
+   Covers: Standard Tables, Manual Logs, and TBD Audits
+   ============================================================ */
 @media print {
+    /* 1. PAGE SETUP: Standard landscape for shop floor visibility */
     @page {
         size: landscape;
-        margin: 0.5in;
+        margin: 0.4in; /* Reduced slightly to prevent blank page overflow */
     }
 
-    /* 1. THE NUCLEAR HIDE: Remove all UI "ghosts" and interactive elements */
-    body > *, 
+    /* 2. THE NUCLEAR HIDE: Clear all interactive UI elements */
+    body > *:not(#app-content), 
     .sidebar, 
     .command-bar, 
     .edit-only-cell, 
-    #current-view-title, 
     #auth-btn, 
-    button,
-    .loader { 
+    button, 
+    .loader,
+    .print-force-hide, 
+    .print-hide { 
         display: none !important; 
     }
 
-    /* 2. RE-ENABLE CONTENT: Show only the data and the print title */
-    #app-content, 
-    .print-only-title, 
-    .print-only-title * { 
-        display: block !important; 
-        visibility: visible !important;
+    /* 3. LAYOUT RESTORATION: Ensure content flows properly on paper */
+    html, body {
         width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
     }
 
-    /* 3. RESTORE TABLE STRUCTURE: Prevents vertical stacking and scrollbars */
-    #table-container {
+    #app-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 99.5% !important; /* Prevents trailing blank page bug */
         display: block !important;
         visibility: visible !important;
+    }
+
+    #table-container {
+        display: block !important;
         overflow: visible !important;
         width: 100% !important;
     }
 
+    /* 4. TABLE ARCHITECTURE: Force rugged black borders */
     .inventory-table {
         display: table !important;
         width: 100% !important;
-        table-layout: fixed !important; /* Standard Table Fit */
         border-collapse: collapse !important;
         border: 2px solid black !important;
+        table-layout: auto !important; /* Allow columns to fit text naturally */
     }
 
-    /* Fix for Manual Log: Allow the table to breathe if the extra column is added */
-    .manual-log-mode.inventory-table {
-        table-layout: auto !important; 
-    }
-
-    thead { display: table-header-group !important; }
-    tbody { display: table-row-group !important; }
-    tr { display: table-row !important; } 
-    
-    th, td { 
+    .inventory-table th, 
+    .inventory-table td { 
         display: table-cell !important; 
         border: 1px solid black !important;
-        font-size: 8pt !important;
-        padding: 4px !important;
+        font-size: 9pt !important; /* Slightly larger for rugged environments */
+        padding: 6px !important;
         color: black !important;
         background: white !important;
-        word-wrap: break-word !important;
     }
 
-    th { background-color: #eee !important; font-weight: bold; }
-
-    /* 4. MANUAL LOG INJECTION (The 'Changes' Column) */
-    
-    /* Add Header Column */
-    .manual-log-mode thead tr::after {
-        content: "Changes / New Count";
-        display: table-cell !important;
-        border: 1px solid black;
-        padding: 4px;
-        font-size: 8pt;
-        font-weight: bold;
-        background-color: #eee !important;
-        width: 150px; /* Specific width for handwriting */
+    .inventory-table th { 
+        background-color: #eee !important; 
+        font-weight: bold; 
         text-align: center;
     }
 
-    /* Add Empty Data Row Column */
+    /* 5. MANUAL LOG SPECIALIZATION (Selective Mode) */
+    /* When manual-log-mode is active, we inject the handwriting cell */
+    .manual-log-mode thead tr::after {
+        content: "NEW COUNT / CHANGES";
+        display: table-cell !important;
+        border: 2px solid black;
+        width: 200px; /* Specific width for handwriting zone */
+        background-color: #ddd !important;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 9pt;
+    }
+
     .manual-log-mode tbody tr::after {
         content: "";
         display: table-cell !important;
-        border: 1px solid black;
+        border: 2px solid black;
+        height: 45px; /* Taller for easier shop floor handwriting */
         background-color: white !important;
-        height: 35px; /* Taller for easier shop floor handwriting */
     }
 
-    /* 5. PRINT TITLE STYLING */
+    /* 6. TITLE STYLING: Simple & Branded */
     .print-only-title { 
         display: block !important; 
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         width: 100%;
     }
 
     .print-only-title h1 {
-        font-size: 16pt !important;
+        font-size: 18pt !important;
         margin: 0;
         padding-bottom: 5px;
-        border-bottom: 2px solid black;
+        border-bottom: 3px solid black;
         color: black !important;
+        text-transform: uppercase;
     }
 
-    .print-hide {
-        display: none !important;
-    }
-
-      /* INJECT THE BLANK CELL: Creates the "Manual Entry" column on the far right */
-    .manual-log-print-mode thead tr::after {
-        content: "ACTUAL COUNT";
-        display: table-cell !important;
-        border: 1px solid black;
-        padding: 8px;
-        background: #eee !important;
-        font-weight: bold;
-        width: 120px;
-    }
-
-    .manual-log-print-mode tbody tr::after {
-        content: "";
-        display: table-cell !important;
-        border: 1px solid black;
-        height: 40px; /* Taller for easier handwriting */
-    }
-
-    /* Ensure the remaining columns fill the page width */
-    .manual-log-print-mode {
+    /* 7. VIRTUAL AUDIT SUPPORT: Ensuring TBD prints follow the same grid */
+    .print-only-container {
+        display: block !important;
         width: 100% !important;
-        table-layout: auto !important;
     }
-
-    /* 1. Nuclear Hide for non-essential headers and cells */
-    .print-force-hide, 
-    .edit-only-cell {
-        display: none !important;
-    }
-
-    /* 2. Style the "Stock_Count" value so it's readable but not overwhelming */
-    .anchor-manual-entry {
-        border-right: 1px solid #ccc !important;
-        background: #f9f9f9 !important;
-        width: 100px !important;
-    }
-
-    /* 3. INJECT THE BOXED MANUAL ENTRY COLUMN */
-    /* This places the box immediately after the Stock_Count */
-    .anchor-manual-entry::after {
-        content: "NEW COUNT";
-        display: block;
-        position: absolute;
-        top: 0;
-        right: -152px; /* Pulls it into the print flow */
-        width: 150px;
-        height: 100%;
-        border: 2px solid black !important;
-        background: white !important;
-        color: black;
-        font-weight: bold;
-        text-align: center;
-        line-height: 40px; /* Centers the text vertically */
-    }
-    
-    /* Correct the Table header for the New Count */
-    th.anchor-manual-entry::after {
-        content: "ACTUAL COUNT";
-        line-height: normal;
-        padding-top: 10px;
-        background: #eee !important;
-    }
-
-    /* 4. Table Layout for Handwriting */
-    .manual-log-mode {
-        width: auto !important;
-        margin: 0 auto;
-        border-collapse: collapse !important;
-    }
-
-    .manual-log-mode tr {
-        height: 50px !important; /* Plenty of room for shop floor handwriting */
-    }
-
 }
-/*}
 /*==== END PRINT TABLE ======*/
 
 /* for Quick Update  */
