@@ -237,7 +237,7 @@ renderMenu(activeWorksheets, onClickCallback) {
         const isCounted = currentMethod === "Counted";
     
         // 2. Define the Silos
-        const unitSilo = ["Unit Cost", "Stock_Count"];
+        const unitSilo = ["Unit Cost", "Stock_Count", "Reorder Point"];
         const bulkSilo = ["Bulk_Value"];
 
         // 3. Loop through columns and enforce the "Active" state
@@ -564,7 +564,7 @@ renderCommandBar(tableName) {
     const levelSelect = document.getElementById('field-Stock_Level');
     
     // Methodology Silo Mapping
-    const unitSiloIds = ['field-UnitCost', 'field-Stock_Count'];
+    const unitSiloIds = ['field-UnitCost', 'field-Stock_Count', 'field-ReorderPoint'];
     const bulkSiloIds = ['field-Bulk_Value'];
 
     const applySiloGovernance = () => {

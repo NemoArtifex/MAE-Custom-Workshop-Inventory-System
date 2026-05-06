@@ -1092,7 +1092,7 @@ function handleEditClick(tableName) {
                                 return;
                             }
 
-                            const unitIndices = ["Unit Cost", "Stock_Count"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
+                            const unitIndices = ["Unit Cost", "Stock_Count", "Reorder Point"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                                                           
                             // Wipe the data in the abandoned silo
