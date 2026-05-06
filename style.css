@@ -467,6 +467,35 @@ main, #table-container, .inventory-table {
         border-bottom: 2px solid black;
         color: black !important;
     }
+
+    .print-hide {
+        display: none !important;
+    }
+
+      /* INJECT THE BLANK CELL: Creates the "Manual Entry" column on the far right */
+    .manual-log-print-mode thead tr::after {
+        content: "ACTUAL COUNT";
+        display: table-cell !important;
+        border: 1px solid black;
+        padding: 8px;
+        background: #eee !important;
+        font-weight: bold;
+        width: 120px;
+    }
+
+    .manual-log-print-mode tbody tr::after {
+        content: "";
+        display: table-cell !important;
+        border: 1px solid black;
+        height: 40px; /* Taller for easier handwriting */
+    }
+
+    /* Ensure the remaining columns fill the page width */
+    .manual-log-print-mode {
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+}
 }
 /*==== END PRINT TABLE ======*/
 

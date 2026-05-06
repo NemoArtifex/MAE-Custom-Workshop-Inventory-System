@@ -696,24 +696,40 @@ printTable(tableName, sheetConfig, customTitle = null) {
 //============ print MANUAL LOG =============
 // ui.js - New Function
 printManualLog(tableName, sheetConfig) {
-    const container = document.getElementById("app-content");
     const table = document.getElementById("main-data-table");
-    if (!table || !container) return;
+    if (!table) return;
 
-    // 1. Mark the table for manual log styling
-    table.classList.add("manual-log-mode");
+    // 1. Identify "Pertinent" Headers for the Shop Floor
+    const pertinentHeaders = ["Location_ID", "Tool Name/Brand/Model/Description", "Item Name", "Stock_Count"];
 
+    // 2. TAG THE TABLE: Add a class so CSS knows to hide everything else
+    table.classList.add("manual-log-print-mode");
+
+    // 3. TAG THE COLUMNS: Loop through columns and mark 'non-pertinent' ones
+    sheetConfig.columns.forEach((col, idx) => {
+        const cells = table.querySelectorAll(`[data-col-index="${idx}"]`);
+        const isPertinent = pertinentHeaders.some(h => col.header.includes(h));
+        
+        cells.forEach(cell => {
+            if (!isPertinent) {
+                cell.classList.add("print-hide");
+            }
+        });
+    });
+
+    // 4. TRIGGER PRINT: Using your existing header logic
+    const container = document.getElementById("app-content");
     const printHeader = document.createElement("div");
     printHeader.className = "print-only-title";
     printHeader.innerHTML = `<h1>MANUAL INVENTORY LOG: ${sheetConfig.tabName}</h1>`;
     
     container.prepend(printHeader);
-    UI.exitEditMode(); //prevents extraneous css styling if print function called from Edit Table
     window.print();
-    
-    // 2. Clean up
+
+    // 5. RUGGED CLEANUP: Restore the UI for screen viewing
     printHeader.remove();
-    table.classList.remove("manual-log-mode");
+    table.classList.remove("manual-log-print-mode");
+    table.querySelectorAll(".print-hide").forEach(el => el.classList.remove("print-hide"));
 },
 
 //========== END PRINT MANUAL LOG ==============
