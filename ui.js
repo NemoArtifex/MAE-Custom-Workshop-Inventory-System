@@ -379,7 +379,9 @@ renderCommandBar(tableName) {
 
     const isDashboard = normalizedName.includes("dashboard");
     const hasManualField = sheetConfig.columns.some(col => 
-        col.header === "Quantity" || col.header === "Current Stock"
+        col.header === "Quantity" || 
+        col.header === "Current Stock" ||
+        col.header === "Stock_Count"
     );
 
     // --- RULE 1: LOCATION TABLE DISCIPLINE ---
