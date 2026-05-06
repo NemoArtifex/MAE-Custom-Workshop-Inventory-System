@@ -699,46 +699,55 @@ printManualLog(tableName, sheetConfig) {
     const table = document.getElementById("main-data-table");
     if (!table) return;
 
-    // 1. THE WHITE-LIST: Exactly what the shop owner needs to see
-    const keepHeaders = ["Location_ID", "Machine Name", "Tool Name", "Item Name", "Stock_Count"];
+    // 1. RUGGED WHITELIST: Case-insensitive fragments that match your config.js headers
+    const keepHeaders = ["location_id", "machine name", "tool name", "item name", "stock_count"];
 
-    // 2. Identify indices to hide
-    const hideIndices = [];
-    sheetConfig.columns.forEach((col, idx) => {
-        const isKeep = keepHeaders.some(h => col.header.includes(h));
-        if (!isKeep || col.hidden) {
-            hideIndices.push(idx);
+    // 2. DOM-BASED COLUMN SCANNER
+    // We scan the actual rendered headers to avoid "index drift" from hidden columns
+    const headers = table.querySelectorAll("thead th");
+    headers.forEach((th, pos) => {
+        const headerText = th.innerText.trim().toLowerCase();
+        const isActionCol = th.classList.contains("edit-only-cell");
+        
+        // Logic: Should we keep this column?
+        const isKeep = keepHeaders.some(h => headerText.includes(h));
+
+        // If it's not a keep-header and not the action column, Nuke it
+        if (!isKeep && !isActionCol && headerText !== "") {
+            // Apply the V1.9 High-Specificity Class
+            th.classList.add("print-force-hide");
+            
+            // Hide every cell in this specific 1-based column position
+            // nth-child is 1-based, so pos + 1 is the exact match
+            table.querySelectorAll(`tbody td:nth-child(${pos + 1})`).forEach(td => {
+                td.classList.add("print-force-hide");
+            });
         }
     });
 
-    // 3. APPLY NUCLEAR HIDE CLASSES
-    table.classList.add("manual-log-mode");
-    
-    hideIndices.forEach(idx => {
-        // Hide the Data Cells for this index
-        table.querySelectorAll(`td[data-col-index="${idx}"]`).forEach(el => el.classList.add("print-force-hide"));
-        
-        // Hide the Header: We find the specific TH at this position.
-        // We use idx + 2 because: +1 for 1-based CSS indexing, +1 for the 'Action' column.
-        const header = table.querySelector(`thead th:nth-child(${idx + 2})`);
-        if (header) header.classList.add("print-force-hide");
-    });
-
-    // 4. TRIGGER PRINT
+    // 3. UI PREPARATION
     const container = document.getElementById("app-content");
     const printHeader = document.createElement("div");
     printHeader.className = "print-only-title";
     printHeader.innerHTML = `<h1>MANUAL INVENTORY LOG: ${sheetConfig.tabName}</h1>`;
     
+    // Inject the header and the special mode class
     container.prepend(printHeader);
+    table.classList.add("manual-log-mode");
     
+    // 4. TRIGGER PRINT WITH RUGGED SETTLE TIME
+    // 450ms ensures the browser "paints" the hidden classes into the print buffer
     setTimeout(() => {
         window.print();
-        // 5. RUGGED CLEANUP
+
+        // 5. RUGGED CLEANUP: Restore the UI to its digital state
         printHeader.remove();
         table.classList.remove("manual-log-mode");
-        table.querySelectorAll(".print-force-hide").forEach(el => el.classList.remove("print-force-hide"));
-    }, 200); // 200ms delay to ensure the browser registers the hidden headers
+        table.querySelectorAll(".print-force-hide").forEach(el => {
+            el.classList.remove("print-force-hide");
+        });
+        console.log("MAE System: Print Manual Log Complete. UI Restored.");
+    }, 450);
 },
 
 //========== END PRINT MANUAL LOG ==============

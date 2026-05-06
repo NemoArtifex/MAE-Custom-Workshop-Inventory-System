@@ -361,40 +361,33 @@ main, #table-container, .inventory-table {
 
 /* =========== PRINT TABLE - RUGGED GRID RESTORE =================== */
 /* ============================================================
-   MAE RUGGED PRINT ENGINE: CONSOLIDATED V1.8
-   Covers: Standard Tables, Manual Logs, and TBD Audits
-   ============================================================ */
+  /* ============ MAE RUGGED PRINT ENGINE: CONSOLIDATED V1.9 ============ */
+/* Covers: Standard Tables, Manual Logs, and TBD Audits            */
 @media print {
-    /* 1. NUCLEAR HIDE: This is the most important rule for the headers */
+    /* 1. NUCLEAR HIDE: High-specificity rules to ensure hidden columns STAY hidden */
     .print-force-hide, 
     .edit-only-cell,
-    th.print-force-hide,
-    td.print-force-hide { 
+    .sidebar, 
+    .command-bar, 
+    #auth-btn, 
+    button, 
+    .loader,
+    /* Overriding Section 4's 'display: table-cell' for specific elements */
+    .inventory-table th.print-force-hide, 
+    .inventory-table td.print-force-hide { 
         display: none !important; 
         width: 0 !important;
         height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
+        visibility: hidden !important;
     }
 
-    /* 1. PAGE SETUP: Standard landscape for shop floor visibility */
+    /* 2. PAGE SETUP: Standard landscape for shop floor visibility */
     @page {
         size: landscape;
-        margin: 0.4in; /* Reduced slightly to prevent blank page overflow */
-    }
-
-    /* 2. THE NUCLEAR HIDE: Clear all interactive UI elements */
-    body > *:not(#app-content), 
-    .sidebar, 
-    .command-bar, 
-    .edit-only-cell, 
-    #auth-btn, 
-    button, 
-    .loader,
-    .print-force-hide, 
-    .print-hide { 
-        display: none !important; 
+        margin: 0.4in;
     }
 
     /* 3. LAYOUT RESTORATION: Ensure content flows properly on paper */
@@ -419,20 +412,20 @@ main, #table-container, .inventory-table {
         width: 100% !important;
     }
 
-    /* 4. TABLE ARCHITECTURE: Force rugged black borders */
+    /* 4. TABLE ARCHITECTURE: Force rugged black borders only for visible cells */
     .inventory-table {
         display: table !important;
         width: 100% !important;
         border-collapse: collapse !important;
         border: 2px solid black !important;
-        table-layout: auto !important; /* Allow columns to fit text naturally */
+        table-layout: auto !important; 
     }
 
     .inventory-table th, 
-    .inventory-table td { 
+    .inventory-table td:not(.print-force-hide) { 
         display: table-cell !important; 
         border: 1px solid black !important;
-        font-size: 9pt !important; /* Slightly larger for rugged environments */
+        font-size: 9pt !important; 
         padding: 6px !important;
         color: black !important;
         background: white !important;
@@ -447,10 +440,10 @@ main, #table-container, .inventory-table {
     /* 5. MANUAL LOG SPECIALIZATION (Selective Mode) */
     /* When manual-log-mode is active, we inject the handwriting cell */
     .manual-log-mode thead tr::after {
-        content: "NEW COUNT / CHANGES";
+        content: "NEW COUNT / CHANGES" !important;
         display: table-cell !important;
         border: 2px solid black;
-        width: 200px; /* Specific width for handwriting zone */
+        min-width: 250px !important; /* Larger zone for handwriting */
         background-color: #ddd !important;
         font-weight: bold;
         text-align: center;
@@ -459,10 +452,10 @@ main, #table-container, .inventory-table {
     }
 
     .manual-log-mode tbody tr::after {
-        content: "";
+        content: "" !important;
         display: table-cell !important;
         border: 2px solid black;
-        height: 45px; /* Taller for easier shop floor handwriting */
+        height: 55px !important; /* Taller for easier shop floor entries */
         background-color: white !important;
     }
 
