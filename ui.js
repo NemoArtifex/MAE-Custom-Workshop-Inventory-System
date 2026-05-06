@@ -98,129 +98,130 @@ renderMenu(activeWorksheets, onClickCallback) {
     // Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
     // Rugged: Handles empty states and Microsoft Graph's row structure.
     renderTable(rows, tableName, sheetConfig, customTitle = null) {
-    const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
 
-    if (!sheetConfig) {
-        container.innerHTML = "Error: Worksheet configuration not found.";
-        return;
-    }
-
-    title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
-
-    // Check if this is an "Operational Issues" view
-    const isRepairsView = customTitle && customTitle.includes("Operational Issues");
-
-    if (isRepairsView) {
-        this.renderSubdividedRepairs(rows, tableName, sheetConfig);
-        return; 
-    }
-
-    // PRIMARY KEY ANCHOR: Find the index of the mae_id column
-    const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
-
-    // 1. Identify visible columns from the Manifest
-    const visibleIndices = [];
-    let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
-    
-    html += `<th class="edit-only-cell">Action</th>`;
-    
-    sheetConfig.columns.forEach((col, index) => {
-        if (col.hidden !== true) { 
-            html += `<th>${col.header}</th>`;
-            visibleIndices.push(index);
+        if (!sheetConfig) {
+            container.innerHTML = "Error: Worksheet configuration not found.";
+            return;
         }
-    });
-    html += `</tr></thead><tbody>`;
 
-    // 2. Render Rows
-    if (rows && rows.length > 0) {
-        rows.forEach((row) => {
-            const persistentIndex = row.index; 
-            const allCells = row.values; 
+        title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
 
-            // Safety Check: If allCells is empty, something went wrong in the fetch
-            if (!allCells || allCells.length === 0) return;
+        const isRepairsView = customTitle && customTitle.includes("Operational Issues");
+        if (isRepairsView) {
+            this.renderSubdividedRepairs(rows, tableName, sheetConfig);
+           return; 
+        }
 
-            const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
-
-            html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
-
-            html += `<td class="edit-only-cell">
-                        <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
-                     </td>`;
-
-            visibleIndices.forEach(idx => {
-                const colDef = sheetConfig.columns[idx];
-                const isEditable = !colDef.locked && colDef.type !== 'formula';
-
-                // Visual Alert Logic
-                const isCurrency = colDef.format && colDef.format.includes("$");
-                let displayValue = allCells[idx] ?? '';
-
-                // Identify Subjective Levels for styling
-                const isLowStockText = displayValue === "Few";
-                const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
-
-                // --- MAE SYSTEM: SAFETY ORANGE ALERT FOR INCOMPLETE SALES ---
-                let sellPriceAlert = "";
-                if (tableName === "Resell_Inventory" && colDef.header === "Actual Sale Price") {
-                    // Find the index for Current Status to check if it is "Sold"
-                    const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
-                    const itemStatus = allCells[statusIdx];
-        
-                    // Clean the price value to check if it's effectively $0.00
-                    const itemPrice = parseFloat(displayValue.toString().replace(/[^0-9.-]+/g, "")) || 0;
-
-                    // Trigger Alert: If status is 'Sold' but price is missing or zero
-                    if (itemStatus === "Sold" && itemPrice <= 0) {
-                        sellPriceAlert = "col-resell-price-missing";
-                    }
-                }
-
-                // --- MAE SYSTEM: OVERDUE LOGIC ---
-                let overdueClass = "";
-                if (colDef.type === 'date' && displayValue) {
-                    const dueDate = new Date(displayValue);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
-                    // RUGGED FIX: Only alert if the date is in the past AND it is a "Due" or "Service" column
-                    const isDeadlineCol = colDef.header.includes("Due") || colDef.header.includes("Service");
-
-                    if (isDeadlineCol && !isNaN(dueDate) && dueDate < today) {
-                        overdueClass = "col-date-overdue";
-                    }
-                }
-
-                if (isCurrency) {
-                    displayValue = formatCurrency(displayValue);
-                }
-
-                if (colDef.type === 'boolean') {
-                    const isChecked = displayValue.toString().toUpperCase() === "TRUE";
-                    displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
-                }
-
-                // Apply MAE Rugged Styling Classes - combining all specialized alerts
-                html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
-                                ${overdueClass}
-                                ${sellPriceAlert}
-                                ${isLowStockText ? 'col-stock-alert-red' : ''}
-                                ${isSubjective ? 'col-subjective-level' : ''}
-                                ${isCurrency ? 'col-type-currency' : ''}" 
-                            data-col-index="${idx}">${displayValue}</td>`;
-            });
-            html += `</tr>`;
+        const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
+        const visibleIndices = [];
+        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
+        html += `<th class="edit-only-cell">Action</th>`;
+    
+        sheetConfig.columns.forEach((col, index) => {
+            if (col.hidden !== true) { 
+                html += `<th>${col.header}</th>`;
+                visibleIndices.push(index);
+            }
         });
-    } else {
-        const colSpan = visibleIndices.length + 1;
-        html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
-    }
+        html += `</tr></thead><tbody>`;
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-},
+        if (rows && rows.length > 0) {
+            rows.forEach((row) => {
+                const persistentIndex = row.index; 
+                const allCells = row.values; 
+
+                if (!allCells || allCells.length === 0) return;
+
+                const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
+
+                html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
+                html += `<td class="edit-only-cell">
+                            <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
+                        </td>`;
+
+                visibleIndices.forEach(idx => {
+                    const colDef = sheetConfig.columns[idx];
+                    const isEditable = !colDef.locked && colDef.type !== 'formula';
+
+                    let displayValue = allCells[idx] ?? '';
+
+                    // --- 🌟 NEW: VALUATION GOVERNANCE SILO GUARD ---
+                    // Prevents "Methodology Bleed" by hiding abandoned data
+                    if (tableName === "Shop_Consumables") {
+                        const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
+                        const currentMethod = (allCells[levelIdx] || "").toString().trim();
+                    
+                        const isBulkMode = ["None", "Few", "Adequate", "Many"].includes(currentMethod);
+                        const isCountedMode = currentMethod === "Counted";
+
+                        const unitSiloHeaders = ["Unit Cost", "Stock_Count"];
+                        const bulkSiloHeaders = ["Bulk_Value"];
+
+                        // Wipe data for the inactive silo to avoid $0.00 confusion
+                        if (isBulkMode && unitSiloHeaders.includes(colDef.header)) {
+                            displayValue = ""; 
+                        } else if (isCountedMode && bulkSiloHeaders.includes(colDef.header)) {
+                            displayValue = "";
+                        }
+                    }
+
+                    const isCurrency = colDef.format && colDef.format.includes("$");
+                    const isLowStockText = (displayValue === "Few" || displayValue === "None");
+                    const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
+
+                    let sellPriceAlert = "";
+                    if (tableName === "Resell_Inventory" && colDef.header === "Actual Sale Price") {
+                        const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
+                        const itemStatus = allCells[statusIdx];
+                        const itemPrice = parseFloat(displayValue.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+                        if (itemStatus === "Sold" && itemPrice <= 0) {
+                            sellPriceAlert = "col-resell-price-missing";
+                        }
+                    }
+
+                    let overdueClass = "";
+                    if (colDef.type === 'date' && displayValue && displayValue !== "") {
+                        const dueDate = new Date(displayValue);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const isDeadlineCol = colDef.header.includes("Due") || colDef.header.includes("Service");
+
+                        if (isDeadlineCol && !isNaN(dueDate) && dueDate < today) {
+                            overdueClass = "col-date-overdue";
+                        }
+                    }
+
+                    // Only format currency if the silo hasn't been wiped to blank
+                    if (isCurrency && displayValue !== "") {
+                        displayValue = formatCurrency(displayValue);
+                    }
+
+                    if (colDef.type === 'boolean') {
+                        const isChecked = displayValue.toString().toUpperCase() === "TRUE";
+                        displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+                    }
+
+                    html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
+                                    ${overdueClass}
+                                    ${sellPriceAlert}
+                                    ${isLowStockText ? 'col-stock-alert-red' : ''}
+                                    ${isSubjective ? 'col-subjective-level' : ''}
+                                    ${isCurrency ? 'col-type-currency' : ''}" 
+                                data-col-index="${idx}">${displayValue}</td>`;
+                });
+                html += `</tr>`;
+            });
+        } else {
+            const colSpan = visibleIndices.length + 1;
+            html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
+        }
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    },
     // ============ END RENDER TABLE ============
 
     //=========== RENDER SUBDIVIDED REPAIRS Specialized Renderer ==============

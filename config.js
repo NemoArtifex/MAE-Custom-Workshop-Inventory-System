@@ -28,7 +28,7 @@
  * Version 1.5.5: Changed formula in Master Dashboard, Total Actual Sales to factor in "Sold"
  *                deleted Header: "Sold"
  * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
- * Version 1.5.7: Updated Master Dashboard Low Stock Level formula
+ * Version 1.5.7: Updated Master Dashboard Low Stock Level formula; in Shop_Hand_Tools hid Stock_Level
  * Version xxxx
  */
 
@@ -363,7 +363,8 @@ export const maeSystemConfig = {
                 { 
                     header: "Stock_Level", 
                     type: "dropdown", 
-                    options: ["Few", "Adequate", "Many", "Counted"], 
+                    options: ["Few", "Adequate", "Many", "Counted"],
+                    hidden: true, 
                     locked: false },
                 {
                     header: "Stock_Count",
