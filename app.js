@@ -1064,8 +1064,8 @@ function handleEditClick(tableName) {
                     const row = cell.closest('tr');
 
                     if (tableName === "Shop_Consumables" && colDef.header === "Stock_Level") {
-        
-                        // 1. RUGGED RESET: Clear all existing locks in this row to allow a fresh state
+
+                        // 1. RUGGED RESET: Clear all existing locks in this row
                         const siloHeaders = ["Unit Cost", "Stock_Count", "Bulk_Value", "Reorder Point"];
                         siloHeaders.forEach(h => {
                             const idx = sheetConfig.columns.findIndex(c => c.header === h);
@@ -1077,12 +1077,12 @@ function handleEditClick(tableName) {
                             }
                         });
 
-                        const wasCounted = oldVal === "Counted";
                         const isCounted = newVal === "Counted";
-                        const wasBulk = ["None", "Few", "Adequate", "Many"].includes(oldVal);
                         const isBulk = ["None", "Few", "Adequate", "Many"].includes(newVal);
+                        const wasCounted = oldVal === "Counted";
+                        const wasBulk = ["None", "Few", "Adequate", "Many"].includes(oldVal);
 
-                        // 2. NUCLEAR WIPE GUARD: Confirm if pivoting between Counted and Bulk
+                        // 2. NUCLEAR WIPE GUARD: Logic for pivoting between Counted and Bulk
                         if ((wasCounted && isBulk) || (wasBulk && isCounted)) {
                             const proceed = confirm(`MAE SYSTEM ALERT: Methodology Switch!\n\nThis will WIPE the abandoned silo data to ensure valuation integrity. Proceed?`);
 
@@ -1094,32 +1094,30 @@ function handleEditClick(tableName) {
 
                             const unitIndices = ["Unit Cost", "Stock_Count", "Reorder Point"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
-                                                          
-                            // Wipe the data in the abandoned silo
-                            const activeIndices = isCounted ? unitIndices : bulkIndices;
+                                          
+                         const activeIndices = isCounted ? unitIndices : bulkIndices;
                             const inactiveIndices = isCounted ? bulkIndices : unitIndices;
 
-                            // A. LOCK the inactive side
+                            // A. LOCK AND WIPE the inactive side
                             inactiveIndices.forEach(idx => {
                                 const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
                                 if (targetCell) {
-                                    targetCell.innerHTML = ""; // Clear it
+                                    targetCell.innerHTML = ""; // Clear data for OneDrive sync
                                     targetCell.classList.add('silo-locked');
                                     targetCell.style.pointerEvents = "none";
                                 }
                             });
 
-                            // B. RE-ACTIVATE the active side with a fresh Input box
+                            // B. RE-ACTIVATE the active side with fresh Input boxes
                             activeIndices.forEach(idx => {
                                 const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
                                 if (targetCell) {
                                     const colDef = sheetConfig.columns[idx];
                                     const isCurrency = colDef.format && colDef.format.includes("$");
 
-                                    targetCell.classList.remove('silo-locked');
+                                 targetCell.classList.remove('silo-locked');
                                     targetCell.style.pointerEvents = "auto";
         
-                                    // This puts the actual number box back into the cell
                                     targetCell.innerHTML = `
                                         <input type="number" 
                                             class="edit-number-input" 
@@ -1130,10 +1128,10 @@ function handleEditClick(tableName) {
                             });
                         }
 
-                        // 3. FAT-FINGER RE-ENTRY: Force the active silo to stay interactive
-                        // We run this AFTER the potential wipe to ensure the cells are "unlocked"
-                        const activeHeaders = isCounted ? ["Unit Cost", "Stock_Count"] : ["Bulk_Value"];
-                        const inactiveHeaders = isCounted ? ["Bulk_Value"] : ["Unit Cost", "Stock_Count"];
+                        // 3. FAT-FINGER RE-ENTRY: Maintain interactivity for the correct silo
+                        // Now includes Reorder Point in the active unit silo
+                        const activeHeaders = isCounted ? ["Unit Cost", "Stock_Count", "Reorder Point"] : ["Bulk_Value"];
+                        const inactiveHeaders = isCounted ? ["Bulk_Value"] : ["Unit Cost", "Stock_Count", "Reorder Point"];
 
                         activeHeaders.forEach(h => {
                             const idx = sheetConfig.columns.findIndex(c => c.header === h);
@@ -1142,7 +1140,6 @@ function handleEditClick(tableName) {
                                 target.style.pointerEvents = "auto";
                                 target.style.opacity = "1";
                                 target.classList.remove('silo-locked');
-                                // Ensure text fields are editable even if they lost focus once
                                 if (sheetConfig.columns[idx].type !== "dropdown") {
                                     target.contentEditable = "true";
                                 }
@@ -1153,17 +1150,17 @@ function handleEditClick(tableName) {
                             const idx = sheetConfig.columns.findIndex(c => c.header === h);
                             const target = row.querySelector(`td[data-col-index="${idx}"]`);
                             if (target) {
-                            target.style.pointerEvents = "none";
-                            target.style.opacity = "0.5";
-                            target.classList.add('silo-locked');
-                            target.contentEditable = "false";
+                                target.style.pointerEvents = "none";
+                                target.style.opacity = "0.5";
+                                target.classList.add('silo-locked');
+                                target.contentEditable = "false";
                             }
                         });
                     }
 
                     finishEdit();
 
-                    // 4. SYNC LOCKS: Call the UI helper to ensure styles match the new state
+                    // 4. SYNC LOCKS
                     if (typeof UI.refreshSiloLocks === "function") {
                         UI.refreshSiloLocks(row, tableName, sheetConfig);
                     }
