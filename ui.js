@@ -232,22 +232,18 @@ renderMenu(activeWorksheets, onClickCallback) {
     // ============ END RENDER TABLE ============
     //=======  refreshSiloLocks ===========
     refreshSiloLocks(row, tableName, sheetConfig) {
-        // Only apply this logic to the Consumables methodology silos
         if (tableName !== "Shop_Consumables") return;
 
-        // 1. Identify current methodology by looking at the Stock_Level cell
         const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
         const levelCell = row.querySelector(`td[data-col-index="${levelIdx}"]`);
         if (!levelCell) return;
 
         const currentMethod = (levelCell.innerText || "").trim();
         const isCounted = currentMethod === "Counted";
-    
-        // 2. Define the Silos
+
         const unitSilo = ["Unit Cost", "Stock_Count", "Reorder Point"];
         const bulkSilo = ["Bulk_Value"];
 
-        // 3. Loop through columns and enforce the "Active" state
         sheetConfig.columns.forEach((col, idx) => {
             const targetCell = row.querySelector(`td[data-col-index="${idx}"]`);
             if (!targetCell) return;
@@ -256,25 +252,23 @@ renderMenu(activeWorksheets, onClickCallback) {
             const isBulkCol = bulkSilo.includes(col.header);
 
             if ((isCounted && isBulkCol) || (!isCounted && isUnitCol)) {
-                // LOCK the inactive silo
+                // 🌟 RUGGED WIPE: Clear the text content so the harvester sends 'null' to Excel
+                targetCell.innerHTML = ""; 
+            
                 targetCell.classList.add('silo-locked');
                 targetCell.style.pointerEvents = "none";
                 targetCell.style.opacity = "0.5";
                 targetCell.contentEditable = "false";
             } 
             else if (isUnitCol || isBulkCol) {
-                // 1. UNLOCK the active side
                 targetCell.classList.remove('silo-locked');
                 targetCell.style.pointerEvents = "auto";
                 targetCell.style.opacity = "1";
-            
-                // 2. THE REPAIR (Modified section): 
-                // If the user is in Edit Mode, but the cell only has text (no input box),
-                // we "repair" it by injecting the input box back in.
+        
                 if (window.isEditing === true && !targetCell.querySelector('input')) {
                     const isCurrency = col.format && col.format.includes("$");
                     const currentVal = targetCell.innerText.replace(/[^0-9.-]+/g, "") || 0;
-                
+            
                     targetCell.innerHTML = `
                         <input type="number" 
                             class="edit-number-input" 
