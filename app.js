@@ -1095,7 +1095,7 @@ function handleEditClick(tableName) {
                             const unitIndices = ["Unit Cost", "Stock_Count", "Reorder Point"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                             const bulkIndices = ["Bulk_Value"].map(h => sheetConfig.columns.findIndex(c => c.header === h));
                                           
-                         const activeIndices = isCounted ? unitIndices : bulkIndices;
+                            const activeIndices = isCounted ? unitIndices : bulkIndices;
                             const inactiveIndices = isCounted ? bulkIndices : unitIndices;
 
                             // A. LOCK AND WIPE the inactive side
@@ -1105,6 +1105,7 @@ function handleEditClick(tableName) {
                                     targetCell.innerHTML = ""; // Clear data for OneDrive sync
                                     targetCell.classList.add('silo-locked');
                                     targetCell.style.pointerEvents = "none";
+                                    targetCell.style.opacity = "0.5";
                                 }
                             });
 
