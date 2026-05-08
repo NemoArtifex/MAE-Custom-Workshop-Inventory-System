@@ -1465,6 +1465,7 @@ async function handleQuickUpdate(tableName) {
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
+    UI.renderCommandBar(tableName);
 }
 
 // ========END handleQuickUpdate ============

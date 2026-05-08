@@ -1138,3 +1138,14 @@ td.editable-cell:has(.edit-number-input) {
     background-color: #fadbd8 !important;
     border: 2px solid #e74c3c !important;
 }
+/*Ensurse title/header area stays visible */
+#app-content h1, 
+#current-view-title {
+    position: sticky;
+    top: 0;
+    z-index: 2000; /* Must be higher than the 999/1000 in your cells */
+    background: var(--bg); /* Matches your body background */
+    margin: 0;
+    padding: 20px 0;
+    width: 100%;
+}
