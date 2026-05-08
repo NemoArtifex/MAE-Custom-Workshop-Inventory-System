@@ -156,7 +156,7 @@ renderMenu(activeWorksheets, onClickCallback) {
                         const isBulkMode = ["None", "Few", "Adequate", "Many"].includes(currentMethod);
                         const isCountedMode = currentMethod === "Counted";
 
-                        const unitSiloHeaders = ["Unit Cost", "Stock_Count"];
+                        const unitSiloHeaders = ["Unit Cost", "Stock_Count","Reorder Point"];
                         const bulkSiloHeaders = ["Bulk_Value"];
 
                         // Wipe data for the inactive silo to avoid $0.00 confusion
