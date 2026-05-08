@@ -1167,7 +1167,6 @@ function handleEditClick(tableName) {
                     }
                 };
 
-                select.onblur = finishEdit;
                 select.onkeydown = (k) => { if(k.key === 'Enter') finishEdit(); };
             };
 
