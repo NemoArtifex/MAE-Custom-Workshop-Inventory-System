@@ -82,6 +82,7 @@ main {
     border-radius: 8px;
     margin-bottom: 0; /* Space between table and buttons */
     pointer-events: auto !important; /*Ensure table container doesn't "swallow" clicks */
+    clip-path: inset(0px 0px 0px 0px);
 }
 
 /* Target the specific class used in JS */
@@ -94,13 +95,16 @@ main {
 }
 
 .inventory-table th { 
-    background: var(--primary); 
-    color: white; 
+    background: var(--primary) !important; 
+    color: white !important; 
     padding: 12px 15px; 
     text-align: left; 
-    border-bottom: 3px solid var(--accent); /* Adds that "MAE" branding */
+    border-bottom: 3px solid var(--accent); 
+    
+    /* 1. ANCHOR & ELEVATE */
     position: sticky; 
     top: 0; 
+    z-index: 9999 !important; /* Forces the Navy bar to sit OVER the relative cells */
 }
 
 .inventory-table td { 
@@ -1141,11 +1145,11 @@ td.editable-cell:has(.edit-number-input) {
 /*Ensures title/header area stays visible */
 #app-content h1, 
 #current-view-title {
-    position: sticky; /* Keeps it stationary */
+    position: relative; /* Keeps it stationary */
     top: 0;
-    z-index: 10000 !important; /* Higher than the 999 cells */
+    z-index: 10;
     background: var(--bg); /* Solid shield */
     margin: 0;
-    padding: 30px 0 20px 0; /* Restores the spacing */
+    padding: 20px 0; 
     width: 100%;
 }
