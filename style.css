@@ -69,7 +69,7 @@ main {
     flex-direction: column;
     height: 100%;
     min-width: 0;
-    padding: 30px 30px 0 30px; 
+    padding: 0 30px; 
     overflow: hidden;   
 }
 
@@ -1141,10 +1141,11 @@ td.editable-cell:has(.edit-number-input) {
 /*Ensures title/header area stays visible */
 #app-content h1, 
 #current-view-title {
-    position: relative; /* 🌟 Required for z-index to work */
-    z-index: 9999 !important; /* 🌟 Higher than the 999/1000 in your cells */
-    background: var(--bg) !important; /* 🌟 Solid shield to hide scrolling text */
+    position: sticky; /* Keeps it stationary */
+    top: 0;
+    z-index: 10000 !important; /* Higher than the 999 cells */
+    background: var(--bg); /* Solid shield */
     margin: 0;
-    padding: 20px 0;
+    padding: 30px 0 20px 0; /* Restores the spacing */
     width: 100%;
 }
