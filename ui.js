@@ -417,6 +417,7 @@ renderCommandBar(tableName) {
 
     if (window.isEditing || isQuickUpdating) {
         buttons = `
+            <button class="action-btn" onclick="UI.printManualLog(window.currentTable, sheetConfig)" style="background:#34495e;">🖨️ Print Manual Log</button>
             <button class="action-btn" id="btn-commit-sync" style="background:#27ae60;">💾 Commit Changes</button>
             <button class="action-btn" id="btn-discard-edit" style="background:#7f8c8d;">Discard Changes</button>
         `;

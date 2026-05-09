@@ -1415,12 +1415,17 @@ async function deleteExcelRow(tableName, rowIndex) {
 //======= FUNCTION handleQuickUpdate ================
 async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
-    if (!table || table.classList.contains("is.quick-updating")) return;
+    if (!table || table.classList.contains("is-quick-updating")) return;
 
     window.currentTable = tableName; 
+    window.isEditing = true; // 🌟 CRITICAL: Enables the Commit/Discard buttons
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
     table.classList.add("is-editing", "is-quick-updating");
+
+    // 1. WHITELIST: Columns to keep visible (Matches your Manual Log requirement)
+    const keepHeaders = ["location_id", "machine name", "tool name", "item name", "stock_count", "quantity"];
+    const headers = table.querySelectorAll("thead th");
 
     const cells = table.querySelectorAll("td");
     cells.forEach(cell => {
@@ -1431,8 +1436,19 @@ async function handleQuickUpdate(tableName) {
         const colDef = sheetConfig.columns[colIdx];
         if (!colDef) return; 
 
-        // FIX 1: STRICT INVENTORY CHECK (Prevents arrows in Unit Cost/Price)
-        const isQtyField = (colDef.header === "Quantity" || colDef.header === "Current Stock") && colDef.type === "number";
+        const headerText = colDef.header.toLowerCase();
+        const isKeep = keepHeaders.some(h => headerText.includes(h));
+
+        // 2. COLUMN VISIBILITY GOVERNANCE
+        if (!isKeep) {
+            // Hide the cell and the corresponding header
+            cell.style.display = "none";
+            if (headers[colIdx + 1]) headers[colIdx + 1].style.display = "none"; // +1 for Action col
+            return;
+        }
+
+        // 3. EDITABLE FIELD LOGIC (Quantity / Stock_Count)
+        const isQtyField = (colDef.header === "Quantity" || colDef.header === "Stock_Count") && colDef.type === "number";
         
         if (isQtyField) {
             cell.classList.add("quick-edit-focus");
@@ -1442,20 +1458,14 @@ async function handleQuickUpdate(tableName) {
             cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="1" min="0">`;
             
             const input = cell.querySelector('input');
-            
-            // FIX 2: REMOVED the setTimeout focus from here to prevent the "Last Row Only" bug.
-            // All rows will now be editable at once.
-
-            input.onblur = () => {
-                cell.innerText = input.value;
-            };
+            input.onblur = () => { cell.innerText = input.value; };
 
             input.onkeydown = (e) => {
                 if (e.key.toLowerCase() === "e") e.preventDefault();
                 if (e.key === "." || e.key === ",") e.preventDefault();
             };
         } else {
-            // Visual lock for non-inventory columns
+            // Lock and shade Item Names/Locations
             cell.contentEditable = "false";
             cell.style.backgroundColor = "#f4f4f4";
             cell.style.color = "#999";
@@ -1465,6 +1475,8 @@ async function handleQuickUpdate(tableName) {
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
+
+    // 4. UI REFRESH: Show the Save/Discard/Print buttons
     UI.renderCommandBar(tableName);
 }
 
