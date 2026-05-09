@@ -1141,19 +1141,10 @@ td.editable-cell:has(.edit-number-input) {
 /*Ensures title/header area stays visible */
 #app-content h1, 
 #current-view-title {
-    /* 1. ANCHOR: This keeps the title stuck to the top */
-    position: sticky;
-    top: 0;
-    
-    /* 2. ELEVATION: Needs to be 5000+ to beat the relative z-indexing of cells */
-    z-index: 5000; 
-
-    /* 3. SHIELD: Set a background color to hide the scrolling text behind it */
-    background: #f4f4f4 !important; /* Forces background to match your --bg variable */
-    
-    /* 4. ALIGNMENT */
+    position: relative; /* 🌟 Required for z-index to work */
+    z-index: 9999 !important; /* 🌟 Higher than the 999/1000 in your cells */
+    background: var(--bg) !important; /* 🌟 Solid shield to hide scrolling text */
     margin: 0;
     padding: 20px 0;
     width: 100%;
-    box-sizing: border-box;
 }
