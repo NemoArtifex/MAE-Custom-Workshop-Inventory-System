@@ -406,48 +406,45 @@ renderCommandBar(tableName) {
     if (!container) return;
 
     const normalizedName = tableName.trim().toLowerCase();
-    let buttons = "";
-
-    // --- NEW: EDIT MODE GUARDRAIL ---
-    // If the system is in Edit Mode, we ignore standard buttons and show the Commitment Bar
-    // (Updated for Quick Update)
-
+    const config = window.maeSystemConfig;
+    const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
     const table = document.getElementById("main-data-table");
     const isQuickUpdating = table && table.classList.contains("is-quick-updating");
 
+    // --- RULE 1: EDIT MODE / QUICK UPDATE GUARDRAIL ---
     if (window.isEditing || isQuickUpdating) {
-        buttons = `
-            <button class="action-btn" onclick="UI.printManualLog(window.currentTable, sheetConfig)" style="background:#34495e;">🖨️ Print Manual Log</button>
+        let buttons = "";
+        
+        // 🌟 MIGRATION: Print Manual Log ONLY appears here during Quick Update
+        if (isQuickUpdating && sheetConfig) {
+            buttons += `<button class="action-btn" onclick="UI.printManualLog('${tableName}', maeSystemConfig.worksheets.find(s => s.tableName === '${tableName}'))" style="background:#34495e;">🖨️ Print Manual Log</button>`;
+        }
+
+        buttons += `
             <button class="action-btn" id="btn-commit-sync" style="background:#27ae60;">💾 Commit Changes</button>
             <button class="action-btn" id="btn-discard-edit" style="background:#7f8c8d;">Discard Changes</button>
         `;
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-        return; // EXIT: Standard buttons won't render while editing
+        return; 
     }
 
-    // --- VIRTUAL RULE 1: AUDIT VIEW (Check this BEFORE the sheetConfig guard) ---
+    // --- RULE 2: VIRTUAL AUDIT VIEW ---
     if (normalizedName === "location_audit") {
-        buttons = `
+        container.innerHTML = `<div class="command-bar">
             <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
             <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
-        `;
-        container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-        return; // EXIT: We don't need sheetConfig for a virtual view
+        </div>`;
+        return;
     }
 
-    // --- STANDARD GUARD: Only proceed if this is a physical Excel table ---
-    const config = window.maeSystemConfig;
-    const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
+    // --- RULE 3: STANDARD INVENTORY TABLES ---
     if (!sheetConfig) return;
-
     const isDashboard = normalizedName.includes("dashboard");
     const hasManualField = sheetConfig.columns.some(col => 
-        col.header === "Quantity" || 
-        col.header === "Current Stock" ||
-        col.header === "Stock_Count"
+        ["Quantity", "Current Stock", "Stock_Count"].includes(col.header)
     );
 
-    // --- RULE 1: LOCATION TABLE DISCIPLINE ---
+    let buttons = "";
     if (normalizedName === "location") {
         buttons = `
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
@@ -455,7 +452,6 @@ renderCommandBar(tableName) {
             <button class="action-btn" id="btn-print">Print Location Map</button>
         `;
     } 
-    // --- RULE 2: INVENTORY TABLES ---
     else if (!isDashboard) {
         buttons = `
             <button class="action-btn" id="btn-print">Print Table</button>
@@ -463,12 +459,11 @@ renderCommandBar(tableName) {
             <button class="action-btn" id="btn-edit">Edit Table</button>
         `;
 
+        // 🌟 REMOVAL: 'Print Manual Log' (btn-manual-print) is removed from the regular view
         if (hasManualField) {
-            buttons += `<button class="action-btn" id="btn-manual-print">Print Manual Log</button>`;
             buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
         }
     } 
-    // --- RULE 3: DASHBOARDS ---
     else {
         buttons = `<button class="action-btn" id="btn-print">Print Dashboard</button>`;
     }

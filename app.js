@@ -1418,65 +1418,68 @@ async function handleQuickUpdate(tableName) {
     if (!table || table.classList.contains("is-quick-updating")) return;
 
     window.currentTable = tableName; 
-    window.isEditing = true; // 🌟 CRITICAL: Enables the Commit/Discard buttons
+    window.isEditing = true; 
     const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
     
     table.classList.add("is-editing", "is-quick-updating");
 
-    // 1. WHITELIST: Columns to keep visible (Matches your Manual Log requirement)
+    // 1. THE RUGGED WHITELIST (Matches Print Manual Log exactly)
     const keepHeaders = ["location_id", "machine name", "tool name", "item name", "stock_count", "quantity"];
+    
     const headers = table.querySelectorAll("thead th");
+    const visibleIndices = [];
 
-    const cells = table.querySelectorAll("td");
-    cells.forEach(cell => {
-        const colIdxAttr = cell.getAttribute('data-col-index');
-        if (colIdxAttr === null) return; 
+    // 2. HEADER GOVERNANCE: Determine what to show
+    headers.forEach((th, idx) => {
+        const headerText = th.innerText.trim().toLowerCase();
+        const isAction = th.classList.contains("edit-only-cell");
+        const isKeep = keepHeaders.some(h => headerText.includes(h)) || isAction;
 
-        const colIdx = parseInt(colIdxAttr);
-        const colDef = sheetConfig.columns[colIdx];
-        if (!colDef) return; 
-
-        const headerText = colDef.header.toLowerCase();
-        const isKeep = keepHeaders.some(h => headerText.includes(h));
-
-        // 2. COLUMN VISIBILITY GOVERNANCE
         if (!isKeep) {
-            // Hide the cell and the corresponding header
-            cell.style.display = "none";
-            if (headers[colIdx + 1]) headers[colIdx + 1].style.display = "none"; // +1 for Action col
-            return;
-        }
-
-        // 3. EDITABLE FIELD LOGIC (Quantity / Stock_Count)
-        const isQtyField = (colDef.header === "Quantity" || colDef.header === "Stock_Count") && colDef.type === "number";
-        
-        if (isQtyField) {
-            cell.classList.add("quick-edit-focus");
-            const currentVal = parseInt(cell.innerText.replace(/[^0-9.-]+/g, "")) || 0;
-            
-            cell.contentEditable = "false"; 
-            cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="1" min="0">`;
-            
-            const input = cell.querySelector('input');
-            input.onblur = () => { cell.innerText = input.value; };
-
-            input.onkeydown = (e) => {
-                if (e.key.toLowerCase() === "e") e.preventDefault();
-                if (e.key === "." || e.key === ",") e.preventDefault();
-            };
+            th.style.display = "none";
         } else {
-            // Lock and shade Item Names/Locations
-            cell.contentEditable = "false";
-            cell.style.backgroundColor = "#f4f4f4";
-            cell.style.color = "#999";
+            visibleIndices.push(idx);
         }
     });
-    
+
+    // 3. ROW GOVERNANCE: Hide non-whitelisted cells and enable Stock_Count input
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        cells.forEach((cell, idx) => {
+            if (!visibleIndices.includes(idx)) {
+                cell.style.display = "none";
+                return;
+            }
+
+            const colIdxAttr = cell.getAttribute('data-col-index');
+            if (colIdxAttr === null) return; 
+
+            const colDef = sheetConfig.columns[parseInt(colIdxAttr)];
+            const isStockField = (colDef.header === "Stock_Count" || colDef.header === "Quantity");
+
+            if (isStockField) {
+                cell.classList.add("quick-edit-focus");
+                const currentVal = parseInt(cell.innerText.replace(/[^0-9.-]+/g, "")) || 0;
+                cell.innerHTML = `<input type="number" class="edit-number-input" value="${currentVal}" step="1" min="0">`;
+                
+                const input = cell.querySelector('input');
+                input.onblur = () => { cell.innerText = input.value; };
+                input.onkeydown = (e) => {
+                    if (["e", ".", ","].includes(e.key.toLowerCase())) e.preventDefault();
+                };
+            } else {
+                // Read-only reference fields (Name, Location)
+                cell.style.backgroundColor = "#f4f4f4";
+                cell.style.color = "#666";
+            }
+        });
+    });
+
     setTimeout(() => {
         document.addEventListener('mousedown', globalClickOffHandler);
     }, 150);
 
-    // 4. UI REFRESH: Show the Save/Discard/Print buttons
     UI.renderCommandBar(tableName);
 }
 
