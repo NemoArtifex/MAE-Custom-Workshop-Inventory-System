@@ -29,12 +29,13 @@
  *                deleted Header: "Sold"
  * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
  * Version 1.5.7: Updated Master Dashboard Low Stock Level formula; in Shop_Hand_Tools hid Stock_Level
- * Version xxxx
+ * Version 1.5.8: In Maintenance Log: renamed Service Date to Completion Date and moved after Complete checkbox
+ * Version xxxxxx
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.7",
+    version: "1.5.8",
 
     features: {
         enableScanning: true
@@ -280,7 +281,6 @@ export const maeSystemConfig = {
                 { header: "Log ID", type: "string", hidden: true, locked: false },
                 { header: "Asset ID", type: "string", hidden: true, locked: false },
                 { header: "Asset and Service Description", type: "string", locked: false},
-                { header: "Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { 
                     header: "Service Type",
                     type: "dropdown",
@@ -296,6 +296,7 @@ export const maeSystemConfig = {
                 { header: "Cost", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Next Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Complete", type: "boolean", locked: false },
+                { header: "Completion Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Remarks", type: "string", locked: false }
             ]
         },
