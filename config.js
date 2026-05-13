@@ -30,12 +30,12 @@
  * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
  * Version 1.5.7: Updated Master Dashboard Low Stock Level formula; in Shop_Hand_Tools hid Stock_Level
  * Version 1.5.8: In Maintenance Log: renamed Service Date to Completion Date and moved after Complete checkbox
- * Version xxxxxx
+ * Version 1.6:   Changed/hid several headers to reduce unnecessary columns 
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.5.8",
+    version: "1.6",
 
     features: {
         enableScanning: true
@@ -226,9 +226,10 @@ export const maeSystemConfig = {
                     header: "Category",
                     type: "dropdown",
                     options:["Machinery","Furniture","Electronics","Crafts","Auto Related","other"],
+                    hidden: true,
                     locked: false 
                 },
-                { header: "Acquisition Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Date Acquired", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Restoration Cost", type: "number", format: "$#,##0.00", locked: false },
                 { 
@@ -246,6 +247,7 @@ export const maeSystemConfig = {
                 },
                 { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Date Sold", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Location", type: "string", hidden:true,locked: false }
             ]
         },
@@ -259,7 +261,6 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Machine Name/Brand/Model", type: "string", locked: false },
-                { header: "Serial Number", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Location", type: "string", hidden: true, locked: false },
@@ -269,7 +270,7 @@ export const maeSystemConfig = {
                     options: ["Operational","Needs Repair","Repair In-Progress","Unusable/Junk"],
                     locked: false 
                 },
-                { header: "Manual Link/Other Info", type: "string", locked: false}
+                { header: "Serial Number/Other Info", type: "string", locked: false}
             ]
         },
         {
@@ -285,6 +286,7 @@ export const maeSystemConfig = {
                     header: "Service Type",
                     type: "dropdown",
                     options: ["Preventive","Repair"],
+                    hidden: true,
                     locked: false 
                 },
                 { 
@@ -315,18 +317,21 @@ export const maeSystemConfig = {
                     header: "Functional Category",
                     type: "dropdown",
                     options: ["Drilling","Cutting","Grinding","Sanding","Fastening","Shaping/Routing","Other"],
+                    hidden: true,
                     locked: false
                 },
                 {
                     header: "Operational Category",
                     type: "dropdown",
                     options: ["Portable/Handheld","Stationary/Bench Top","Outdoor Power Equipment"],
+                    hidden: true,
                     locked: false
                 },
                 {
                     header: "Power Source",
                     type: "dropdown",
                     options: ["Corded(A/C)","Cordless/Battery","Pneumatic/Air","Fuel-Powered"],
+                    hidden: true,
                     locked: false
                 },
                 { 
@@ -353,6 +358,7 @@ export const maeSystemConfig = {
                     header: "Category",
                     type: "dropdown",
                     options: ["Fastening/Turning","Measuring/Layout","Striking/Hammering","Gripping/Holding","Cutting/Shaping","Other"],
+                    hidden: true,
                     locked: false 
                 },
                 {
