@@ -18,7 +18,7 @@ const formatCurrency = (value) => {
 };
 
 import { Dashboard } from './dashboard.js';
-import { excelSerialToDate} from './app.js';
+
 
 export const UI = {
     
@@ -1931,7 +1931,7 @@ async executeResellStatusFilter() {
             const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
             const cleanValues = cells.map((val, idx) => {
                 const colDef = sheetConfig.columns[idx];
-                return (colDef && colDef.type === 'date') ? excelSerialToDate(val) : val;
+                return (colDef && colDef.type === 'date') ? window.excelSerialToDate(val) : val;
             });
             return { ...rowObj, values: cleanValues };
         });
