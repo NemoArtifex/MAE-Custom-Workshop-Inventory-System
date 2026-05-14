@@ -348,7 +348,7 @@ async function initializeSheetAndTable(accessToken) {
  * @param {number} serial - The Excel serial date (e.g., 44562).
  * @returns {string} - The formatted date string.
  */
-function excelSerialToDate(serial) {
+export function excelSerialToDate(serial) {
     if (!serial || isNaN(serial)) return serial; // Return as-is if not a valid number
     
     // Formula: (Serial - 25569) * milliseconds in a day
