@@ -1966,7 +1966,7 @@ async executeResellStatusFilter() {
             visibleIndices.forEach(idx => {
                 const colDef = sheetConfig.columns[idx];
                 let displayValue = cells[idx] ?? '';
-                if (colDef.format && colDef.format.includes("$") && displayValue !== "") displayValue = UI.formatCurrency(displayValue);
+                if (colDef.format && colDef.format.includes("$") && displayValue !== "") displayValue = formatCurrency(displayValue);
                 htmlTable += `<td class="locked-cell">${displayValue}</td>`;
             });
             htmlTable += `</tr>`;
