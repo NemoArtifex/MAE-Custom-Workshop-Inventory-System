@@ -1902,7 +1902,8 @@ async executeResellStatusFilter() {
 
     if (!selectedStatus) { alert("Please select an operational category status parameter first."); return; }
 
-    UI.showLoading("Isolating records from local data cache buffer...");
+    // RUGGED FIX: Use 'this' instead of the uninitialized 'UI' object reference within its own construction block
+    this.showLoading("Isolating records from local data cache buffer...");
 
     try {
         // Pull fresh dataset straight from your decoupled ledger using your dashboard core tool
@@ -1922,7 +1923,7 @@ async executeResellStatusFilter() {
 
         if (matchingRows.length === 0) {
             tableMount.innerHTML = `<p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9;">Zero records currently match the status criteria: "${selectedStatus}".</p>`;
-            UI.renderCommandBar(""); // Reset command bar layout
+            this.renderCommandBar(""); // RUGGED FIX: Cleared 'UI.' prefix to handle internal scope cleanly
             return;
         }
 
@@ -1966,7 +1967,12 @@ async executeResellStatusFilter() {
             visibleIndices.forEach(idx => {
                 const colDef = sheetConfig.columns[idx];
                 let displayValue = cells[idx] ?? '';
-                if (colDef.format && colDef.format.includes("$") && displayValue !== "") displayValue = formatCurrency(displayValue);
+                
+                // 🌟 MAE ENGINE REPAIR: Calls the top-level standalone constant directly 🌟
+                if (colDef.format && colDef.format.includes("$") && displayValue !== "") {
+                    displayValue = formatCurrency(displayValue);
+                }
+                
                 htmlTable += `<td class="locked-cell">${displayValue}</td>`;
             });
             htmlTable += `</tr>`;
