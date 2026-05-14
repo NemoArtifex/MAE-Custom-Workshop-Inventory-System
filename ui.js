@@ -1212,7 +1212,9 @@ async promptNewLocation() {
 },
 //====== END PROMPT LOGIC For Location_ID ====
 
+//=============================================
 //========== Manage Location Map ===========
+//==================================================
     async applyLocationChange(rowIndex, oldId) {
         const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
         const rowDataMap = {};
@@ -1243,82 +1245,94 @@ async promptNewLocation() {
     },
 
     manageLocationMap() {
-    const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
-    title.innerText = "Administrative: Manage Shop Location Map";
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        title.innerText = "Administrative: Manage Shop Location Map";
 
-    this.showLoading("Fetching Foundation Data...");
+        this.showLoading("Fetching Foundation Data...");
     
-    window.Dashboard.getFullTableData("Location").then(data => {
-        // --- THE FIX: Define the blueprint inside the .then() block ---
-        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-        
-        if (!sheetConfig) {
-            this.showError("Configuration for 'Location' table not found.");
-            return;
-        }
+        window.Dashboard.getFullTableData("Location").then(data => {
+            const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+            if (!sheetConfig) { this.showError("Configuration for 'Location' table not found."); return; }
 
-        let html = `<div class="form-card" id="location-manager">
-            <div style="border-bottom: 2px solid var(--accent); margin-bottom: 15px; padding-bottom: 10px;">
-                <h4>+ Establish New Foundation Point</h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">`;
+            let html = `<div class="form-card" id="location-manager">
+                <div style="border-bottom: 2px solid var(--accent); margin-bottom: 15px; padding-bottom: 10px;">
+                    <h4>+ Establish New Foundation Point</h4>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">`;
 
-        // DYNAMICALLY build the "Establish" inputs based on config
-        sheetConfig.columns.forEach(col => {
-            if (col.hidden || col.header === "mae_id") return;
-            const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
-            html += `<input type="text" id="${inputId}" placeholder="${col.header}" style="flex: 1; min-width: 120px;">`;
-        });
-
-        html += `<button class="action-btn" onclick="UI.saveNewLocation()" style="background:#27ae60;">Establish</button>
-            </div>
-        </div>
-        <div id="location-list-scroll" style="max-height: 500px; overflow-y: auto;">
-            <table class="inventory-table">
-                <thead><tr>`;
-
-        // Render headers from config
-        sheetConfig.columns.forEach(col => {
-            if (!col.hidden) html += `<th>${col.header}</th>`;
-        });
-        html += `<th>Actions</th></tr></thead><tbody>`;
-
-        // Render data rows
-        data.forEach((row, idx) => {
-            //const vals = row.values;
-            const vals = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
-            const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
-            const currentLocName = vals[locIdIdx];
+            // Build input layouts dynamically based on system schema configuration parameters
+            sheetConfig.columns.forEach(col => {
+                if (col.hidden || col.header === "mae_id") return;
+                const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
             
-            if (currentLocName === "TBD") return;
-
-            html += `<tr>`;
-            sheetConfig.columns.forEach((col, colIdx) => {
-                if (col.hidden) return;
-                const fieldId = `loc-${col.header.replace(/\s+/g, '')}-${idx}`;
-                const displayVal = vals[colIdx] || '';
-                html += `<td><input type="text" id="${fieldId}" value="${displayVal}" style="width:100%;"></td>`;
+                html += `
+                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column;">
+                        <input type="text" id="${inputId}" placeholder="${col.header}">
+                        ${col.header === "Location_ID" ? `<div id="new-loc-id-feedback" style="margin-top:4px; min-height:1rem;"></div>` : ''}
+                    </div>`;
             });
 
-            html += `
-                <td>
-                    <button class="mini-btn" onclick="UI.applyLocationChange(${idx}, '${currentLocName}')" style="background:#2980b9;">Update</button>
-                    <button class="mini-btn" onclick="UI.removeLocation('${currentLocName}')" style="background:#c0392b;">Delete</button>
-                </td>
-            </tr>`;
-        });
+            html += `<button class="action-btn" onclick="UI.saveNewLocation()" style="background:#27ae60; margin-bottom:20px;">Establish</button>
+                </div>
+            </div>
+            <div id="location-list-scroll" style="max-height: 500px; overflow-y: auto;">
+                <table class="inventory-table">
+                    <thead><tr>`;
 
-        html += `</tbody></table></div>
-            <div class="form-actions" style="margin-top: 20px;">
-                <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
-            </div>`;
+            sheetConfig.columns.forEach(col => { if (!col.hidden) html += `<th>${col.header}</th>`; });
+            html += `<th>Actions</th></tr></thead><tbody>`;
+
+            // Render row item entries contextually
+            data.forEach((row, idx) => {
+                const vals = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
+                const locIdIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+                const currentLocName = vals[locIdIdx];
+                if (currentLocName === "TBD") return;
+
+                html += `<tr>`;
+                sheetConfig.columns.forEach((col, colIdx) => {
+                    if (col.hidden) return;
+                    const fieldId = `loc-${col.header.replace(/\s+/g, '')}-${idx}`;
+                    const displayVal = vals[colIdx] || '';
+                
+                    html += `
+                        <td>
+                            <input type="text" id="${fieldId}" value="${displayVal}" style="width:100%;">
+                            ${col.header === "Location_ID" ? `<div id="${fieldId}-feedback" style="margin-top:4px; min-height:1rem;"></div>` : ''}
+                        </td>`;
+                });
+
+                html += `
+                    <td>
+                        <button class="mini-btn" onclick="UI.applyLocationChange(${idx}, '${currentLocName}')" style="background:#2980b9;">Update</button>
+                        <button class="mini-btn" onclick="UI.removeLocation('${currentLocName}')" style="background:#c0392b;">Delete</button>
+                    </td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
+                /div>`;
             
-        container.innerHTML = html;
-    }).catch(err => {
-        console.error("MAE System: Manager load failed", err);
-        this.showError("Could not load Location data from OneDrive.");
-    });
-},
+            container.innerHTML = html;
+
+            // 🌟 ATTACH REAL-TIME RE-ORIENTATION LISTENERS AFTER CONTENT IS INJECTED INTO DOM
+            const primaryNewInput = document.getElementById("new-loc-Location_ID");
+            this.attachLocationValidationGuard(primaryNewInput, "new-loc-id-feedback");
+
+            data.forEach((row, idx) => {
+                const rowInput = document.getElementById(`loc-Location_ID-${idx}`);
+                if (rowInput) {
+                    this.attachLocationValidationGuard(rowInput, `loc-Location_ID-${idx}-feedback`);
+             }
+            });
+
+        }).catch(err => {
+            console.error("MAE Manager Load Crash Intercepted:", err);
+            this.showError("Could not load Location data from OneDrive.");
+        });
+    },
 
     async removeLocation(locName) {
     const confirmed = confirm(`CRITICAL WARNING: You are about to DELETE the location [${locName}]. \n\nAny items currently assigned to this spot will lose their physical reference. Proceed?`);
@@ -1385,49 +1399,104 @@ async promptNewLocation() {
     },
 
     async saveNewLocation() {
-    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-    const rowDataMap = {};
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+        const rowDataMap = {};
+        let missingField = false;
 
-    // 1. DYNAMIC GATHERING: Pull data from the top "Establish" row
-    sheetConfig.columns.forEach(col => {
-        if (col.hidden || col.header === "mae_id") return;
+        // Guardrail Check: Abort if submission field holds an active validation error layout template state
+        const targetKeyInput = document.getElementById("new-loc-Location_ID");
+        if (targetKeyInput && targetKeyInput.classList.contains("input-error")) {
+            alert("CRITICAL SYSTEM RULES VIOLATION:\n\nYou cannot write this Location_ID to the spreadsheet ledger until naming compliance rules are met.");
+            targetKeyInput.focus();
+            return;
+        }
+
+        sheetConfig.columns.forEach(col => {
+            if (col.hidden || col.header === "mae_id") return;
+            const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                const val = input.value.trim();
+                if (col.header === "Location_ID" && !val) { missingField = true; }
+                rowDataMap[col.header] = col.header === "Location_ID" ? val.toUpperCase() : val;
+            }
+        });
+
+        if (missingField) { alert("Error: Location_ID is mandatory."); return; }
+
+        this.showLoading("Writing New Foundation Point...");
+        const success = await window.submitNewLocationToTable(rowDataMap);
+    
+        if (success) {
+            await window.refreshLocationCache();
+            this.manageLocationMap();
+        } else {
+            alert("Error: Failed to register location on OneDrive ledger.");
+            this.manageLocationMap();
+        }
+    },
+
+//=======  Core Real-Time Location ID Validation Guard
+attachLocationValidationGuard(inputElement, feedbackElementId) {
+    if (!inputElement) return;
+
+    inputElement.addEventListener("input", (e) => {
+        // 1. SILENT AUTO-CORRECT: Instantly transform spaces to hyphens and lowercase to uppercase
+        let cursorPosition = e.target.selectionStart;
+        let originalLength = e.target.value.length;
         
-        const inputId = `new-loc-${col.header.replace(/\s+/g, '')}`;
-        const input = document.getElementById(inputId);
-        if (input) {
-            rowDataMap[col.header] = col.header === "Location_ID" ? 
-                input.value.trim().toUpperCase() : input.value.trim();
+        let cleanText = e.target.value.toUpperCase().replace(/\s+/g, "-");
+        e.target.value = cleanText;
+        
+        // Preserve tablet typing cursor position during automated string conversion adjustments
+        let lengthDelta = cleanText.length - originalLength;
+        e.target.setSelectionRange(cursorPosition + lengthDelta, cursorPosition + lengthDelta);
+
+        // 2. REGEX SPECIFICATION EVALUATION (Enforces leading zeros and dash separation constraints)
+        const locationPatternRegex = /^([A-Z0-9]+)(-[A-Z0-9]{2,})+$/;
+        const isValid = locationPatternRegex.test(cleanText);
+        const feedbackEl = document.getElementById(feedbackElementId);
+
+        if (cleanText === "") {
+            inputElement.style.borderColor = "var(--border)";
+            inputElement.style.backgroundColor = "#ffffff";
+            if (feedbackEl) feedbackEl.innerHTML = "";
+            return;
+        }
+
+        if (!isValid) {
+            // 3. INDUSTRIAL HIGH-AWARENESS FAT-FINGER ALERT TINTS
+            inputElement.style.borderColor = "#e74c3c";     // Red Alert Border Outline
+            inputElement.style.backgroundColor = "#fadbd8"; // Soft Red Alert Sheet Tint
+            inputElement.classList.add("input-error");
+            
+            if (feedbackEl) {
+                feedbackEl.style.color = "#c0392b";
+                feedbackEl.style.fontWeight = "bold";
+                feedbackEl.style.fontSize = "0.85rem";
+                feedbackEl.innerHTML = `⚠️ Format Variance: Use padded double-digits and hyphens. (e.g., SHOP-RACK-02-BIN-04)`;
+            }
+        } else {
+            // 4. SOLID DISCIPLINARY STRUCTURAL STATE CONFIRMED
+            inputElement.style.borderColor = "#27ae60";     // Operational Green Border
+            inputElement.style.backgroundColor = "#e8f8f5"; // Operational Mint Sheet Tint
+            inputElement.classList.remove("input-error");
+            
+            if (feedbackEl) {
+                feedbackEl.style.color = "#27ae60";
+                feedbackEl.style.fontWeight = "bold";
+                feedbackEl.style.fontSize = "0.85rem";
+                feedbackEl.innerHTML = `✅ Structure Verified: Solid physical map anchor matrix alignment.`;
+            }
         }
     });
-
-    const newLoc = rowDataMap["Location_ID"];
-    if (!newLoc) {
-        alert("Please enter a Location ID.");
-        return;
-    }
-
-    // 2. RUGGED DUPLICATE CHECK
-    if (window.maeLocations.includes(newLoc)) {
-        alert(`Error: [${newLoc}] is already established.`);
-        return;
-    }
-
-    this.showLoading(`Establishing ${newLoc}...`);
-
-    // 3. SAVE: We reuse updateLocationRecord but pass -1 to signify a NEW row 
-    // OR use your existing submitNewLocationToTable if preferred.
-    // Let's use a dynamic version of submit to handle all fields:
-    const success = await window.submitNewLocationToTable(rowDataMap);
-
-    if (success) {
-        await window.refreshLocationCache();
-        this.manageLocationMap(); // Reload Manager
-    } else {
-        this.showError("Failed to establish new location.");
-    }
 },
 
-// ======== END modify location Map Logic ========
+
+//====================================================
+// ======== END Manage location Map Logic ========
+//==================================================
+
 
 //======= "Virtual table renderer" for TBD ======
 renderAuditGrid(auditData) {
