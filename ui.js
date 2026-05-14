@@ -1312,7 +1312,11 @@ async promptNewLocation() {
 
             html += `</tbody></table></div>
                 <div class="form-actions" style="margin-top: 20px;">
-                    <button class="cancel-btn" onclick="loadTableData('Location')">Close Manager</button>
+                     <button class="cancel-btn" 
+                        style="background: var(--primary); width: 100%; height: 50px; font-size: 1.1rem;" 
+                        onclick="window.UI.exitLocationManagerAndRefresh()">
+                        💾 Save Map Configuration & Return to Inventory
+                    </button>   
                 /div>`;
             
             container.innerHTML = html;
@@ -1492,7 +1496,33 @@ attachLocationValidationGuard(inputElement, feedbackElementId) {
     });
 },
 
+//====== Secure COnfiguration Exit and Sync Router
+async exitLocationManagerAndRefresh() {
+    this.showLoading("Synchronizing physical workshop map parameters...");
+    
+    try {
+        // 1. Force a raw background cache sweep to ensure all memory indexes align
+        await window.refreshLocationCache();
+        
+        // 2. Identify what view context was open before entering administrative mode
+        // If the user was editing a table, default back to the Location map to view coordinates
+        const targetView = (window.currentTable && window.currentViewTitle !== "location_audit") 
+            ? window.currentTable 
+            : "Location";
 
+        console.log(`MAE Engine: Administrative map locked. Re-drawing sheet layout workspace: [${targetView}]`);
+        
+        // 3. Clear active input visual variables completely
+        this.exitEditMode();
+        
+        // 4. Force a clean, re-sorted download straight from your OneDrive backend ledger
+        window.loadTableData(targetView);
+
+    } catch (err) {
+        console.error("MAE Engine Sync Failure during manager teardown:", err);
+        window.loadTableData("Master_Dashboard");
+    }
+},
 //====================================================
 // ======== END Manage location Map Logic ========
 //==================================================
