@@ -460,8 +460,6 @@ renderCommandBar(tableName) {
             <button class="action-btn" id="btn-add">➕ Add Item</button>
             <button class="action-btn" id="btn-edit">✏️ Edit Table</button>
             ${hasManualField ? `<button class="action-btn" id="btn-inventory-update" style="background:#e67e22;">⚡ Quick Update</button>` : ''}
-            
-            /* 🌟 MAE ENGINE UPGRADE: CONTEXTUAL PIVOT CONTROLLER 🌟 */
             ${normalizedName === "resell_inventory" ? `<button class="action-btn" id="btn-resell-status-pivot" style="background:#8e44ad;">📊 Sort By Status</button>` : ''}
         `;
     }
