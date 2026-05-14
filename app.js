@@ -431,7 +431,7 @@ async function loadTableData(tableName, filterType = null) {
         });
 
         // ==========================================
-        // 🌟 MAE ENGINE: CONTEXT-AWARE SORTING GATE (NEW CODE) 🌟
+        // 🌟 MAE ENGINE: CONTEXT-AWARE SORTING GATE  🌟
         // ==========================================
         
         // PATH A: Core Inventory Sheets & Location Map Axis
@@ -442,20 +442,69 @@ async function loadTableData(tableName, filterType = null) {
                 const locA = String(rowA.values[locationColumnIndex] || "").trim();
                 const locB = String(rowB.values[locationColumnIndex] || "").trim();
 
-                // Guardrail: If location identifiers match identically, preserve original order
                 if (locA === locB) return 0;
-
-                // ABSOLUTE SCHEMA DISCIPLINE: Force unassigned "TBD" assets straight to the top
-                if (locA === "TBD") return -1;
+                if (locA === "TBD") return -1; // Force unassigned "TBD" assets straight to the top
                 if (locB === "TBD") return 1;
 
-                // Human-Readable Natural Alphanumeric Sorting (Handles PAD-02 ahead of PAD-10)
                 return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
             });
             console.log(`MAE Sorting Engine: [${tableName}] memory rows sorted by Location_ID axis.`);
         } 
         
-        // PATH B: Standalone Modules & Custom Extensions (e.g., Supplier Contacts)
+        // PATH B: Maintenance Log (Sort Chronologically by Next Service Date)
+        else if (tableName === "Maintenance_Log") {
+            const targetDateHeader = "Next Service Date";
+            const dateColumnIndex = sheetConfig.columns.findIndex(c => c.header === targetDateHeader);
+
+            if (dateColumnIndex !== -1) {
+                formattedRows.sort((rowA, rowB) => {
+                    const rawValA = rowA.values[dateColumnIndex];
+                    const rawValB = rowB.values[dateColumnIndex];
+
+                    // RUGGED GUARDRAILS: Push items with blank or invalid dates to the bottom
+                    if (!rawValA) return 1;
+                    if (!rawValB) return -1;
+
+                    const dateA = new Date(rawValA);
+                    const dateB = new Date(rawValB);
+
+                    // If a date fails to parse, protect the sort loop from breaking
+                    if (isNaN(dateA)) return 1;
+                    if (isNaN(dateB)) return -1;
+
+                    // Chronological sort: Past/Overdue items first, moving into the future
+                    return dateA - dateB;
+                });
+                console.log(`MAE Sorting Engine: [${tableName}] sorted chronologically by [${targetDateHeader}].`);
+            }
+        }
+
+        // PATH C: Shop Overhead (Sort Chronologically by Due Date)
+        else if (tableName === "Shop_Overhead") {
+            const targetDateHeader = "Due Date";
+            const dateColumnIndex = sheetConfig.columns.findIndex(c => c.header === targetDateHeader);
+
+            if (dateColumnIndex !== -1) {
+                formattedRows.sort((rowA, rowB) => {
+                    const rawValA = rowA.values[dateColumnIndex];
+                    const rawValB = rowB.values[dateColumnIndex];
+
+                    if (!rawValA) return 1;
+                    if (!rawValB) return -1;
+
+                    const dateA = new Date(rawValA);
+                    const dateB = new Date(rawValB);
+
+                    if (isNaN(dateA)) return 1;
+                    if (isNaN(dateB)) return -1;
+
+                    return dateA - dateB;
+                });
+                console.log(`MAE Sorting Engine: [${tableName}] sorted chronologically by [${targetDateHeader}].`);
+            }
+        }
+
+        // PATH D: Standalone Modules & Custom Extensions (e.g., Supplier Contacts)
         else if (tableName === "Supplier_Contacts") {
             const targetSortHeader = "Supplier Name";
             const sortColumnIndex = sheetConfig.columns.findIndex(c => c.header === targetSortHeader);
