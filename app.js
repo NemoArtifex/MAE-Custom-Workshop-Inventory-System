@@ -792,6 +792,11 @@ document.getElementById('action-bar-zone').addEventListener('click', (event) => 
     else if (btn.id === 'btn-inventory-update') {
         handleQuickUpdate(currentTable);
     }
+    else if (btn.id === 'btn-resell-status-pivot') {
+        if (typeof UI.renderStatusPivotControls === "function") {
+            UI.renderStatusPivotControls();
+        }
+    }
 });
 
 //=========== END GLOBAL CLICK LISTENER ==============

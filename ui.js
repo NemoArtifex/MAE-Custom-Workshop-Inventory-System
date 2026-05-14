@@ -454,16 +454,16 @@ renderCommandBar(tableName) {
     } 
     else if (!isDashboard) {
         buttons = `
-            <button class="action-btn" id="btn-print">Print Table</button>
-            <button class="action-btn" id="btn-add">Add Item</button>
-            <button class="action-btn" id="btn-edit">Edit Table</button>
+            <button class="action-btn" id="btn-print">🖨️ Print Sheet</button>
+            ${hasManualField ? `<button class="action-btn" id="btn-manual-print">📋 Print Manual Log</button>` : ''}
+            <button class="action-btn" id="btn-add">➕ Add Item</button>
+            <button class="action-btn" id="btn-edit">✏️ Edit Table</button>
+            ${hasManualField ? `<button class="action-btn" id="btn-inventory-update" style="background:#e67e22;">⚡ Quick Update</button>` : ''}
+            
+            /* 🌟 MAE ENGINE UPGRADE: CONTEXTUAL PIVOT CONTROLLER 🌟 */
+            ${normalizedName === "resell_inventory" ? `<button class="action-btn" id="btn-resell-status-pivot" style="background:#8e44ad;">📊 Sort By Status</button>` : ''}
         `;
-
-        // 🌟 REMOVAL: 'Print Manual Log' (btn-manual-print) is removed from the regular view
-        if (hasManualField) {
-            buttons += `<button class="action-btn" id="btn-inventory-update">Quick Update</button>`;
-        }
-    } 
+    }
     else {
         buttons = `<button class="action-btn" id="btn-print">Print Dashboard</button>`;
     }
@@ -1852,6 +1852,179 @@ renderVirtualSearchHub(auditData) {
 },
 //====== END Virtual Search Hub for Multiple ITems on a Single Tag 
 
+//========== Resell Status Pivot Viewport Modulator
+renderStatusPivotControls() {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    const config = window.maeSystemConfig;
+    
+    const sheetConfig = config.worksheets.find(s => s.tableName === "Resell_Inventory");
+    const statusCol = sheetConfig.columns.find(c => c.header === "Current Status");
+    const statusOptions = statusCol ? (statusCol.options || []) : [];
+
+    title.innerText = "Resell Inventory: Filter View By Status Selection";
+    window.currentTable = "resell_status_pivot"; // Establish virtual routing state context
+
+    let html = `
+        <div class="form-card" style="border-left:5px solid #8e44ad; padding:25px; background:#fff; margin-bottom:20px;">
+            <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">Select Current Status Target</h4>
+            <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+                <select id="mae-resell-status-selector" class="edit-dropdown" style="flex:1; max-width:400px; height:50px;">
+                    <option value="">-- Choose Status Group --</option>
+                    ${statusOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                </select>
+                <button class="action-btn" style="background:#8e44ad; height:50px; font-size:1rem;" onclick="UI.executeResellStatusFilter()">📊 Generate Filtered Table</button>
+            </div>
+        </div>
+        <div id="status-filtered-table-mount"></div>
+    `;
+
+    container.innerHTML = html;
+
+    // Load custom, context-sensitive back-to-base routing action options row
+    const actionZone = document.getElementById("action-bar-zone");
+    if (actionZone) {
+        actionZone.innerHTML = `
+            <div class="command-bar">
+                <button class="action-btn" onclick="window.loadTableData('Resell_Inventory')">← Return to Resell Inventory</button>
+            </div>`;
+    }
+},
+//=========  END: Resell Status Pivot Viewport Modulator
+
+//=========  Compiling and Printing the Filtered Subset (Resell Inventory)
+async executeResellStatusFilter() {
+    const selector = document.getElementById("mae-resell-status-selector");
+    const selectedStatus = selector ? selector.value : "";
+    const tableMount = document.getElementById("status-filtered-table-mount");
+    const actionZone = document.getElementById("action-bar-zone");
+
+    if (!selectedStatus) { alert("Please select an operational category status parameter first."); return; }
+
+    UI.showLoading("Isolating records from local data cache buffer...");
+
+    try {
+        // Pull fresh dataset straight from your decoupled ledger using your dashboard core tool
+        const rawRows = await window.Dashboard.getFullTableData("Resell_Inventory");
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Resell_Inventory");
+        const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
+
+        // Step 1: Filter the rows based on the dropdown selection
+        const matchingRows = rawRows.filter(rowObj => {
+            const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
+            return String(cells[statusIdx]).trim() === selectedStatus;
+        });
+
+        // Save this specific subset to global memory so the print subsystem can see it seamlessly
+        this.activeStatusPivotData = matchingRows;
+        this.activeStatusPivotLabel = selectedStatus;
+
+        if (matchingRows.length === 0) {
+            tableMount.innerHTML = `<p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9;">Zero records currently match the status criteria: "${selectedStatus}".</p>`;
+            UI.renderCommandBar(""); // Reset command bar layout
+            return;
+        }
+
+        // Step 2: Normalize dates using your Data Flattening Bridge logic
+        const flattenedSubset = matchingRows.map(rowObj => {
+            const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
+            const cleanValues = cells.map((val, idx) => {
+                const colDef = sheetConfig.columns[idx];
+                return (colDef && colDef.type === 'date') ? excelSerialToDate(val) : val;
+            });
+            return { ...rowObj, values: cleanValues };
+        });
+
+        // 🌟 Step 3: Run your Default Location_ID sorting engine over the filtered rows 🌟
+        const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+        if (locIdx !== -1) {
+            flattenedSubset.sort((a, b) => {
+                const locA = String(a.values[locIdx] || "").trim();
+                const locB = String(b.values[locIdx] || "").trim();
+                if (locA === locB) return 0;
+                if (locA === "TBD") return -1;
+                if (locB === "TBD") return 1;
+                return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+        }
+
+        // Step 4: Draw a regular data grid cleanly inside your mount zone view layout parameters
+        const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
+        const visibleIndices = [];
+        
+        let htmlTable = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
+        sheetConfig.columns.forEach((col, index) => {
+            if (col.hidden !== true) { htmlTable += `<th>${col.header}</th>`; visibleIndices.push(index); }
+        });
+        htmlTable += `</tr></thead><tbody>`;
+
+        flattenedSubset.forEach(row => {
+            const cells = row.values;
+            const rawMaeId = (idIndex !== -1) ? cells[idIndex] : '';
+            htmlTable += `<tr data-row-index="${row.index}" data-mae-id="${rawMaeId}">`;
+            visibleIndices.forEach(idx => {
+                const colDef = sheetConfig.columns[idx];
+                let displayValue = cells[idx] ?? '';
+                if (colDef.format && colDef.format.includes("$") && displayValue !== "") displayValue = UI.formatCurrency(displayValue);
+                htmlTable += `<td class="locked-cell">${displayValue}</td>`;
+            });
+            htmlTable += `</tr>`;
+        });
+        htmlTable += `</tbody></table>`;
+        tableMount.innerHTML = htmlTable;
+
+        // Step 5: Mount custom context action bar holding your required Print and Back selectors
+        if (actionZone) {
+            actionZone.innerHTML = `
+                <div class="command-bar">
+                    <button class="action-btn" onclick="window.UI.printStatusPivotTable()" style="background:#27ae60;">🖨️ Print Filtered View</button>
+                    <button class="action-btn" onclick="window.loadTableData('Resell_Inventory')">← Back to Resell Inventory</button>
+                </div>`;
+        }
+
+    } catch (err) {
+        console.error("MAE Engine Pivot System Failure:", err);
+        tableMount.innerHTML = "<p style='color:red; padding:20px;'>Failed to correctly slice status array parameters.</p>";
+    }
+},
+
+printStatusPivotTable() {
+    const tableElement = document.getElementById("main-data-table");
+    if (!tableElement || !this.activeStatusPivotLabel) return;
+
+    const customPrintTitle = `Resell Item with Current Status: ${this.activeStatusPivotLabel}`;
+    
+    // Leverage your clean detached tab document printing system context safely
+    const printWindow = window.open('', '_blank');
+    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .map(link => `<link rel="stylesheet" href="${link.href}">`).join('');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>${customPrintTitle}</title>
+            ${styleLinks}
+            <style>
+                body { background: white !important; color: black !important; padding: 20px; font-family: sans-serif; }
+                .edit-only-cell, button, .form-card { display: none !important; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid black !important; padding: 8px !important; text-align: left; }
+                th { background-color: #eee !important; color: black !important; font-weight: bold; text-transform: uppercase; }
+            </style>
+        </head>
+        <body>
+            <h2 style="margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid black; padding-bottom:5px;">MAE Workshop Inventory System</h2>
+            <h4 style="margin-top:5px; color:#333;">${customPrintTitle}</h4>
+            <div>${tableElement.outerHTML}</div>
+            <script>
+                window.onload = function() { window.print(); window.close(); };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+//======  END Compiling and Printing the Filtered Subset (Resell Inventory)
 
 };
 
