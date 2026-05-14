@@ -197,6 +197,7 @@ function mapRowToHeaders(rowValues, sheetConfig) {
     return data;
 }
 
+//===== WORKER FUNCTION: refresh location cache; specifically pulls Location List for dropdowns =====
 async function refreshLocationCache() {
     try {
         const locationConfig = maeSystemConfig.worksheets.find(s => s.tableName === "Location");
@@ -207,19 +208,25 @@ async function refreshLocationCache() {
             const locIdx = locationConfig.columns.findIndex(c => c.header === "Location_ID");
 
             const list = data.map(row => {
-                const rowCells = row.values[0]; 
-                return rowCells[locIdx];
+                // 🌟 MAE ENGINE RUGGED FIXED APPARATUS 🌟
+                // Safely handles both nested 2D arrays and flat single-dimensional fallback array formats
+                const rowCells = (row.values && Array.isArray(row.values[0])) 
+                    ? row.values[0] 
+                    : (row.values && Array.isArray(row.values)) ? row.values : row;
+                
+                return rowCells ? rowCells[locIdx] : null;
             });
 
             // Clean the list: remove nulls/duplicates and keep "TBD" at the top
             window.maeLocations = ["TBD", ...new Set(list.filter(i => i && i !== "TBD"))];
-            console.log("MAE System: Location cache refreshed using Header Mapping.");
+            console.log("MAE System: Location dropdown cache successfully updated with raw ledger changes:", window.maeLocations);
         }
     } catch (e) {
-        console.warn("MAE System: Could not find 'Location_ID' column. Using default 'TBD'.", e);
+        console.warn("MAE System Fail: Could not find 'Location_ID' column. Defaulting dropdown parameters to 'TBD'.", e);
         window.maeLocations = ["TBD"];
     }
 }
+//==== END WORKER FUNCTION ======
 
 
 
