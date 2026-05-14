@@ -2025,8 +2025,19 @@ async executeResellStatusFilter() {
 },
 
 printStatusPivotTable() {
-    const tableElement = document.getElementById("main-data-table");
-    if (!tableElement || !this.activeStatusPivotLabel) return;
+    // 🌟 MAE ENGINE RUGGED FIX: Target the specific status table container mount point 🌟
+    const tableMount = document.getElementById("status-filtered-table-mount");
+    if (!tableMount || !this.activeStatusPivotLabel) {
+        alert("System Error: No active filtered data grid available to print.");
+        return;
+    }
+
+    // Safely extract the inner table layout node directly from the mount container
+    const tableElement = tableMount.querySelector("table");
+    if (!tableElement) {
+        alert("System Error: Table asset element layout mismatch.");
+        return;
+    }
 
     const customPrintTitle = `Resell Item with Current Status: ${this.activeStatusPivotLabel}`;
     
@@ -2053,7 +2064,13 @@ printStatusPivotTable() {
             <h4 style="margin-top:5px; color:#333;">${customPrintTitle}</h4>
             <div>${tableElement.outerHTML}</div>
             <script>
-                window.onload = function() { window.print(); window.close(); };
+                // 🌟 RUGGED SETTLE TIMEOUT: Ensures the print buffer paints completely before dialog opens 🌟
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print(); 
+                        window.close();
+                    }, 300);
+                };
             </script>
         </body>
         </html>
