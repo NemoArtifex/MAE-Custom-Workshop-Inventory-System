@@ -1902,7 +1902,6 @@ async executeResellStatusFilter() {
 
     if (!selectedStatus) { alert("Please select an operational category status parameter first."); return; }
 
-    // RUGGED FIX: Use 'this' instead of the uninitialized 'UI' object reference within its own construction block
     this.showLoading("Isolating records from local data cache buffer...");
 
     try {
@@ -1911,10 +1910,11 @@ async executeResellStatusFilter() {
         const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Resell_Inventory");
         const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
 
-        // Step 1: Filter the rows based on the dropdown selection
+        // 🌟 Step 1: Filter the rows based on the dropdown selection (With Nested Array Fix)
         const matchingRows = rawRows.filter(rowObj => {
-            const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
-            return String(cells[statusIdx]).trim() === selectedStatus;
+            // Dig down into the inner array array wrapper just like app.js does
+            const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
+            return cells && String(cells[statusIdx]).trim() === selectedStatus;
         });
 
         // Save this specific subset to global memory so the print subsystem can see it seamlessly
@@ -1922,14 +1922,33 @@ async executeResellStatusFilter() {
         this.activeStatusPivotLabel = selectedStatus;
 
         if (matchingRows.length === 0) {
-            tableMount.innerHTML = `<p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9;">Zero records currently match the status criteria: "${selectedStatus}".</p>`;
-            this.renderCommandBar(""); // RUGGED FIX: Cleared 'UI.' prefix to handle internal scope cleanly
+            tableMount.innerHTML = `<p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9; color:#333;">Zero records currently match the status criteria: "${selectedStatus}".</p>`;
+            
+            // Clean out the loading screen wrapper to allow user navigation to recover safely
+            const container = document.getElementById("table-container");
+            if (container) {
+                // Preserves the selection form card structure on screen
+                container.innerHTML = `
+                    <div class="form-card" style="border-left:5px solid #8e44ad; padding:25px; background:#fff; margin-bottom:20px;">
+                        <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">Select Current Status Target</h4>
+                        <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+                            <select id="mae-resell-status-selector" class="edit-dropdown" style="flex:1; max-width:400px; height:50px;">
+                                <option value="">-- Choose Status Group --</option>
+                                ${sheetConfig.columns.find(c => c.header === "Current Status").options.map(opt => `<option value="${opt}" ${opt === selectedStatus ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                            <button class="action-btn" style="background:#8e44ad; height:50px; font-size:1rem;" onclick="UI.executeResellStatusFilter()">📊 Generate Filtered Table</button>
+                        </div>
+                    </div>
+                    <div id="status-filtered-table-mount"><p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9; color:#333;">Zero records currently match the status criteria: "${selectedStatus}".</p></div>
+                `;
+            }
+            this.renderCommandBar(""); 
             return;
         }
 
-        // Step 2: Normalize dates using your Data Flattening Bridge logic
+        // 🌟 Step 2: Normalize dates and data elements (With Nested Array Fix)
         const flattenedSubset = matchingRows.map(rowObj => {
-            const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
+            const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
             const cleanValues = cells.map((val, idx) => {
                 const colDef = sheetConfig.columns[idx];
                 return (colDef && colDef.type === 'date') ? window.excelSerialToDate(val) : val;
@@ -1937,7 +1956,7 @@ async executeResellStatusFilter() {
             return { ...rowObj, values: cleanValues };
         });
 
-        // 🌟 Step 3: Run your Default Location_ID sorting engine over the filtered rows 🌟
+        // Step 3: Run your Default Location_ID sorting engine over the filtered rows
         const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
         if (locIdx !== -1) {
             flattenedSubset.sort((a, b) => {
@@ -1967,18 +1986,30 @@ async executeResellStatusFilter() {
             visibleIndices.forEach(idx => {
                 const colDef = sheetConfig.columns[idx];
                 let displayValue = cells[idx] ?? '';
-                
-                // 🌟 MAE ENGINE REPAIR: Calls the top-level standalone constant directly 🌟
                 if (colDef.format && colDef.format.includes("$") && displayValue !== "") {
                     displayValue = formatCurrency(displayValue);
                 }
-                
                 htmlTable += `<td class="locked-cell">${displayValue}</td>`;
             });
             htmlTable += `</tr>`;
         });
         htmlTable += `</tbody></table>`;
-        tableMount.innerHTML = htmlTable;
+        
+        // Restore selection form card along with newly mounted table subset data array 
+        const container = document.getElementById("table-container");
+        container.innerHTML = `
+            <div class="form-card" style="border-left:5px solid #8e44ad; padding:25px; background:#fff; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">Select Current Status Target</h4>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+                    <select id="mae-resell-status-selector" class="edit-dropdown" style="flex:1; max-width:400px; height:50px;">
+                        <option value="">-- Choose Status Group --</option>
+                        ${sheetConfig.columns.find(c => c.header === "Current Status").options.map(opt => `<option value="${opt}" ${opt === selectedStatus ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    <button class="action-btn" style="background:#8e44ad; height:50px; font-size:1rem;" onclick="UI.executeResellStatusFilter()">📊 Generate Filtered Table</button>
+                </div>
+            </div>
+            <div id="status-filtered-table-mount">${htmlTable}</div>
+        `;
 
         // Step 5: Mount custom context action bar holding your required Print and Back selectors
         if (actionZone) {
