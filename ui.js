@@ -2025,14 +2025,12 @@ async executeResellStatusFilter() {
 },
 
 printStatusPivotTable() {
-    // 🌟 MAE ENGINE RUGGED FIX: Target the specific status table container mount point 🌟
     const tableMount = document.getElementById("status-filtered-table-mount");
     if (!tableMount || !this.activeStatusPivotLabel) {
         alert("System Error: No active filtered data grid available to print.");
         return;
     }
 
-    // Safely extract the inner table layout node directly from the mount container
     const tableElement = tableMount.querySelector("table");
     if (!tableElement) {
         alert("System Error: Table asset element layout mismatch.");
@@ -2041,35 +2039,87 @@ printStatusPivotTable() {
 
     const customPrintTitle = `Resell Item with Current Status: ${this.activeStatusPivotLabel}`;
     
-    // Leverage your clean detached tab document printing system context safely
+    // Open a completely detached, clean browser window tab context
     const printWindow = window.open('', '_blank');
-    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-        .map(link => `<link rel="stylesheet" href="${link.href}">`).join('');
 
+    // 🌟 MAE ENGINE RUGGED PRINT FIX: INJECT INLINE, HIGH-CONTRAST ISOLATED PRINT STYLES 🌟
+    // Bypasses style.css completely inside the new tab to prevent "Nuclear Hide" selector rule conflicts
     printWindow.document.write(`
+        <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <title>${customPrintTitle}</title>
-            ${styleLinks}
             <style>
-                body { background: white !important; color: black !important; padding: 20px; font-family: sans-serif; }
-                .edit-only-cell, button, .form-card { display: none !important; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid black !important; padding: 8px !important; text-align: left; }
-                th { background-color: #eee !important; color: black !important; font-weight: bold; text-transform: uppercase; }
+                /* Force standard shop floor visibility rules on the plain paper layout sheets */
+                body { 
+                    background: #ffffff !important; 
+                    color: #000000 !important; 
+                    padding: 20px; 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+                h2 { 
+                    margin: 0 0 5px 0; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    font-size: 16pt;
+                    color: #000000;
+                }
+                h4 { 
+                    margin: 0 0 20px 0; 
+                    color: #333333; 
+                    font-size: 11pt;
+                    font-weight: normal;
+                    border-bottom: 2px solid #000000;
+                    padding-bottom: 5px;
+                }
+                /* Reconstruction of your rugged, industrial black-and-white grid template layout */
+                table { 
+                    width: 100% !important; 
+                    border-collapse: collapse !important; 
+                    margin-top: 15px;
+                    page-break-inside: auto;
+                }
+                tr {
+                    page-break-inside: avoid;
+                    page-break-after: auto;
+                }
+                th, td { 
+                    border: 1px solid #000000 !important; 
+                    padding: 8px 12px !important; 
+                    text-align: left; 
+                    font-size: 10pt !important;
+                    color: #000000 !important;
+                    background: #ffffff !important;
+                }
+                th { 
+                    background-color: #f2f2f2 !important; 
+                    font-weight: bold !important; 
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                /* Force any hidden configuration identifiers or delete button icons to stay hidden */
+                .edit-only-cell, .print-force-hide, button, .form-card, input[type="hidden"] { 
+                    display: none !important; 
+                    width: 0 !important;
+                    height: 0 !important;
+                    visibility: hidden !important;
+                }
             </style>
         </head>
         <body>
-            <h2 style="margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid black; padding-bottom:5px;">MAE Workshop Inventory System</h2>
-            <h4 style="margin-top:5px; color:#333;">${customPrintTitle}</h4>
+            <h2>MAE Workshop Inventory System</h2>
+            <h4>${customPrintTitle}</h4>
             <div>${tableElement.outerHTML}</div>
             <script>
-                // 🌟 RUGGED SETTLE TIMEOUT: Ensures the print buffer paints completely before dialog opens 🌟
+                // 🌟 SETTLE TIMEOUT: Ensures the browser DOM engine paints completely before firing dialog 🌟
                 window.onload = function() {
                     setTimeout(() => {
                         window.print(); 
                         window.close();
-                    }, 300);
+                    }, 250);
                 };
             </script>
         </body>
