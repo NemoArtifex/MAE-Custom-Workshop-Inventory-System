@@ -431,6 +431,47 @@ async function loadTableData(tableName, filterType = null) {
         });
 
         // ==========================================
+        // 🌟 MAE ENGINE: CONTEXT-AWARE SORTING GATE (NEW CODE) 🌟
+        // ==========================================
+        
+        // PATH A: Core Inventory Sheets & Location Map Axis
+        const locationColumnIndex = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+        
+        if (locationColumnIndex !== -1) {
+            formattedRows.sort((rowA, rowB) => {
+                const locA = String(rowA.values[locationColumnIndex] || "").trim();
+                const locB = String(rowB.values[locationColumnIndex] || "").trim();
+
+                // Guardrail: If location identifiers match identically, preserve original order
+                if (locA === locB) return 0;
+
+                // ABSOLUTE SCHEMA DISCIPLINE: Force unassigned "TBD" assets straight to the top
+                if (locA === "TBD") return -1;
+                if (locB === "TBD") return 1;
+
+                // Human-Readable Natural Alphanumeric Sorting (Handles PAD-02 ahead of PAD-10)
+                return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+            console.log(`MAE Sorting Engine: [${tableName}] memory rows sorted by Location_ID axis.`);
+        } 
+        
+        // PATH B: Standalone Modules & Custom Extensions (e.g., Supplier Contacts)
+        else if (tableName === "Supplier_Contacts") {
+            const targetSortHeader = "Supplier Name";
+            const sortColumnIndex = sheetConfig.columns.findIndex(c => c.header === targetSortHeader);
+
+            if (sortColumnIndex !== -1) {
+                formattedRows.sort((rowA, rowB) => {
+                    const stringA = String(rowA.values[sortColumnIndex] || "").trim();
+                    const stringB = String(rowB.values[sortColumnIndex] || "").trim();
+                    
+                    return stringA.localeCompare(stringB, undefined, { numeric: true, sensitivity: 'base' });
+                });
+                console.log(`MAE Sorting Engine: Standalone [${tableName}] rows sorted by [${targetSortHeader}].`);
+            }
+        }
+
+        // ==========================================
         // 3. SMART FILTERS
         // ==========================================
         if (filterType) {
