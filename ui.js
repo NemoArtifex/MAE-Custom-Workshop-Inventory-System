@@ -2038,12 +2038,8 @@ printStatusPivotTable() {
     }
 
     const customPrintTitle = `Resell Item with Current Status: ${this.activeStatusPivotLabel}`;
-    
-    // Open a completely detached, clean browser window tab context
     const printWindow = window.open('', '_blank');
 
-    // 🌟 MAE ENGINE RUGGED PRINT FIX: INJECT INLINE, HIGH-CONTRAST ISOLATED PRINT STYLES 🌟
-    // Bypasses style.css completely inside the new tab to prevent "Nuclear Hide" selector rule conflicts
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -2051,7 +2047,12 @@ printStatusPivotTable() {
             <meta charset="UTF-8">
             <title>${customPrintTitle}</title>
             <style>
-                /* Force standard shop floor visibility rules on the plain paper layout sheets */
+                /* 🌟 MAE ENGINE UPGRADE: FORCE LANDSCAPE PAGE DIRECTIVES 🌟 */
+                @page {
+                    size: landscape;
+                    margin: 0.4in;
+                }
+
                 body { 
                     background: #ffffff !important; 
                     color: #000000 !important; 
@@ -2060,22 +2061,26 @@ printStatusPivotTable() {
                     -webkit-print-color-adjust: exact;
                     print-color-adjust: exact;
                 }
+
+                /* 🌟 MAE ENGINE UPGRADE: SCALE UP BRANDED HERO TYPOGRAPHY 🌟 */
                 h2 { 
                     margin: 0 0 5px 0; 
                     text-transform: uppercase; 
                     letter-spacing: 1px; 
-                    font-size: 16pt;
+                    font-size: 22pt !important; /* Scaled up to match standard high-contrast headers */
+                    font-weight: 800;
                     color: #000000;
                 }
                 h4 { 
-                    margin: 0 0 20px 0; 
+                    margin: 0 0 25px 0; 
                     color: #333333; 
-                    font-size: 11pt;
-                    font-weight: normal;
-                    border-bottom: 2px solid #000000;
-                    padding-bottom: 5px;
+                    font-size: 14pt !important; /* Expanded descriptor row sizing */
+                    font-weight: bold;
+                    border-bottom: 3px solid #000000; /* Rugged thick dividing border line */
+                    padding-bottom: 8px;
+                    text-transform: uppercase;
                 }
-                /* Reconstruction of your rugged, industrial black-and-white grid template layout */
+
                 table { 
                     width: 100% !important; 
                     border-collapse: collapse !important; 
@@ -2088,7 +2093,7 @@ printStatusPivotTable() {
                 }
                 th, td { 
                     border: 1px solid #000000 !important; 
-                    padding: 8px 12px !important; 
+                    padding: 10px 12px !important; /* Slightly padded for clear clipboard viewing */
                     text-align: left; 
                     font-size: 10pt !important;
                     color: #000000 !important;
@@ -2100,7 +2105,6 @@ printStatusPivotTable() {
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                 }
-                /* Force any hidden configuration identifiers or delete button icons to stay hidden */
                 .edit-only-cell, .print-force-hide, button, .form-card, input[type="hidden"] { 
                     display: none !important; 
                     width: 0 !important;
@@ -2114,7 +2118,6 @@ printStatusPivotTable() {
             <h4>${customPrintTitle}</h4>
             <div>${tableElement.outerHTML}</div>
             <script>
-                // 🌟 SETTLE TIMEOUT: Ensures the browser DOM engine paints completely before firing dialog 🌟
                 window.onload = function() {
                     setTimeout(() => {
                         window.print(); 
