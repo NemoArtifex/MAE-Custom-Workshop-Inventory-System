@@ -31,11 +31,13 @@
  * Version 1.5.7: Updated Master Dashboard Low Stock Level formula; in Shop_Hand_Tools hid Stock_Level
  * Version 1.5.8: In Maintenance Log: renamed Service Date to Completion Date and moved after Complete checkbox
  * Version 1.6:   Changed/hid several headers to reduce unnecessary columns 
+ * Version 1.6.1: Hid two columns in Location
+ * Version xxxx:
  */
 
 export const maeSystemConfig = {
     spreadsheetName: "MAE_Workshop_Inventory_MASTER_TEMPLATE.xlsx",
-    version: "1.6",
+    version: "1.6.1",
 
     features: {
         enableScanning: true
@@ -503,8 +505,8 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false },
                 { header: "Description", type: "string", locked: false },
-                { header: "Type", type: "string", locked: false },
-                { header: "Parent_Location", type: "string", locked: false}
+                { header: "Type", type: "string", hidden: true, locked: false },
+                { header: "Parent_Location", type: "string", hidden: true, locked: false}
             ]
         }
     ]
