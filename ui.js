@@ -2250,12 +2250,15 @@ printInspectedLocationTable() {
 
                 rawRows.forEach(rowObj => {
                     // 🌟 MAE ENGINE RUGGED FIXED APPARATUS 🌟
-                    // Digs past Microsoft Graph's nested 2D array wrapper [[v1, v2]] to find the real text row cells
-                    const cells = (rowObj.values && Array.isArray(rowObj.values[0])) 
-                        ? rowObj.values[0] 
-                        : (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj;
+                    // Digs past Microsoft Graph's nested 2D array wrapper [[v1, v2]] directly into index [0] to extract the pure string row cells
+                    let cells = null;
+                    if (rowObj.values && Array.isArray(rowObj.values)) {
+                        cells = Array.isArray(rowObj.values[0]) ? rowObj.values[0] : rowObj.values;
+                    } else {
+                        cells = rowObj;
+                    }
                     
-                    if (cells && cells[locIdx] !== undefined) {
+                    if (cells && cells[locIdx] !== undefined && cells[locIdx] !== null) {
                         const cellValue = String(cells[locIdx]).trim();
                         
                         if (cellValue === targetLocation.trim()) {
