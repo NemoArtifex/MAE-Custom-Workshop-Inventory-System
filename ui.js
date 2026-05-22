@@ -2145,8 +2145,8 @@ printStatusPivotTable() {
 
 //======= Print Location_ID search results ========
 printInspectedLocationTable() {
-        const tableMount = document.getElementById("location-inspected-table-mount");
-        if (!tableMount || !this.activeInspectedLocationLabel || !this.activeInspectedLocationData) {
+        const table = document.getElementById("main-data-table");
+        if (!table || !this.activeInspectedLocationLabel) {
             alert("System Error: No active inspection data grid available to print.");
             return;
         }
@@ -2169,13 +2169,13 @@ printInspectedLocationTable() {
                     table { width: 100% !important; border-collapse: collapse !important; margin-top: 15px; }
                     th, td { border: 1px solid #000000 !important; padding: 10px 12px !important; text-align: left; font-size: 10pt !important; color: #000000 !important; background: #ffffff !important; }
                     th { background-color: #f2f2f2 !important; font-weight: bold !important; text-transform: uppercase; }
-                    button, .action-btn, td:nth-child(2), th:nth-child(2) { display: none !important; } /* Cleanly strip buttons and navigation arrays from final clipboard paper */
+                    button, .action-btn, .edit-only-cell { display: none !important; }
                 </style>
             </head>
             <body>
                 <h2>MAE Workshop Inventory System</h2>
                 <h4>${customPrintTitle} (as of ${today})</h4>
-                <div>${tableMount.innerHTML}</div>
+                <div>${table.outerHTML}</div>
                 <script>
                     window.onload = function() {
                         setTimeout(() => { window.print(); window.close(); }, 250);
@@ -2219,114 +2219,79 @@ printInspectedLocationTable() {
     async executeLocationInspection() {
         const selector = document.getElementById("mae-inspection-location-selector");
         const targetLocation = selector ? selector.value : "";
-        const tableMount = document.getElementById("location-inspected-table-mount");
 
         if (!targetLocation) { 
             alert("Please select a physical storage spot parameter first."); 
             return; 
         }
 
-        this.showLoading(`Scanning local memory records for items in [${targetLocation}]...`);
+        this.showLoading(`Scanning cache for items in [${targetLocation}]...`);
 
-        // Strict priority sequence matching your universal scanning layer hierarchy
         const tablesToScan = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
-        let aggregatedResults = [];
+        let aggregatedRows = [];
 
         try {
             for (const tableName of tablesToScan) {
                 const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
                 if (!sheetConfig) continue;
 
-                // Extract cached records through your dashboard module's independent engine
-                const rawRows = await window.Dashboard.getFullTableData(tableName);
-                if (!rawRows || rawRows.length === 0) continue;
+                // Query cached items through your dashboard data module
+                const dataRows = await window.Dashboard.getFullTableData(tableName);
+                if (!dataRows || dataRows.length === 0) continue;
 
                 const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
                 
-                // Discover the first active descriptor header tracking asset name strings natively
-                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool") || c.header.includes("Description")));
-
                 if (locIdx === -1) continue;
 
-                rawRows.forEach(rowObj => {
-                    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS 🌟
-                    // Digs past Microsoft Graph's nested 2D array wrapper [[v1, v2]] directly into index [0] to extract the pure string row cells
-                    let cells = null;
-                    if (rowObj.values && Array.isArray(rowObj.values)) {
-                        cells = Array.isArray(rowObj.values[0]) ? rowObj.values[0] : rowObj.values;
-                    } else {
-                        cells = rowObj;
-                    }
+                dataRows.forEach(rowObj => {
+                    // Pull values natively from index 0 inside Graph's 2D array wrapper [[v1, v2]]
+                    const rawCells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
                     
-                    if (cells && cells[locIdx] !== undefined && cells[locIdx] !== null) {
-                        const cellValue = String(cells[locIdx]).trim();
+                    if (rawCells && rawCells[locIdx] !== undefined && rawRows !== null) {
+                        const currentLocValue = String(rawCells[locIdx]).trim().toUpperCase();
                         
-                        if (cellValue === targetLocation.trim()) {
-                            aggregatedResults.push({
-                                category: sheetConfig.tabName,
-                                itemName: cells[nameIdx] || "N/A",
-                                tableName: tableName
+                        if (currentLocValue === targetLocation.trim().toUpperCase()) {
+                            // Inject metadata attributes so your standard table renderer can build row components
+                            aggregatedRows.push({
+                                index: rowObj.index,
+                                values: rawCells
                             });
                         }
                     }
                 });
             }
 
-            // Bind values to attributes so your popup print subsystem can safely query them
-            this.activeInspectedLocationData = aggregatedResults;
+            // Save matched arrays locally so the print subsystem can access them
+            this.activeInspectedLocationData = aggregatedRows;
             this.activeInspectedLocationLabel = targetLocation;
 
-            if (aggregatedResults.length === 0) {
-                tableMount.innerHTML = `
-                    <div style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9; color:#333; margin-top:15px;">
-                        Zero records are currently assigned to storage spot: "${targetLocation}".
+            // Extract the standard Location table schema configuration to use as our layout base
+            const locationConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
+            const customDisplayTitle = `Location Map: Items Stored Inside Spot [${targetLocation}]`;
+
+            if (aggregatedRows.length === 0) {
+                const container = document.getElementById("table-container");
+                container.innerHTML = `
+                    <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+                        <h3 style="color:var(--primary); margin-top:0;">📋 Empty Storage Spot</h3>
+                        <p>Zero active inventory items are currently mapped to Location_ID: <b>${targetLocation}</b>.</p>
+                        <button class="action-btn" onclick="window.loadTableData('Location')">Return to Location Map</button>
                     </div>`;
+                this.renderCommandBar("Location");
                 return;
             }
 
-            // Group the metrics dynamically by tab name for professional workshop presentation
-            const grouped = aggregatedResults.reduce((acc, item) => {
-                if (!acc[item.category]) acc[item.category] = [];
-                acc[item.category].push(item);
-                return acc;
-            }, {});
-
-            let htmlGrid = `<table class="inventory-table" id="main-data-table">`;
-            for (const [category, items] of Object.entries(grouped)) {
-                htmlGrid += `
-                    <thead>
-                        <tr>
-                            <th colspan="2" style="background:var(--primary); color:white; padding:12px; position:sticky; top:0; z-index:9999;">
-                                ${category.toUpperCase()} (${items.length} Items Present)
-                            </th>
-                        </tr>
-                        <tr>
-                            <th style="width:75%;">Item Description / Model Identification</th>
-                            <th style="width:25%; text-align:center;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-                
-                items.forEach(item => {
-                    htmlGrid += `
-                        <tr>
-                            <td class="locked-cell">${item.itemName}</td>
-                            <td style="text-align:center;">
-                                <button class="action-btn" style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" onclick="window.loadTableData('${item.tableName}')">
-                                    ✏️ View in Table
-                                </button>
-                            </td>
-                        </tr>`;
-                });
-                htmlGrid += `</tbody>`;
-            }
-            htmlGrid += `</table>`;
-
-            tableMount.innerHTML = htmlGrid;
+            // 🌟 THE MASTER COUPLING: Native Table Grid Processing 🌟
+            // Forwards matched rows directly to your proven structural table builder engine
+            this.renderTable(aggregatedRows, "Location", locationConfig, customDisplayTitle);
+            
+            // Set current state flags to swap bottom command bar button actions contextually
+            window.currentTable = "location_inspector";
+            this.renderCommandBar("location_inspector");
 
         } catch (err) {
             console.error("MAE Engine Location Inspection Failure:", err);
-            tableMount.innerHTML = "<p style='color:red; padding:20px;'>Failed to resolve inventory localization records safely.</p>";
+            this.showError("Failed to safely load inventory data lookup rows.");
         }
     }
 //=======  END: LOCATION_ID CONTENTS INSPECTOR MODULE  ================
