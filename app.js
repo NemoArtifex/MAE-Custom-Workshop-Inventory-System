@@ -2048,5 +2048,8 @@ window.getLocationDependencies = getLocationDependencies;
 window.globalClickOffHandler = globalClickOffHandler;
 window.getGraphToken = getGraphToken; 
 window.excelSerialToDate = excelSerialToDate;
+window.renderLocationInspectorControls = UI.renderLocationInspectorControls;
+window.executeLocationInspection = UI.executeLocationInspection;
+window.printInspectedLocationTable = UI.printInspectedLocationTable;
 
 startup();
