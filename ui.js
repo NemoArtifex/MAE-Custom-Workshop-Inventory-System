@@ -2169,7 +2169,7 @@ printInspectedLocationTable() {
                     table { width: 100% !important; border-collapse: collapse !important; margin-top: 15px; }
                     th, td { border: 1px solid #000000 !important; padding: 10px 12px !important; text-align: left; font-size: 10pt !important; color: #000000 !important; background: #ffffff !important; }
                     th { background-color: #f2f2f2 !important; font-weight: bold !important; text-transform: uppercase; }
-                    button, .action-btn, .edit-only-cell { display: none !important; }
+                    button, .action-btn, td:nth-child(2), th:nth-child(2) { display: none !important; } /* Cleanly drop the "Action" column from final hardcopy sheets */
                 </style>
             </head>
             <body>
@@ -2219,6 +2219,7 @@ printInspectedLocationTable() {
     async executeLocationInspection() {
         const selector = document.getElementById("mae-inspection-location-selector");
         const targetLocation = selector ? selector.value : "";
+        const tableContainer = document.getElementById("table-container");
 
         if (!targetLocation) { 
             alert("Please select a physical storage spot parameter first."); 
@@ -2227,8 +2228,9 @@ printInspectedLocationTable() {
 
         this.showLoading(`Scanning cache for items in [${targetLocation}]...`);
 
+        // The exact priority sequence of your active inventory worksheets
         const tablesToScan = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
-        let aggregatedRows = [];
+        let aggregatedResults = [];
 
         try {
             for (const tableName of tablesToScan) {
@@ -2240,58 +2242,105 @@ printInspectedLocationTable() {
                 if (!dataRows || dataRows.length === 0) continue;
 
                 const locIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
-                
+                // Discover the first active descriptor header tracking asset name strings natively
+                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool") || c.header.includes("Description")));
+
                 if (locIdx === -1) continue;
 
                 dataRows.forEach(rowObj => {
-                    // Pull values natively from index 0 inside Graph's 2D array wrapper [[v1, v2]]
+                    // Extract values cleanly from index 0 inside Graph's 2D array wrapper
                     const rawCells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
                     
                     if (rawCells && rawCells[locIdx] !== undefined && rawCells[locIdx] !== null) {
                         const currentLocValue = String(rawCells[locIdx]).trim().toUpperCase();
                         
                         if (currentLocValue === targetLocation.trim().toUpperCase()) {
-                            // Inject metadata attributes so your standard table renderer can build row components
-                            aggregatedRows.push({
-                                index: rowObj.index,
-                                values: rawCells
+                            aggregatedResults.push({
+                                category: sheetConfig.tabName,
+                                itemName: rawCells[nameIdx] || "N/A",
+                                tableName: tableName
                             });
                         }
                     }
                 });
             }
 
-            // Save matched arrays locally so the print subsystem can access them
-            this.activeInspectedLocationData = aggregatedRows;
+            // Save matched arrays locally so the print subsystem can access them cleanly
+            this.activeInspectedLocationData = aggregatedResults;
             this.activeInspectedLocationLabel = targetLocation;
 
-            // Extract the standard Location table schema configuration to use as our layout base
-            const locationConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === "Location");
-            const customDisplayTitle = `Location Map: Items Stored Inside Spot [${targetLocation}]`;
-
-            if (aggregatedRows.length === 0) {
-                const container = document.getElementById("table-container");
-                container.innerHTML = `
+            // Handle the empty storage spot layout scenario gracefully
+            if (aggregatedResults.length === 0) {
+                tableContainer.innerHTML = `
                     <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
                         <h3 style="color:var(--primary); margin-top:0;">📋 Empty Storage Spot</h3>
                         <p>Zero active inventory items are currently mapped to Location_ID: <b>${targetLocation}</b>.</p>
                         <button class="action-btn" onclick="window.loadTableData('Location')">Return to Location Map</button>
                     </div>`;
-                this.renderCommandBar("Location");
+                window.currentTable = "location_inspector";
+                this.renderCommandBar("location_inspector");
                 return;
             }
 
-            // 🌟 THE MASTER COUPLING: Native Table Grid Processing 🌟
-            // Forwards matched rows directly to your proven structural table builder engine
-            this.renderTable(aggregatedRows, "Location", locationConfig, customDisplayTitle);
-            
+            // Group the metrics dynamically by tab name for professional workshop presentation
+            const grouped = aggregatedResults.reduce((acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
+                acc[item.category].push(item);
+                return acc;
+            }, {});
+
+            // 🌟 THE SOLUTION GRID: Build a clean view mapping exactly what sits inside the spot 🌟
+            let htmlGrid = `
+                <div style="padding: 20px 0;">
+                    <div class="form-card" style="border-left:5px solid #8e44ad; padding:20px; background:#fff; margin-bottom:20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin:0; color:var(--primary);">Active Inspection: Storage Spot [${targetLocation}]</h3>
+                            <p style="margin:5px 0 0 0; font-size:0.9rem; color:#666;">Displaying all inventory records matching this physical landmark vector.</p>
+                        </div>
+                        <button class="action-btn" onclick="UI.renderLocationInspectorControls()" style="background:#8e44ad;">🔄 Change Location</button>
+                    </div>
+                    <table class="inventory-table" id="main-data-table">`;
+
+            for (const [category, items] of Object.entries(grouped)) {
+                htmlGrid += `
+                    <thead>
+                        <tr>
+                            <th colspan="2" style="background:#34495e; color:white; padding:12px; position:sticky; top:0; z-index:9999;">
+                                ${category.toUpperCase()} (${items.length} Items Present)
+                            </th>
+                        </tr>
+                        <tr>
+                            <th style="width:75%; background: var(--primary) !important;">Item Description / Model Identification</th>
+                            <th style="width:25%; text-align:center; background: var(--primary) !important;">Operational Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                items.forEach(item => {
+                    htmlGrid += `
+                        <tr>
+                            <td class="locked-cell" style="padding: 12px 15px;"><b>${item.itemName}</b></td>
+                            <td style="text-align:center; padding: 12px 15px;">
+                                <button class="action-btn" style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" onclick="window.loadTableData('${item.tableName}')">
+                                    ✏️ Go to Table
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+                htmlGrid += `</tbody>`;
+            }
+            htmlGrid += `</table></div>`;
+
+            // Overwrite the table viewport container with our targeted structural list
+            tableContainer.innerHTML = htmlGrid;
+
             // Set current state flags to swap bottom command bar button actions contextually
             window.currentTable = "location_inspector";
             this.renderCommandBar("location_inspector");
 
         } catch (err) {
             console.error("MAE Engine Location Inspection Failure:", err);
-            this.showError("Failed to safely load inventory data lookup rows.");
+            this.showError("Failed to safely load inventory content records.");
         }
     }
 //=======  END: LOCATION_ID CONTENTS INSPECTOR MODULE  ================
