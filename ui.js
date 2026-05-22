@@ -2247,7 +2247,7 @@ printInspectedLocationTable() {
                     // Pull values natively from index 0 inside Graph's 2D array wrapper [[v1, v2]]
                     const rawCells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
                     
-                    if (rawCells && rawCells[locIdx] !== undefined && rawRows !== null) {
+                    if (rawCells && rawCells[locIdx] !== undefined && rawCells[locIdx] !== null) {
                         const currentLocValue = String(rawCells[locIdx]).trim().toUpperCase();
                         
                         if (currentLocValue === targetLocation.trim().toUpperCase()) {
