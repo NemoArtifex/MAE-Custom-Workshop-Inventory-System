@@ -2249,17 +2249,22 @@ printInspectedLocationTable() {
                 if (locIdx === -1) continue;
 
                 rawRows.forEach(rowObj => {
-                    // Replicate app.js value extraction layout to safely handle both single and multi-2D array payloads
+                    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS 🌟
+                    // Digs past Microsoft Graph's nested 2D array wrapper [[v1, v2]] to find the real text row cells
                     const cells = (rowObj.values && Array.isArray(rowObj.values[0])) 
                         ? rowObj.values[0] 
                         : (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj;
                     
-                    if (cells && String(cells[locIdx]).trim() === targetLocation) {
-                        aggregatedResults.push({
-                            category: sheetConfig.tabName,
-                            itemName: cells[nameIdx] || "N/A",
-                            tableName: tableName
-                        });
+                    if (cells && cells[locIdx] !== undefined) {
+                        const cellValue = String(cells[locIdx]).trim();
+                        
+                        if (cellValue === targetLocation.trim()) {
+                            aggregatedResults.push({
+                                category: sheetConfig.tabName,
+                                itemName: cells[nameIdx] || "N/A",
+                                tableName: tableName
+                            });
+                        }
                     }
                 });
             }
