@@ -1599,6 +1599,7 @@ async function handleQuickUpdate(tableName) {
 // ========END handleQuickUpdate ============
 
 // =========== UPDATED UNIVERSAL SCANNER LOOKUP ===========
+/*
 async function handleUniversalLookup(scannedId) {
     // RUGGED: Scanners often send hidden spaces or newline characters
     const cleanId = scannedId.toString().trim();
@@ -1694,7 +1695,207 @@ async function handleUniversalLookup(scannedId) {
         UI.showError("Network error during lookup. Check workshop internet.");
     }
 }
+    */
 // =========== END UPDATED LOOKUP ===========
+
+
+
+///////////////////////////////////////////
+/// new handleUnversalLookup ==============
+//===========================
+// =========================================================================
+// REGISTER GUARD: COUPLING INTELLECTUAL INTRA-ROUTER (app.js Upgrade)
+// =========================================================================
+async function handleUniversalLookup(scannedId) {
+    const cleanId = scannedId.toString().trim();
+    console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
+
+    // 🌟 THE INTAKE GUARDRAIL AXIS BLOCKER 🌟
+    // Check if the user is actively working inside a registration view or form layout panel
+    const formPanelActive = document.getElementById("entry-form") !== null;
+    const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
+
+    if (isRegistrationMode) {
+        console.log("MAE Safety Guard: Registration active. Diverting scanner to Data Integrity Validation Engine.");
+        
+        // 1. Scan your in-memory array database partitions to map tag existence patterns
+        const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+        let matchedAssetRowsList = [];
+        let matchingTableName = "";
+
+        try {
+            for (const table of priorityTables) {
+                const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === table);
+                const rowsData = await Dashboard.getFullTableData(table);
+                if (!rowsData || rowsData.length === 0) continue;
+
+                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                if (tagIdx === -1) continue;
+
+                const internalMatches = rowsData.filter(row => {
+                    const rowCells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
+                    return rowCells && String(rowCells[tagIdx]).trim() === cleanId;
+                });
+
+                if (internalMatches.length > 0) {
+                    matchedAssetRowsList = internalMatches;
+                    matchingTableName = table;
+                    break; // Duplicate tag found, break scanning loop early
+                }
+            }
+
+            const tagInputFieldBox = document.getElementById("field-Tag_ID");
+
+            // SCENARIO 1: BARCODE IS Completely FRESH (Unused)
+            if (matchedAssetRowsList.length === 0) {
+                if (tagInputFieldBox) {
+                    tagInputFieldBox.value = cleanId;
+                    tagInputFieldBox.style.borderColor = "#27ae60"; // Safe green border
+                    tagInputFieldBox.style.backgroundColor = "#e8f8f5"; // Mint tint confirmation sheet
+                    console.log("MAE Validation Engine: Tag completely unique. Code locked into form box.");
+                } else {
+                    alert(`Fresh Tag Checked: ${cleanId}\n\nPlease click into an input field or ensure a form is deployed to lock it down.`);
+                }
+                return;
+            }
+
+            // Extract the matching worksheet config profile references
+            const linkedSheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === matchingTableName);
+            const rawRowCells = (matchedAssetRowsList[0].values && Array.isArray(matchedAssetRowsList[0].values[0])) 
+                ? matchedAssetRowsList[0].values[0] 
+                : matchedAssetRowsList[0].values;
+            const nameIdx = linkedSheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
+            const matchedItemLabelName = rawRowCells ? rawRowCells[nameIdx] : "Unknown Asset";
+
+            const uniqueTablesList = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools"];
+
+            // SCENARIO 2: BARCODE IS ALREADY ASSIGNED TO A STRICTLY "UNIQUE" INDIVIDUAL ASSET MATRIX
+            if (uniqueTablesList.includes(matchingTableName)) {
+                // Wipe data out of the field instantly to protect ledger calculations from duplicate key failures
+                if (tagInputFieldBox) {
+                    tagInputFieldBox.value = "";
+                    tagInputFieldBox.style.borderColor = "#e74c3c";
+                    tagInputFieldBox.style.backgroundColor = "#fadbd8";
+                }
+                alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual asset record:\n\n• Category: ${linkedSheetConfig.tabName}\n• Item Name: "${matchedItemLabelName}"\n\nTo protect database integrity, you CANNOT assign this barcode to another item. Grab a fresh barcode sticker roll.`);
+                return;
+            }
+
+            // SCENARIO 3: BARCODE IS MAPPED TO A "MULTIPLE" CONTAINER/DRAWER MATRIX SHEET
+            const doubleCheckProceed = confirm(
+                `MAE SYSTEM NOTIFICATION: Shared Container Tag Detected!\n\n` +
+                `This barcode is currently assigned to a storage group inside the database ledger:\n\n` +
+                `• Worksheet Location: ${linkedSheetConfig.tabName}\n` +
+                `• Current Drawer Content: "${matchedItemLabelName}"\n\n` +
+                `Would you like to bundle this new item row under the same multi-item Tag_ID inside this physical container space?`
+            );
+
+            if (doubleCheckProceed) {
+                if (tagInputFieldBox) {
+                    tagInputFieldBox.value = cleanId;
+                    tagInputFieldBox.style.borderColor = "#2980b9"; // Shared category operational blue
+                    tagInputFieldBox.style.backgroundColor = "#fffde7"; // Action alert yellow tint
+                }
+                console.log(`MAE Validation Engine: User confirmed container stack allocation matching Tag: \${cleanId}`);
+            } else {
+                if (tagInputFieldBox) {
+                    tagInputFieldBox.value = "";
+                    tagInputFieldBox.style.borderColor = "var(--border)";
+                    tagInputFieldBox.style.backgroundColor = "#ffffff";
+                }
+                console.log("MAE Validation Engine: Container allocation rejected by user choice.");
+            }
+
+        } catch (err) {
+            console.error("MAE Security Module: Ingest validation crash caught.", err);
+            alert("Intake validation error. Ensure cache arrays are aligned.");
+        }
+        return; 
+    }
+
+    // =========================================================================
+    // STANDARD VIEW NAVIGATION MODULE LAYER (Only fires if NOT in entry form)
+    // =========================================================================
+    UI.showLoading(`Searching Shop Records for: \${cleanId}...`);
+    const tables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    
+    try {
+        const token = await window.getGraphToken();
+        for (const tableName of tables) {
+            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            if (!sheetConfig) continue;
+          //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer \${token}` } });
+
+            if (response.ok) {
+                const data = await response.json();
+                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
+                if (tagIdx === -1) continue;
+                
+                const matchedRows = data.value.filter(row => {
+                    const rowCells = row.values[0]; 
+                    return String(rowCells[tagIdx]).trim() === cleanId;
+                });
+                
+                if (matchedRows.length > 0) {
+                    window.currentTable = tableName;
+                    const uniqueTables = ["Resell_Inventory","Shop_Machinery", "Shop_Power_Tools"];
+                    
+                    if (uniqueTables.includes(tableName)) {
+                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
+                        return; 
+                    }
+
+                    if (matchedRows.length === 1) {
+                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
+                    } else {
+                        const auditData = matchedRows.map(row => {
+                            const rowCells = row.values[0];
+                            return {
+                                category: sheetConfig.tabName,
+                                itemName: rowCells[nameIdx] || "N/A",
+                                mae_id: rowCells[0],
+                                tableName: tableName
+                            };
+                        });
+                        UI.renderVirtualSearchHub(auditData);
+                    }
+                    return; 
+                }
+            }
+        }       
+        
+        UI.showError(`
+            <div style="text-align:center; padding: 20px;">
+                <h3 style="color:var(--primary);">New Tag Detected</h3>
+                <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
+                    ID: ${cleanId}
+                </div>
+                <p>This ID is not recognized in the priority inventory lists.</p>
+                <button class="action-btn" onclick="handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
+                    ➕ Register New Item
+                </button>
+                <button class="action-btn cancel-btn" onclick="loadTableData('Master_Dashboard')" style="width:100%;">
+                    Discard Scan
+                </button>
+            </div> 
+        `);
+
+    } catch (error) {
+        console.error("MAE System: Lookup failed", error);
+        UI.showError("Network error during lookup. Check workshop internet.");
+    }
+}
+
+
+
+//=====================================//
+//=======================================//
+//=======  END NEW handleuniversal Lookup 
+
+
 
 // ============ FUNCTION TO HANDLE SINGLE-ROW UPDATES===========
 async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {

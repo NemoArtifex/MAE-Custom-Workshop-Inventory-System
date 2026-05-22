@@ -2446,27 +2446,29 @@ printInspectedLocationTable() {
         const formZone = document.getElementById("central-form-render-zone");
         formZone.innerHTML = ""; // Clean workspace slate
 
+        // 🌟 MAE REGISTRATION LOCK FLAG 🌟
+        // Instructs your global background listener that an intake process is active
+        window.currentTable = "inventory_registration";
+
         // Trigger your proven, table-contextual form generator model
         this.renderEntryForm('add', targetTable, sheetConfig, async () => {
             const success = await window.submitNewRow(targetTable, sheetConfig);
             if (success) {
                 formZone.innerHTML = ""; // Clear active form on successful commit
+                window.currentTable = "Master_Dashboard"; // Revert routing lock safely
                 alert("Central Entry Successfully Committed to OneDrive Ledger!");
             }
         });
 
-        // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: FAILSAFE FOCUS 🌟
-        // Wait for form card elements to mount, then automatically snap focus to the primary item name field
+        // Failsafe input cursor focus routing macro
         setTimeout(() => {
             const formCard = document.getElementById("entry-form");
             if (!formCard) return;
 
-            // Target the very first visible descriptive text input field (always the Name/Model field across your schemas)
             const descriptiveInputField = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
             if (descriptiveInputField) {
                 descriptiveInputField.focus();
                 descriptiveInputField.style.backgroundColor = "#fffde7"; // Highlight active typing field yellow
-                console.log("MAE Central Portal: Primary input focus locked to field ID:", descriptiveInputField.id);
             }
         }, 150);
     },
