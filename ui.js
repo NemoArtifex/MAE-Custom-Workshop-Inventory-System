@@ -486,7 +486,11 @@ renderCommandBar(tableName) {
         `;
     }
     else {
-        buttons = `<button class="action-btn" id="btn-print">Print Dashboard</button>`;
+        buttons = `
+            <button class="action-btn" onclick="UI.renderCentralRegistrationWizard()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
+            <button class="action-btn" onclick="runUntaggedAudit()" style="background:#c0392b; font-weight:bold;">⚠️ Audit Untagged Items</button>
+            <button class="action-btn" id="btn-print">Print Dashboard</button>   
+        `;
     }
 
     container.innerHTML = `<div class="command-bar">${buttons}</div>`;
@@ -2392,8 +2396,96 @@ printInspectedLocationTable() {
         }
         // Direct execution routing back down to your core app.js scanning logic script block
         window.executeFocusedAssetSearch(queryText);
-    }
+    },
 //==========  END: GLOBAL FOCUSED-FIELD SEARCH INTERFACE ===============
+
+// =========================================================================
+    // THE CENTRAL INTAKE REGISTRATION PORTAL 
+    // =========================================================================
+    renderCentralRegistrationWizard() {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        title.innerText = "Administrative: Centralized Item Intake Portal";
+
+        let html = `
+            <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Fast Track Central Asset Registration</h4>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">Streamline setup: type the primary item or machinery name description, select its sheet classification, and generate the localized database form.</p>
+                
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom:15px;">
+                    <div style="flex: 2; min-width: 250px; display: flex; flex-direction: column;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Item / Tool / Machinery Name</label>
+                        <input type="text" id="mae-central-name-input" placeholder="e.g., DeWalt Miter Saw, 1/2-Inch Bolts..." style="height:45px; padding:0 12px; border:1px solid var(--border); border-radius: 4px; font-size:1rem;">
+                    </div>
+                    <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification</label>
+                        <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
+                            <option value="">-- Choose Target Table --</option>
+                            <option value="Shop_Machinery">Shop Machinery</option>
+                            <option value="Shop_Power_Tools">Shop Power Tools</option>
+                            <option value="Shop_Hand_Tools">Shop Hand Tools</option>
+                            <option value="Shop_Consumables">Shop Consumables</option>
+                            <option value="Resell_Inventory">Resell Inventory</option>
+                        </select>
+                    </div>
+                    <button class="action-btn" onclick="UI.launchContextualFormFromCentral()" style="background:var(--primary); height:45px; margin-top:22px; font-weight:bold;">⚡ Build System Form</button>
+                </div>
+            </div>
+            <div id="central-form-render-zone"></div>
+        `;
+        container.innerHTML = html;
+        this.renderCommandBar("");
+    },
+
+    launchContextualFormFromCentral() {
+        const nameInput = document.getElementById("mae-central-name-input");
+        const tableSelect = document.getElementById("mae-central-table-selector");
+        
+        const rawName = nameInput ? nameInput.value.trim() : "";
+        const targetTable = tableSelect ? tableSelect.value : "";
+
+        if (!rawName || !targetTable) {
+            alert("Mandatory Fields Required:\n\nPlease enter an item description name and choose an active inventory classification table target.");
+            return;
+        }
+
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+        const formZone = document.getElementById("central-form-render-zone");
+        formZone.innerHTML = ""; // Clean workspace slate
+
+        // Trigger your proven, table-contextual form generator model
+        this.renderEntryForm('add', targetTable, sheetConfig, async () => {
+            const success = await window.submitNewRow(targetTable, sheetConfig);
+            if (success) {
+                // Clear the intake wizard elements for fluid sequential indexing
+                if (nameInput) nameInput.value = "";
+                formZone.innerHTML = "";
+                alert("Central Entry Successfully Committed to OneDrive Ledger!");
+            }
+        });
+
+        // 🌟 AUTOMATED PRE-FILL MECHANICS 🌟
+        // Inject the pre-typed description name directly into the correct localized field box
+        setTimeout(() => {
+            // Evaluates header keys matching your configurations
+            const targetedFieldBox = document.getElementById("field-ItemName") || 
+                                     document.getElementById("field-MachineNameBrandModel") || 
+                                     document.getElementById("field-ToolNameBrandModel") ||
+                                     document.getElementById("field-ToolNameBrandModelDescription");
+            
+            if (targetedFieldBox) {
+                targetedFieldBox.value = rawName;
+                targetedFieldBox.style.backgroundColor = "#e8f8f5"; // Confirm field lock tint visually
+            }
+
+            // Auto-focus the Tag_ID input box to capture the immediate physical notebook barcode scan stream
+            const tagFieldBox = document.getElementById("field-Tag_ID");
+            if (tagFieldBox) tagFieldBox.focus();
+        }, 300);
+    }
+
+    //========  END THE CENTRAL INTAKE REGISTRATION PORTAL ==========
+
 };
 
 window.UI = UI;
