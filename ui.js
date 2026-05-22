@@ -448,6 +448,16 @@ renderCommandBar(tableName) {
         return;
     }
 
+    // --- RULE 2C: VIRTUAL INVENTORY SEARCH VIEW COMMAND BAR ---
+    if (normalizedName === "inventory_search" || window.currentTable === "inventory_search") {
+        container.innerHTML = `
+            <div class="command-bar" style="justify-content: center;">
+                <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9;">🔍 Run New Search</button>
+                <button class="action-btn" onclick="window.loadTableData('Location')">← Back to Location Map</button>
+            </div>`;
+        return;
+    }
+
     // --- RULE 3: STANDARD INVENTORY TABLES ---
     if (!sheetConfig) return;
     const isDashboard = normalizedName.includes("dashboard");
@@ -459,6 +469,7 @@ renderCommandBar(tableName) {
     if (normalizedName === "location") {
         buttons = `
             <button class="action-btn" onclick="UI.renderLocationInspectorControls()" style="background:#8e44ad; font-weight:bold;">📊 Inspect on Location_ID</button>
+            <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9; font-weight:bold;">🔍 Search Inventory</button>
             <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
             <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
             <button class="action-btn" id="btn-print">Print Location Map</button>
@@ -2342,8 +2353,47 @@ printInspectedLocationTable() {
             console.error("MAE Engine Location Inspection Failure:", err);
             this.showError("Failed to safely load inventory content records.");
         }
-    }
+    },
 //=======  END: LOCATION_ID CONTENTS INSPECTOR MODULE  ================
+
+// =========  GLOBAL FOCUSED-FIELD SEARCH INTERFACE ===============
+    renderSearchControls() {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        
+        title.innerText = "Inventory Search: Find Item Physical Location";
+        window.currentTable = "inventory_search"; // Establish virtual routing state context
+
+        let html = `
+            <div class="form-card" style="border-left:5px solid #2980b9; padding:25px; background:#fff; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">🔍 Narrow Focused Item Lookup</h4>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">Enter a partial item name, brand, model description, or category keyword to cross-reference all tables and find where it is stored.</p>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" id="mae-global-search-input" placeholder="Enter keyword (e.g., DeWalt, Bolt, Bandsaw)..." style="flex:1; max-width:400px; height:50px; padding: 0 15px; border:1px solid var(--border); border-radius:4px; font-size:1rem;" autofocus>
+                    <button class="action-btn" style="background:var(--accent); height:50px; font-size:1rem;" onclick="triggerAssetSearch()">Run Search Matrix</button>
+                </div>
+            </div>
+            <div id="location-search-results-mount"></div>
+        `;
+
+        container.innerHTML = html;
+        this.renderCommandBar("inventory_search");
+
+        // Set focus to text field automatically for fluid HID keyboard/scanner compatibility
+        setTimeout(() => document.getElementById("mae-global-search-input")?.focus(), 50);
+    },
+
+    triggerAssetSearch() {
+        const inputEl = document.getElementById("mae-global-search-input");
+        const queryText = inputEl ? inputEl.value.trim() : "";
+        if (!queryText) {
+            alert("Please enter a tool or part description search keyword phrase first.");
+            return;
+        }
+        // Direct execution routing back down to your core app.js scanning logic script block
+        window.executeFocusedAssetSearch(queryText);
+    }
+//==========  END: GLOBAL FOCUSED-FIELD SEARCH INTERFACE ===============
 };
 
 window.UI = UI;

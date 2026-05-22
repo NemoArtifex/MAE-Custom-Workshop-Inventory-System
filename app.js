@@ -2022,7 +2022,105 @@ async function getLocationDependencies(locationId) {
     return dependencies;
 }
 
-//==========  END Getting Location Dependencies to support Deletion of Location_ID
+//==========  END Getting Location Dependencies to support Deletion of Location_ID===
+
+// =========================================================================
+//  GLOBAL FOCUSED-FIELD SEARCH SCANNER ENGINE 
+// =========================================================================
+async function executeFocusedAssetSearch(searchQuery) {
+    const cleanQuery = searchQuery.toString().trim().toLowerCase();
+    console.log("MAE Search Engine: Sweeping memory cache records for lookup:", cleanQuery);
+
+    UI.showLoading(`Scanning All Shop Records for: "${searchQuery}"...`);
+
+    // Prioritized operational asset tables requiring focus field evaluation checks
+    const tablesToSearch = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+    let consolidatedMatches = [];
+
+    try {
+        for (const tableName of tablesToSearch) {
+            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            if (!sheetConfig) continue;
+
+            // Fetch partition dataset array cleanly from your dashboard module
+            const dataRows = await Dashboard.getFullTableData(tableName);
+            if (!dataRows || dataRows.length === 0) continue;
+
+            // Extract index references only for human-readable label rows (Enforces Focus-Field constraint)
+            const targetedHeaderIndices = [];
+            sheetConfig.columns.forEach((col, idx) => {
+                const headerName = col.header.toLowerCase();
+                if (headerName.includes("name") || 
+                    headerName.includes("tool") || 
+                    headerName.includes("machine") || 
+                    headerName.includes("description") || 
+                    headerName.includes("model") ||
+                    headerName.includes("remarks") ||
+                    headerName.includes("brand")) {
+                    targetedHeaderIndices.push(idx);
+                }
+            });
+
+            // Target column index vectors mapping your identifier labels and physical storage spot metrics
+            const firstVisibleNameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool") || c.header.includes("Description")));
+            const locationColumnIdx = sheetConfig.columns.findIndex(c => c.header === "Location_ID");
+
+            dataRows.forEach(rowObj => {
+                // Flatten structural array blocks cleanly matching your standard Graph API row mappings
+                const cells = (rowObj.values && Array.isArray(rowObj.values)) 
+                    ? rowObj.values[0] 
+                    : (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj;
+                    
+                if (!cells) return;
+
+                let recordMatchesQuery = false;
+                for (const colIdx of targetedHeaderIndices) {
+                    const cellContents = String(cells[colIdx] || "").toLowerCase();
+                    if (cellContents.includes(cleanQuery)) {
+                        recordMatchesQuery = true;
+                        break; // Substring verified, escape column check loop early for speed
+                    }
+                }
+
+                if (recordMatchesQuery) {
+                    // Extract the item's physical storage spot coordinate vector
+                    const itemPhysicalLocation = cells[locationColumnIdx] || "TBD";
+                    
+                    consolidatedMatches.push({
+                        category: `${sheetConfig.tabName} [Physical Storage Spot: ${itemPhysicalLocation}]`,
+                        itemName: cells[firstVisibleNameIdx] || "N/A",
+                        tableName: tableName
+                    });
+                }
+            });
+        }
+
+        console.log(`MAE Search Engine: Sweeping complete. Discovered ${consolidatedMatches.length} matching rows.`);
+        
+        if (consolidatedMatches.length === 0) {
+            UI.showError(`
+                <div style="text-align:center; padding: 25px;">
+                    <h3 style="color:var(--primary);">No Matches Located</h3>
+                    <p>The system string search for <b>"${searchQuery}"</b> did not find any inventory records matching your identifier fields.</p>
+                    <button class="action-btn" onclick="renderSearchControls()" style="width:100%; max-width:300px; margin-top:15px;">Run New Search</button>
+                </div>
+            `);
+            return;
+        }
+
+        // Forward matching collections down to your Multiple Items visual Search Hub viewport
+        UI.renderVirtualSearchHub(consolidatedMatches);
+
+    } catch (err) {
+        console.error("MAE Search Engine: Processor routine loop crashed.", err);
+        UI.showError("Search matrix lookup processing failed. Check network link indicators.");
+    }
+}
+
+//=======  END  GLOBAL FOCUSED-FIELD SEARCH SCANNER ENGINE ==========
+
+
+
 
 window.Dashboard = Dashboard;
 window.UI = UI;
@@ -2051,5 +2149,8 @@ window.excelSerialToDate = excelSerialToDate;
 window.renderLocationInspectorControls = UI.renderLocationInspectorControls;
 window.executeLocationInspection = UI.executeLocationInspection;
 window.printInspectedLocationTable = UI.printInspectedLocationTable;
+window.executeFocusedAssetSearch = executeFocusedAssetSearch;
+window.renderSearchControls = UI.renderSearchControls;
+window.triggerAssetSearch = UI.triggerAssetSearch;
 
 startup();
