@@ -2211,5 +2211,6 @@ window.triggerAssetSearch = UI.triggerAssetSearch;
 window.runUntaggedAudit = runUntaggedAudit;
 window.renderCentralRegistrationWizard = UI.renderCentralRegistrationWizard;
 window.renderUntaggedAuditGrid = UI.renderUntaggedAuditGrid;
+window.submitNewRow = submitNewRow;
 
 startup();

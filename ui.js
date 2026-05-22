@@ -2409,16 +2409,12 @@ printInspectedLocationTable() {
 
         let html = `
             <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
-                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Fast Track Central Asset Registration</h4>
-                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">Streamline setup: type the primary item or machinery name description, select its sheet classification, and generate the localized database form.</p>
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">Select a target inventory classification sheet from the dropdown below to instantly deploy its specialized database entry form.</p>
                 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom:15px;">
-                    <div style="flex: 2; min-width: 250px; display: flex; flex-direction: column;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Item / Tool / Machinery Name</label>
-                        <input type="text" id="mae-central-name-input" placeholder="e.g., DeWalt Miter Saw, 1/2-Inch Bolts..." style="height:45px; padding:0 12px; border:1px solid var(--border); border-radius: 4px; font-size:1rem;">
-                    </div>
-                    <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification</label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom:5px;">
+                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Select Target Inventory Classification Sheet</label>
                         <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
                             <option value="">-- Choose Target Table --</option>
                             <option value="Shop_Machinery">Shop Machinery</option>
@@ -2428,7 +2424,7 @@ printInspectedLocationTable() {
                             <option value="Resell_Inventory">Resell Inventory</option>
                         </select>
                     </div>
-                    <button class="action-btn" onclick="UI.launchContextualFormFromCentral()" style="background:var(--primary); height:45px; margin-top:22px; font-weight:bold;">⚡ Build System Form</button>
+                    <button class="action-btn" onclick="UI.launchContextualFormFromCentral()" style="background:var(--primary); height:45px; margin-top:22px; font-weight:bold;">⚡ Deploy System Form</button>
                 </div>
             </div>
             <div id="central-form-render-zone"></div>
@@ -2438,14 +2434,11 @@ printInspectedLocationTable() {
     },
 
     launchContextualFormFromCentral() {
-        const nameInput = document.getElementById("mae-central-name-input");
         const tableSelect = document.getElementById("mae-central-table-selector");
-        
-        const rawName = nameInput ? nameInput.value.trim() : "";
         const targetTable = tableSelect ? tableSelect.value : "";
 
-        if (!rawName || !targetTable) {
-            alert("Mandatory Fields Required:\n\nPlease enter an item description name and choose an active inventory classification table target.");
+        if (!targetTable) {
+            alert("Mandatory Selection Required:\n\nPlease choose an active inventory classification table target from the dropdown list first.");
             return;
         }
 
@@ -2457,31 +2450,25 @@ printInspectedLocationTable() {
         this.renderEntryForm('add', targetTable, sheetConfig, async () => {
             const success = await window.submitNewRow(targetTable, sheetConfig);
             if (success) {
-                // Clear the intake wizard elements for fluid sequential indexing
-                if (nameInput) nameInput.value = "";
-                formZone.innerHTML = "";
+                formZone.innerHTML = ""; // Clear active form on successful commit
                 alert("Central Entry Successfully Committed to OneDrive Ledger!");
             }
         });
 
-        // 🌟 AUTOMATED PRE-FILL MECHANICS 🌟
-        // Inject the pre-typed description name directly into the correct localized field box
+        // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: FAILSAFE FOCUS 🌟
+        // Wait for form card elements to mount, then automatically snap focus to the primary item name field
         setTimeout(() => {
-            // Evaluates header keys matching your configurations
-            const targetedFieldBox = document.getElementById("field-ItemName") || 
-                                     document.getElementById("field-MachineNameBrandModel") || 
-                                     document.getElementById("field-ToolNameBrandModel") ||
-                                     document.getElementById("field-ToolNameBrandModelDescription");
-            
-            if (targetedFieldBox) {
-                targetedFieldBox.value = rawName;
-                targetedFieldBox.style.backgroundColor = "#e8f8f5"; // Confirm field lock tint visually
-            }
+            const formCard = document.getElementById("entry-form");
+            if (!formCard) return;
 
-            // Auto-focus the Tag_ID input box to capture the immediate physical notebook barcode scan stream
-            const tagFieldBox = document.getElementById("field-Tag_ID");
-            if (tagFieldBox) tagFieldBox.focus();
-        }, 300);
+            // Target the very first visible descriptive text input field (always the Name/Model field across your schemas)
+            const descriptiveInputField = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
+            if (descriptiveInputField) {
+                descriptiveInputField.focus();
+                descriptiveInputField.style.backgroundColor = "#fffde7"; // Highlight active typing field yellow
+                console.log("MAE Central Portal: Primary input focus locked to field ID:", descriptiveInputField.id);
+            }
+        }, 150);
     },
 
     //========  END THE CENTRAL INTAKE REGISTRATION PORTAL ==========
