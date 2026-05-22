@@ -2482,9 +2482,71 @@ printInspectedLocationTable() {
             const tagFieldBox = document.getElementById("field-Tag_ID");
             if (tagFieldBox) tagFieldBox.focus();
         }, 300);
-    }
+    },
 
     //========  END THE CENTRAL INTAKE REGISTRATION PORTAL ==========
+
+    //====== Virtual Table View Renderer for UNTAGGED Audit ========
+
+    renderUntaggedAuditGrid(auditData) {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        title.innerText = "Audit: Items Awaiting Physical Tag Assignment";
+
+        if (!auditData || auditData.length === 0) {
+            container.innerHTML = `
+                <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+                    <h3 style="color:#27ae60; margin-top:0;">✅ Tag Compliance Verified</h3>
+                    <p>Excellent discipline! Every single asset inside the workshop database ledger has a registered Tag_ID.</p>
+                    <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">Return to Dashboard</button>
+                </div>`;
+            this.renderCommandBar("");
+            return;
+        }
+
+        const grouped = auditData.reduce((acc, item) => {
+            if (!acc[item.category]) acc[item.category] = [];
+            acc[item.category].push(item);
+            return acc;
+        }, {});
+
+        let html = `<table class="inventory-table" id="main-data-table">`;
+        for (const [category, items] of Object.entries(grouped)) {
+            html += `
+                <thead>
+                    <tr><th colspan="2" style="background:#c0392b; color:white; padding:12px;">${category.toUpperCase()}</th></tr>
+                    <tr><th style="width:60%;">Item Description Name</th><th style="width:40%;">Scan / Type New Tag_ID Reference</th></tr>
+                </thead>
+                <tbody>`;
+            
+            items.forEach(item => {
+                const htmlRowId = `untagged-row-${item.mae_id}`;
+                html += `
+                    <tr id="${htmlRowId}" style="transition: opacity 0.4s ease;">
+                        <td class="locked-cell"><b>${item.itemName}</b></td>
+                        <td>
+                            <input type="text" placeholder="Scan notebook page or barcode label here..." 
+                                   style="width:100%; height:38px; background:#fffde7; border:1px solid var(--accent); padding:0 8px; font-weight:bold;"
+                                   onchange="handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
+                        </td>
+                    </tr>`;
+            });
+        }
+        html += `</tbody></table>`;
+        
+        container.innerHTML = html;
+
+        // Load custom bottom action controls row
+        const actionZone = document.getElementById("action-bar-zone");
+        if (actionZone) {
+            actionZone.innerHTML = `
+                <div class="command-bar" style="justify-content: center;">
+                    <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
+                </div>`;
+        }
+    }
+
+//====== END  Virtual Table View Renderer for UNTAGGED Audit ========
 
 };
 

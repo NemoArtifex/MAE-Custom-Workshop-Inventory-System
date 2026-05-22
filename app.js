@@ -1346,6 +1346,17 @@ async function submitNewRow(tableName, sheetConfig) {
         return input.value.trim();
     });
 
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: ENFORCE TAG_ID DISCIPLINE 🌟
+    const tagColumnIndex = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+    if (tagColumnIndex !== -1) {
+        const rawTagVal = rowData[tagColumnIndex];
+        // If the Tag_ID is empty, null, or whitespace, force-inject the absolute string token "UNTAGGED"
+        if (rawTagVal === "" || rawTagVal === null || (typeof rawTagVal === 'string' && rawTagVal.trim() === "")) {
+            rowData[tagColumnIndex] = "UNTAGGED";
+            console.log(`MAE Intake Engine: Blank tag detected. Enforcing fallback default token: [UNTAGGED]`);
+        }
+    }
+
     try {
         const token = await window.getGraphToken();
         const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
@@ -2119,6 +2130,51 @@ async function executeFocusedAssetSearch(searchQuery) {
 
 //=======  END  GLOBAL FOCUSED-FIELD SEARCH SCANNER ENGINE ==========
 
+// =========================================================================
+// UNTAGGED ASSETS AUDIT AND REGISTRATION SUB-SYSTEM 
+// =========================================================================
+async function runUntaggedAudit() {
+    UI.showLoading("Performing cross-table audit of UNTAGGED assets...");
+    
+    const inventoryTables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+    let untaggedResultsList = [];
+
+    try {
+        for (const tableName of inventoryTables) {
+            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            const dataRows = await Dashboard.getFullTableData(tableName); 
+
+            if (dataRows && dataRows.length > 0) {
+                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool") || c.header.includes("Description")));
+
+                dataRows.forEach(rowObj => {
+                    const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj.values;
+                    
+                    // Match rows containing our strict default fallback code string "UNTAGGED"
+                    if (cells && String(cells[tagIdx]).trim().toUpperCase() === "UNTAGGED") {
+                        untaggedResultsList.push({
+                            category: sheetConfig.tabName,
+                            itemName: cells[nameIdx] || "N/A",
+                            mae_id: cells, // Index 0 handles primary mapping keys
+                            tableName: tableName
+                        });
+                    }
+                });
+            }
+        }
+
+        // Forward matched arrays straight to our dedicated virtual table layout renderer inside ui.js
+        UI.renderUntaggedAuditGrid(untaggedResultsList);
+
+    } catch (error) {
+        console.error("MAE Engine Untagged Cross-Table Audit Crashed:", error);
+        UI.showError("Audit loop processing was interrupted. Ensure local connection is healthy.");
+    }
+}
+
+//====== END UNTAGGED ASSETS AUDIT AND REGISTRATION SUB-SYSTEM ==========
+
 
 
 
@@ -2152,5 +2208,8 @@ window.printInspectedLocationTable = UI.printInspectedLocationTable;
 window.executeFocusedAssetSearch = executeFocusedAssetSearch;
 window.renderSearchControls = UI.renderSearchControls;
 window.triggerAssetSearch = UI.triggerAssetSearch;
+window.runUntaggedAudit = runUntaggedAudit;
+window.renderCentralRegistrationWizard = UI.renderCentralRegistrationWizard;
+window.renderUntaggedAuditGrid = UI.renderUntaggedAuditGrid;
 
 startup();
