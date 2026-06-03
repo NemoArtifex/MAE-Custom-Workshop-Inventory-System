@@ -1525,6 +1525,8 @@ async function deleteExcelRow(tableName, rowIndex) {
 
 //====== END delete Excel Row ============
 
+
+
 //======= FUNCTION handleQuickUpdate ================
 async function handleQuickUpdate(tableName) {
     const table = document.getElementById("main-data-table");
@@ -1598,113 +1600,10 @@ async function handleQuickUpdate(tableName) {
 
 // ========END handleQuickUpdate ============
 
-// =========== UPDATED UNIVERSAL SCANNER LOOKUP ===========
-/*
-async function handleUniversalLookup(scannedId) {
-    // RUGGED: Scanners often send hidden spaces or newline characters
-    const cleanId = scannedId.toString().trim();
-    console.log("MAE System: Searching Ledger for ID:", cleanId);
-    
-    UI.showLoading(`Searching Shop Records for: ${cleanId}...`);
-    
-    // Priority order for search
-    const tables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
-    
-    try {
-        const token = await window.getGraphToken();
 
-        for (const tableName of tables) {
-            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-            if (!sheetConfig) continue;
-            // API path to the specific table
-            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
-            
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                
-                // FInd index of the Tag_ID column
-                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
-                // Finds the first unhidden column containing "Name" or "Tool"
-                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
-                if (tagIdx === -1) continue;
-                
-                // Find ALL rows where Tag_ID matches (allows for "Multiple" tags)
-                const matchedRows = data.value.filter(row => {
-                    const rowCells = row.values[0]; 
-                    return String(rowCells[tagIdx]).trim() === cleanId;
-                });
-                
-                if (matchedRows.length > 0) {
-                    console.log(`MAE System: Found ${matchedRows.length} match(es) in ${tableName}`);
-                    window.currentTable = tableName;
-
-                    const uniqueTables = ["Resell_Inventory","Shop_Machinery", "Shop_Power_Tools"];
-                    if (uniqueTables.includes(tableName)) {
-                        console.log("MAE Integrity: Unique item detected. Blocking 'Add New'.");
-                        // Only allow View/Edit, do not show the "Register New Item" prompt
-                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
-                        return; 
-                    }
-
-
-
-                    // If it is just ONE item (Unique), use your existing Card view
-                    if (matchedRows.length === 1) {
-                        UI.renderScanResultCard(matchedRows[0].values[0], tableName, sheetConfig, matchedRows[0].index);
-                    } else {
-                        // 🌟 NEW CAPABILITY: If multiple items share this tag (like a drawer), 
-                        // map them and send them to the Virtual Table Hub we will build next.
-                        const auditData = matchedRows.map(row => {
-                            const rowCells = row.values[0];
-                            return {
-                                category: sheetConfig.tabName,
-                                itemName: rowCells[nameIdx] || "N/A",
-                                mae_id: rowCells[0], // Column 0
-                                tableName: tableName
-                            };
-                        });
-                        UI.renderVirtualSearchHub(auditData);
-                    }
-                    return; 
-                }
-            }
-        }       
-        // NO MATCH FOUND: Industrial Prompt
-        UI.showError(`
-            <div style="text-align:center; padding: 20px;">
-                <h3 style="color:var(--primary);">New Tag Detected</h3>
-                <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
-                    ID: ${cleanId}
-                </div>
-                <p>This ID is not recognized in the priority inventory lists.</p>
-                <button class="action-btn" onclick="handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
-                    ➕ Register New Item
-                </button>
-                <button class="action-btn cancel-btn" onclick="loadTableData('Master_Dashboard')" style="width:100%;">
-                    Discard Scan
-                </button>
-            </div> 
-        `);
-
-    } catch (error) {
-        console.error("MAE System: Lookup failed", error);
-        UI.showError("Network error during lookup. Check workshop internet.");
-    }
-}
-    */
-// =========== END UPDATED LOOKUP ===========
-
-
-
-///////////////////////////////////////////
-/// new handleUnversalLookup ==============
-//===========================
 // =========================================================================
-// REGISTER GUARD: COUPLING INTELLECTUAL INTRA-ROUTER (app.js Upgrade)
+// =========== UPDATED UNIVERSAL SCANNER LOOKUP ===========
+// REGISTER GUARD: COUPLING INTELLECTUAL INTRA-ROUTER 
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
     const cleanId = scannedId.toString().trim();
@@ -1751,7 +1650,7 @@ async function handleUniversalLookup(scannedId) {
                 if (tagInputFieldBox) {
                     tagInputFieldBox.value = cleanId;
                     tagInputFieldBox.style.borderColor = "#27ae60"; // Safe green border
-                    tagInputFieldBox.style.backgroundColor = "#e8f8f5"; // Mint tint confirmation sheet
+                    tagInputFieldBox.style.backgroundColor = "#238b78"; // Mint tint confirmation sheet
                     console.log("MAE Validation Engine: Tag completely unique. Code locked into form box.");
                 } else {
                     alert(`Fresh Tag Checked: ${cleanId}\n\nPlease click into an input field or ensure a form is deployed to lock it down.`);
@@ -1888,12 +1787,10 @@ async function handleUniversalLookup(scannedId) {
         UI.showError("Network error during lookup. Check workshop internet.");
     }
 }
+// =========== END UNIVERSAL SCANNER LOOKUP ===========
 
 
 
-//=====================================//
-//=======================================//
-//=======  END NEW handleuniversal Lookup 
 
 
 
