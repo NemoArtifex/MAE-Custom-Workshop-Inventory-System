@@ -2379,6 +2379,101 @@ async function initiateTagReplacementWorkflow(tableName, rowIndex, oldTagId) {
 
 //===== END  MAE REGISTERED TAG DISCIPLINE: DECOMMISSION AND REPLACEMENT SUB-SYSTEM ==========
 
+//  ====Registered tag discipline: Batch Container Group Update Engine
+async function executeBulkContainerGroupingTransition(rawScannerInput) {
+    if (!rawScannerInput || rawScannerInput.trim() === "") return;
+
+    // 1. URL SANITIZATION & SCRUBBING
+    // Processes the raw string to strip away ToteScan web parameters, keeping just the clean token
+    const cleanTagId = window.Labels.extractCleanId(rawScannerInput).toUpperCase();
+    console.log("MAE Bulk Engine: Initializing container build for Tag:", cleanTagId);
+
+    const bulkInputField = document.getElementById("mae-bulk-container-input");
+
+    // 2. ANTI-COLLISION SAFETY BLOCK
+    // Check if the scanned sticker is already used as a unique tool or a different container
+    const isTagAlreadyInUse = await verifyTagUniquenessCrossTable(cleanTagId);
+    if (isTagAlreadyInUse) {
+        alert(`CRITICAL ASSIGNMENT CONFLICT BLOCKED:\n\nYou cannot build this group. Barcode [${cleanTagId}] is already actively assigned to an asset record inside your database ledger.\n\nGrab a completely fresh, unused sticker.`);
+        if (bulkInputField) {
+            bulkInputField.value = "";
+            bulkInputField.focus();
+        }
+        return;
+    }
+
+    // 3. DATA HARVESTING VIA THE CHECKBOXES
+    const checkedBoxes = document.querySelectorAll('.mae-audit-bulk-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        alert("MAE System Exception: Zero rows are currently selected for grouping.");
+        return;
+    }
+
+    const confirmation = confirm(`MAE COMPLIANCE REGULATION CONFIRMATION:\n\nYou are about to group ${checkedBoxes.length} loose items onto a shared container tag:\n\n• New Shared Tag ID: [${cleanTagId}]\n• Tag Type Assignment: MULTIPLE\n\nThis will link them in the ledger while leaving all individual descriptions, costs, and remarks completely intact. Proceed?`);
+    if (!confirmation) {
+        if (bulkInputField) bulkInputField.value = "";
+        return;
+    }
+
+    UI.showLoading(`LOCKING SYSTEM: Packaging ${checkedBoxes.length} items into container group...`);
+
+    try {
+        const token = await window.getGraphToken();
+        
+        // 4. TRANSACTION EXECUTION LOOP (THROTTLED PER ROW)
+        for (const box of checkedBoxes) {
+            const tableName = box.getAttribute('data-table');
+            const rowIndex = parseInt(box.getAttribute('data-row'), 10);
+            const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+
+            if (!sheetConfig) continue;
+
+            const tagIdIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+            const tagTypeIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_Type");
+
+            // Sparse update structure: Null values guarantee existing item rows remain completely untouched
+            const rowValues = new Array(sheetConfig.columns.length).fill(null);
+            rowValues[tagIdIdx] = cleanTagId;
+            
+            if (tagTypeIdx !== -1) {
+                rowValues[tagTypeIdx] = "MULTIPLE"; // Enforce the shared container constraint fact
+            }
+
+            console.log(`MAE Bulk Sync: Updating row index ${rowIndex} inside ${tableName} to Container Tag [${cleanTagId}]`);
+
+            const url = `https://microsoft.com{encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ values: [rowValues] })
+            });
+
+            if (!response.ok) {
+                console.error(`MAE Fault Intercept: Network update failed on row index ${rowIndex} inside ${tableName}`);
+            }
+
+            // 400ms Throttling protection delay to safeguard Microsoft Graph workbook concurrency locks
+            await new Promise(r => setTimeout(r, 400));
+        }
+
+        alert(`System Integrity Verified!\n\nSuccessfully bundled ${checkedBoxes.length} items onto Container Tag: [${cleanTagId}]. All unique descriptions have been preserved.`);
+        
+        // Wipe selection states and pull a fresh compliance check straight from OneDrive ground-truth
+        UI.clearBulkAuditSelection();
+        await window.runUntaggedAudit();
+
+    } catch (err) {
+        console.error("MAE Bulk Grouping Sub-System Crash:", err);
+        UI.showError("Failed to cleanly assemble container group. Verify cloud asset links.");
+    }
+}
+//==== END Registered tag discipline: Batch Container Group Update Engine ========
+
+
 
 window.Dashboard = Dashboard;
 window.UI = UI;
@@ -2420,5 +2515,6 @@ window.executeMaintenanceSearch = UI.executeMaintenanceSearch;
 window.executeDirectTagWipe = UI.executeDirectTagWipe;
 window.evaluateAuditCheckboxStateChanges = UI.evaluateAuditCheckboxStateChanges;
 window.clearBulkAuditSelection = UI.clearBulkAuditSelection;
+window.executeBulkContainerGroupingTransition = executeBulkContainerGroupingTransition;
 
 startup();
