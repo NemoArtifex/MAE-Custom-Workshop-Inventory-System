@@ -531,15 +531,30 @@ renderCommandBar(tableName) {
             }
             // 1B. TAG_TYPE DISCIPLINE EXPLICIT ENTRY (Injected for Advanced Tier Intake)
             else if (col.header === "Tag_Type") {
-                // RUGGED DEFENSE: Force a solid default fallback state to UNIQUE if data is missing/empty
-                const currentSelection = val || "UNIQUE";
+                // MAE PROTECTION: Force-lock type selection to MULTIPLE when working inside the multi-item container panel view
+                const isAppendingToContainerView = document.getElementById("current-view-title")?.innerText.includes("Multiple Items");
+                
+                let currentSelection = val;
+                if (!isEdit && isAppendingToContainerView) {
+                    currentSelection = "MULTIPLE";
+                } else if (!currentSelection) {
+                    currentSelection = "UNIQUE"; 
+                }
+
+                const isFormLocked = (!isEdit && isAppendingToContainerView);
+
                 formHtml += `
-                    <select id="${fieldId}" required style="border: 2px solid var(--accent); background: #fffde7; font-weight: bold; height: 45px;">
-                        <option value="UNIQUE" ${currentSelection === "UNIQUE" ? "selected" : ""}>UNIQUE (One Tag for One Single Machine/Asset) [DEFAULT]</option>
+                    <select id="${fieldId}" required ${isFormLocked ? 'disabled style="background-color:#eeeeee; color:#888888; border:1px solid var(--border); width: 100%; height: 45px;"' : 'style="border: 2px solid var(--accent); background: #fffde7; font-weight: bold; height: 45px;"'}>
+                        <option value="UNIQUE" ${currentSelection === "UNIQUE" ? "selected" : ""}>UNIQUE (One Tag for One Single Machine/Asset)</option>
                         <option value="MULTIPLE" ${currentSelection === "MULTIPLE" ? "selected" : ""}>MULTIPLE (One Tag for a Container/Bin/Drawer Group)</option>
                     </select>
                 `;
-            }
+                
+                // Secret Payload Pass: Feeds the background harvester when the dropdown element is disabled
+                if (isFormLocked) {
+                    formHtml += `<input type="hidden" id="${fieldId}" value="MULTIPLE">`;
+                }
+            }    
             // 2. LOCATION_ID (Foundation Discipline)
             else if (col.header === "Location_ID") {
                 formHtml += `
