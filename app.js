@@ -2489,9 +2489,16 @@ async function executeBulkContainerGroupingTransition(rawScannerInput) {
 
         alert(`System Integrity Verified!\n\nSuccessfully bundled ${checkedBoxes.length} items onto Container Tag: [${cleanTagId}]. All unique descriptions have been preserved.`);
         
-        // Wipe selection states and pull a fresh compliance check straight from OneDrive ground-truth
+        UI.showLoading("Synchronizing local ledger partitions... please wait.");
+        
+        // 🌟 INDUSTRIAL SETTLE DELAY: Allows OneDrive file properties to completely settle on Microsoft's servers
+        await new Promise(r => setTimeout(r, 1200));
+
         UI.clearBulkAuditSelection();
         await window.runUntaggedAudit();
+        
+        // Clear loading overlay and bounce view back to master layout cleanly
+        window.loadTableData("Master_Dashboard");
 
     } catch (err) {
         console.error("MAE Bulk Grouping Sub-System Crash:", err);
