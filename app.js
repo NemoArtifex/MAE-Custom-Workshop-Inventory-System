@@ -1092,6 +1092,18 @@ function handleEditClick(tableName) {
             return;
         }
 
+        // BRANCH 1C - TAG_ID DISCIPLINARY LOCKDOWN GUARD 🌟
+        if (colDef.header === "Tag_ID") {
+            cell.contentEditable = "false";
+            // Strip any accidental editing borders and turn it into a standard locked element
+            cell.classList.remove("text-edit-focus");
+            cell.classList.add("locked-cell");
+            cell.style.backgroundColor = "#eeeeee"; // High-visibility locked gray tint
+            cell.style.color = "#888888";
+            cell.style.pointerEvents = "none";      // Shield mouse clicks completely
+            return; // Escape cell processing loop early to prevent standard text initialization
+        }
+
 
         // --- BRANCH 2: NUMBERS & RUGGED VALIDATION ---
         if (colDef.type === "number") {

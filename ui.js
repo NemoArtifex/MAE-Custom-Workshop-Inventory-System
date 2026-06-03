@@ -144,8 +144,8 @@ renderMenu(activeWorksheets, onClickCallback) {
 
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
-                    const isEditable = (!colDef.locked || colDef.header === "Tag_Type") && colDef.type !== 'formula';
-
+                    //  Allow Tag_Type to toggle, but explicitly freeze Tag_ID columns during inline edits
+                    const isEditable = (!colDef.locked || colDef.header === "Tag_Type") && colDef.header !== "Tag_ID" && colDef.type !== 'formula';
                     let displayValue = allCells[idx] ?? '';
 
                     // --- 🌟 NEW: VALUATION GOVERNANCE SILO GUARD ---
