@@ -1047,7 +1047,7 @@ function handleEditClick(tableName) {
         cell.setAttribute('tabindex', '0');
         cell.onmousedown = (e) => e.stopPropagation();
 
-        // --- BRANCH 1: LOCATION_ID ---
+        // --- BRANCH 1A: LOCATION_ID ---
         if (colDef.header === "Location_ID") {
             cell.contentEditable = "false"; 
             cell.classList.add("dropdown-edit-zone");
@@ -1067,6 +1067,31 @@ function handleEditClick(tableName) {
             select.onblur = finishEdit;
             return; 
         }
+
+        // BRANCH 1B - DYNAMIC TAG_TYPE RE-ORIENTATION AXIS 🌟
+        if (colDef.header === "Tag_Type") {
+            cell.contentEditable = "false";
+            cell.classList.add("dropdown-edit-zone");
+            const currentVal = cell.innerText.trim() || "UNIQUE"; // Grab existing or fallback to default
+            
+            let selectHtml = `<select class="edit-dropdown" style="width:100%; border:none; background:#fffde7; font-weight:bold; color:var(--primary);">`;
+            selectHtml += `<option value="UNIQUE" ${currentVal === "UNIQUE" ? 'selected' : ''}>UNIQUE</option>`;
+            selectHtml += `<option value="MULTIPLE" ${currentVal === "MULTIPLE" ? 'selected' : ''}>MULTIPLE</option>`;
+            selectHtml += `</select>`;
+            
+            cell.innerHTML = selectHtml;
+            const select = cell.querySelector('select');
+            
+            const finishEdit = () => {
+                cell.innerText = select.value;
+                cell.classList.remove("dropdown-edit-zone");
+            };
+            
+            select.onchange = finishEdit;
+            select.onblur = finishEdit;
+            return;
+        }
+
 
         // --- BRANCH 2: NUMBERS & RUGGED VALIDATION ---
         if (colDef.type === "number") {

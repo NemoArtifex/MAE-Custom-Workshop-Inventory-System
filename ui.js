@@ -144,7 +144,7 @@ renderMenu(activeWorksheets, onClickCallback) {
 
                 visibleIndices.forEach(idx => {
                     const colDef = sheetConfig.columns[idx];
-                    const isEditable = !colDef.locked && colDef.type !== 'formula';
+                    const isEditable = (!colDef.locked || colDef.header === "Tag_Type") && colDef.type !== 'formula';
 
                     let displayValue = allCells[idx] ?? '';
 
