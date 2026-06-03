@@ -2817,22 +2817,31 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
             let matchedRowsToUpdate = [];
 
             // 2. SWEEP DATABASE PARTITIONS TO GATHER ALL ROWS MATCHING OLD TAG_ID
+            // MAE INDUSTRIAL SYSTEM MAINTENANCE LOOP
             for (const table of priorityTables) {
                 const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
-                const rowsData = await window.Dashboard.getFullTableData(table);
-                if (!rowsData || rowsData.length === 0) continue;
+                const dataRows = await window.Dashboard.getFullTableData(table);
+                if (!dataRows || dataRows.length === 0) continue;
 
                 const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
                 if (tagColIdx === -1) continue;
 
-                rowsData.forEach(row => {
-                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
-                    if (cells && String(cells[tagColIdx]).trim() === oldTagId) {
-                        matchedRowsToUpdate.push({
-                            tableName: table,
-                            rowIndex: parseInt(row.index, 10),
-                            config: sheetConfig
-                        });
+                dataRows.forEach(row => {
+                    // 🌟 MAE ENGINE REPAIR: Explicitly unwrap Graph API's 2D double-nested array cell matrix container 🌟
+                    const cells = (row.values && Array.isArray(row.values[0])) 
+                        ? row.values[0] 
+                        : (row.values && Array.isArray(row.values)) ? row.values : row.values;
+
+                    if (cells && cells[tagColIdx] !== undefined && cells[tagColIdx] !== null) {
+                        const cellTagValueText = String(cells[tagColIdx]).trim();
+                        
+                        if (cellTagValueText === oldTagId.toString().trim()) {
+                            matchedRowsToUpdate.push({
+                                tableName: table,
+                                rowIndex: parseInt(row.index, 10),
+                                config: sheetConfig
+                            });
+                        }
                     }
                 });
             }
