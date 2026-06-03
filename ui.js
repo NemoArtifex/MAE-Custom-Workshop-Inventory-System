@@ -2808,7 +2808,8 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 return;
             }
             
-            newTagValue = reStickerInput.trim().toUpperCase();
+            // 🌟 MAE ENGINE REPAIR: Route the prompt string through your Labels module to strip out the web URLs 🌟
+            newTagValue = window.Labels.extractCleanId(reStickerInput).toUpperCase();
             
             if (newTagValue === "UNTAGGED") {
                 alert("CRITICAL REGULATION BLOCKED:\n\nYou cannot assign the absolute fallback string 'UNTAGGED' as a functional hardware sticker token.");
