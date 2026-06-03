@@ -2500,6 +2500,32 @@ async function executeBulkContainerGroupingTransition(rawScannerInput) {
 }
 //==== END Registered tag discipline: Batch Container Group Update Engine ========
 
+//  MAE REGISTERED TAG DISCIPLINE: UTILITY COMPLIANCE CROSS-TABLE SCANNER
+// =========================================================================
+async function verifyTagUniquenessCrossTable(tagIdToCheck) {
+    const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    
+    for (const table of priorityTables) {
+        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === table);
+        const rowsData = await Dashboard.getFullTableData(table);
+        if (!rowsData || rowsData.length === 0) continue;
+
+        const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+        if (tagColIdx === -1) continue;
+
+        const match = rowsData.find(row => {
+            // Unwrap Microsoft Graph API's 2D nested array cell container safely [[...]]
+            const cells = (row.values && Array.isArray(row.values)) ? row.values : (Array.isArray(row.values) ? row.values : null);
+            return cells && String(cells[tagColIdx]).trim() === tagIdToCheck.toString().trim();
+        });
+        
+        if (match) return true; // Collision found! Tag is already assigned elsewhere.
+    }
+    return false; // Safe and clean! Tag is completely unique.
+}
+
+// ===== END MAE REGISTERED TAG DISCIPLINE: UTILITY COMPLIANCE CROSS-TABLE SCANNER ========
+
 
 
 window.Dashboard = Dashboard;
@@ -2543,5 +2569,6 @@ window.executeDirectTagWipe = UI.executeDirectTagWipe;
 window.evaluateAuditCheckboxStateChanges = UI.evaluateAuditCheckboxStateChanges;
 window.clearBulkAuditSelection = UI.clearBulkAuditSelection;
 window.executeBulkContainerGroupingTransition = executeBulkContainerGroupingTransition;
+window.verifyTagUniquenessCrossTable = verifyTagUniquenessCrossTable;
 
 startup();
