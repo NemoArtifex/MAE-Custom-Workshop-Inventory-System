@@ -2560,9 +2560,8 @@ printInspectedLocationTable() {
 
     //========  END THE CENTRAL INTAKE REGISTRATION PORTAL ==========
 
-    //====== Virtual Table View Renderer for UNTAGGED Audit ========
-
-   //====== Virtual Table View Renderer for UNTAGGED Audit with Bulk-Selection Checkboxes ======
+    
+//====== Virtual Table View Renderer for UNTAGGED Audit with Inline Structural Layout CSS ======
 renderUntaggedAuditGrid(auditData) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
@@ -2581,22 +2580,29 @@ renderUntaggedAuditGrid(auditData) {
         return;
     }
 
-    // 1. MAE ENGINE UPGRADE: Inject the hidden placeholder for the Dynamic Container Group Header Bar
+    // --- MAE ENHANCED MATRIX CONTAINER ---
+    // This parent layout wrapper strictly partitions the stationary header from the scrolling data table underneath
     let html = `
-        <div id="mae-bulk-tagging-control-bar" style="display:none; margin-bottom:20px; transition: all 0.3s ease;">
-            <div class="form-card" style="border-left: 6px solid var(--accent); background: #ffffde; padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                <div>
-                    <h4 style="margin:0 0 5px 0; color:var(--accent); font-weight:800; text-transform:uppercase;">⚡ Bulk Container Assembly Active</h4>
-                    <p style="margin:0; font-size:0.85rem; color:#444;">Scan or type a single barcode to group all <span id="mae-bulk-checked-count" style="font-weight:bold; color:var(--primary);">0</span> checked items into a shared space.</p>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="mae-bulk-container-input" placeholder="Scan shared label sticker here..." 
-                           style="height:45px; width:300px; padding:0 12px; border:2px solid var(--accent); border-radius:4px; font-weight:bold; font-size:0.95rem; background:#ffffff;"
-                           onchange="window.executeBulkContainerGroupingTransition(this.value)">
-                    <button class="cancel-btn" style="height:45px; margin-left:5px;" onclick="UI.clearBulkAuditSelection()">Clear Selection</button>
+        <div id="mae-audit-view-wrapper" style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;">
+            
+            <!-- STATIONARY CONTAINER ASSY BAR BLOCK -->
+            <div id="mae-bulk-tagging-control-bar" style="display:none; flex-shrink: 0; margin-bottom:15px; width:100%; background:#f4f4f4; padding-bottom:5px; box-sizing:border-box;">
+                <div class="form-card" style="border-left: 6px solid var(--accent); background: #ffffde; padding: 15px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 0;">
+                    <div>
+                        <h4 style="margin:0 0 5px 0; color:var(--accent); font-weight:800; text-transform:uppercase; font-size:0.95rem;">⚡ Bulk Container Assembly Active</h4>
+                        <p style="margin:0; font-size:0.85rem; color:#444;">Scan or type a single barcode to group all <span id="mae-bulk-checked-count" style="font-weight:bold; color:var(--primary);">0</span> checked items into a shared space.</p>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="mae-bulk-container-input" placeholder="Scan shared label sticker here..." 
+                               style="height:40px; width:280px; padding:0 12px; border:2px solid var(--accent); border-radius:4px; font-weight:bold; font-size:0.9rem; background:#ffffff;"
+                               onchange="window.executeBulkContainerGroupingTransition(this.value)">
+                        <button class="cancel-btn" style="height:40px; margin-left:5px; padding: 0 15px;" onclick="UI.clearBulkAuditSelection()">Clear Selection</button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- INDEPENDENT SCROLLING VIEWPANEL MATRIX -->
+            <div id="mae-audit-table-scroll-zone" style="flex: 1; overflow-y: auto; min-height: 0; background: #ffffff; border-radius: 4px;">
     `;
 
     const grouped = auditData.reduce((acc, item) => {
@@ -2605,19 +2611,19 @@ renderUntaggedAuditGrid(auditData) {
         return acc;
     }, {});
 
-    html += `<table class="inventory-table" id="main-data-table">`;
+    html += `<table class="inventory-table" id="main-data-table" style="width:100%; border-collapse:collapse; min-width:100%; margin-top:0;">`;
     for (const [category, items] of Object.entries(grouped)) {
         html += `
             <thead>
                 <tr>
-                    <th colspan="3" style="background:#c0392b; color:white; padding:12px;">
+                    <th colspan="3" style="background:#c0392b !important; color:white !important; padding:12px; position: sticky; top: 0; z-index: 99;">
                         ${category.toUpperCase()} (${items.length} Gaps)
                     </th>
                 </tr>
                 <tr>
-                    <th style="width:8%; text-align:center; background: var(--primary) !important;">Select</th>
-                    <th style="width:52%; background: var(--primary) !important;">Item Description Name</th>
-                    <th style="width:40%; background: var(--primary) !important;">Scan / Type Individual Tag_ID (UNIQUE)</th>
+                    <th style="width:8%; text-align:center; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Select</th>
+                    <th style="width:52%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Item Description Name</th>
+                    <th style="width:40%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Scan / Type Individual Tag_ID (UNIQUE)</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -2626,10 +2632,9 @@ renderUntaggedAuditGrid(auditData) {
             const htmlRowId = `untagged-row-${item.rowIndex}`;
             html += `
                 <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.3s ease;">
-                    <!-- Checkbox column for bulk grouping operations -->
                     <td style="text-align:center; vertical-align:middle; padding:10px;">
                         <input type="checkbox" class="mae-audit-bulk-checkbox" 
-                               style="transform: scale(1.6); cursor:pointer; width:25px; height:25px;"
+                               style="transform: scale(1.4); cursor:pointer; width:22px; height:22px;"
                                data-table="${item.tableName}" 
                                data-id="${item.mae_id}" 
                                data-row="${item.rowIndex}"
@@ -2647,6 +2652,11 @@ renderUntaggedAuditGrid(auditData) {
     }
     html += `</table>`;
     
+    // Close scroll zone and parent wrapper divisions cleanly
+    html += `
+            </div> 
+        </div>`;
+    
     container.innerHTML = html;
 
     const actionZone = document.getElementById("action-bar-zone");
@@ -2657,8 +2667,50 @@ renderUntaggedAuditGrid(auditData) {
             </div>`;
     }
     
-    // Explicitly lock window table identifier context to protect tracking scanner interrupts
     window.currentTable = "untagged_audit_grid_view";
+},
+
+// ==========================================
+// STATE OBSERVERS FOR THE BULK AUDIT GRID
+// ==========================================
+evaluateAuditCheckboxStateChanges() {
+    const checkboxes = document.querySelectorAll('.mae-audit-bulk-checkbox:checked');
+    const controlBar = document.getElementById('mae-bulk-tagging-control-bar');
+    const countDisplay = document.getElementById('mae-bulk-checked-count');
+    const individualInputs = document.querySelectorAll('.mae-individual-scan-box');
+
+    if (checkboxes.length > 0) {
+        // Reveal the bulk command header bar inline
+        controlBar.style.display = "block";
+        countDisplay.innerText = checkboxes.length;
+        
+        // Disable individual row inputs while checking boxes to prevent user confusion
+        individualInputs.forEach(input => {
+            input.disabled = true;
+            input.style.opacity = "0.4";
+            input.style.cursor = "not-allowed";
+        });
+    } else {
+        this.clearBulkAuditSelection();
+    }
+},
+
+clearBulkAuditSelection() {
+    const checkboxes = document.querySelectorAll('.mae-audit-bulk-checkbox');
+    const controlBar = document.getElementById('mae-bulk-tagging-control-bar');
+    const individualInputs = document.querySelectorAll('.mae-individual-scan-box');
+    const bulkInput = document.getElementById('mae-bulk-container-input');
+
+    checkboxes.forEach(cb => cb.checked = false);
+    if (controlBar) controlBar.style.display = "none";
+    if (bulkInput) bulkInput.value = "";
+
+    // Re-enable standalone inputs
+    individualInputs.forEach(input => {
+        input.disabled = false;
+        input.style.opacity = "1";
+        input.style.cursor = "text";
+    });
 },
 
 // ==========================================
