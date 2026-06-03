@@ -488,6 +488,7 @@ renderCommandBar(tableName) {
     else {
         buttons = `
             <button class="action-btn" onclick="UI.renderCentralRegistrationWizard()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
+            <button class="action-btn" onclick="UI.renderTagMaintenanceWizard()" style="background:#8e44ad; font-weight:bold;">🔧 Manage Lost/Damaged Tags</button>
             <button class="action-btn" onclick="runUntaggedAudit()" style="background:#c0392b; font-weight:bold;">⚠️ Audit Untagged Items</button>
             <button class="action-btn" id="btn-print">Print Dashboard</button>   
         `;
@@ -2617,9 +2618,202 @@ printInspectedLocationTable() {
                     <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
                 </div>`;
         }
-    }
+    },
 
 //====== END  Virtual Table View Renderer for UNTAGGED Audit ========
+
+//========== TAG MAINTENANCE ===================
+//========  Render Tag Maintenance Wizard for Lost/Damaged Tags ========
+renderTagMaintenanceWizard() {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        
+        title.innerText = "Maintenance: Decommission Lost or Damaged Tags";
+        window.currentTable = "tag_maintenance"; // Establish explicit maintenance mode state context
+
+        let html = `
+            <div class="form-card" style="border-left:6px solid #8e44ad; padding:25px; background:#fff; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">🛠️ Isolate Broken Label Rows</h4>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 20px 0;">If a tag sticker fell off, is torn, or cannot be scanned, use either entry field below to pinpoint the asset in the ledger.</p>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:end;">
+                    <!-- Option A: Keyword Text Lookup -->
+                    <div class="input-group">
+                        <label style="font-weight:bold; color:var(--primary); margin-bottom:5px;">A. Find by Keyword Description</label>
+                        <input type="text" id="mae-maintenance-search-input" placeholder="Type name (e.g. bandsaw, bolt)..." style="height:45px; padding:0 12px; border:1px solid var(--border); border-radius:4px; font-size:1rem;">
+                    </div>
+                    
+                    <!-- Option B: Location Dropdown Lookup -->
+                    <div class="input-group">
+                        <label style="font-weight:bold; color:var(--primary); margin-bottom:5px;">B. Find by Storage Spot Landmark</label>
+                        <select id="mae-maintenance-location-selector" class="edit-dropdown" style="height:45px; font-size:1rem; border:1px solid var(--border);">
+                            <option value="">-- Select Location_ID --</option>
+                            ${window.maeLocations.map(loc => `<option value="${loc}">${loc}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="margin-top:20px; display:flex; gap:15px;">
+                    <button class="action-btn" style="flex:1; background:var(--primary); height:45px; font-weight:bold;" onclick="UI.executeMaintenanceSearch('keyword')">🔍 Run Text Search Matrix</button>
+                    <button class="action-btn" style="flex:1; background:#2980b9; height:45px; font-weight:bold;" onclick="UI.executeMaintenanceSearch('location')">📊 Filter by Location Spot</button>
+                </div>
+            </div>
+            <div id="maintenance-results-mount-zone"></div>
+        `;
+
+        container.innerHTML = html;
+
+        // Custom action command bar for navigation safety
+        const actionZone = document.getElementById("action-bar-zone");
+        if (actionZone) {
+            actionZone.innerHTML = `
+                <div class="command-bar" style="justify-content: center;">
+                    <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Dashboard</button>
+                </div>`;
+        }
+    },
+//====== END  Render Tag Maintenance Wizard for Lost/Damaged Tags ========
+
+//========  Execute Search Logic for Tag Maintenance Wizard ========
+async executeMaintenanceSearch(searchType) {
+        const resultsZone = document.getElementById("maintenance-results-mount-zone");
+        resultsZone.innerHTML = `<div class="loader">Sweeping records for matching rows...</div>`;
+
+        let cleanQuery = "";
+        let filterField = "Item_Description";
+
+        if (searchType === 'keyword') {
+            cleanQuery = document.getElementById("mae-maintenance-search-input").value.trim().toLowerCase();
+            if (!cleanQuery) { alert("Please input a keyword descriptor parameter first."); resultsZone.innerHTML = ""; return; }
+        } else {
+            cleanQuery = document.getElementById("mae-maintenance-location-selector").value.trim().toUpperCase();
+            if (!cleanQuery) { alert("Please select a physical storage spot first."); resultsZone.innerHTML = ""; return; }
+            filterField = "Location_ID";
+        }
+
+        const tablesToScan = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+        let maintenanceMatches = [];
+
+        try {
+            for (const tableName of tablesToScan) {
+                const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+                const dataRows = await window.Dashboard.getFullTableData(tableName);
+                if (!dataRows || dataRows.length === 0) continue;
+
+                const targetColIdx = sheetConfig.columns.findIndex(c => c.header === filterField);
+                const descColIdx = sheetConfig.columns.findIndex(c => c.header === "Item_Description");
+                const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+
+                dataRows.forEach(rowObj => {
+                    const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
+                    if (!cells) return;
+
+                    let matchConfirmed = false;
+                    if (searchType === 'keyword') {
+                        // Scan descriptions for substring match
+                        const itemText = String(cells[descColIdx] || "").toLowerCase();
+                        if (itemText.includes(cleanQuery)) matchConfirmed = true;
+                    } else {
+                        // Strict check on physical landmark vector
+                        const itemLoc = String(cells[targetColIdx] || "").toUpperCase();
+                        if (itemLoc === cleanQuery) matchConfirmed = true;
+                    }
+
+                    if (matchConfirmed) {
+                        maintenanceMatches.push({
+                            category: sheetConfig.tabName,
+                            itemDescription: cells[descColIdx] || "N/A",
+                            currentTag: cells[tagColIdx] || "UNTAGGED",
+                            tableName: tableName,
+                            rowIndex: rowObj.index
+                        });
+                    }
+                });
+            }
+
+            if (maintenanceMatches.length === 0) {
+                resultsZone.innerHTML = `<p style="padding:20px; text-align:center; font-style:italic; border:1px dashed #ccc; background:#f9f9f9;">No active records were found matching the parameters.</p>`;
+                return;
+            }
+
+            // Build an interactive layout row block with custom decommissioning parameters
+            let htmlTable = `
+                <table class="inventory-table" style="margin-top:15px;">
+                    <thead>
+                        <tr>
+                            <th style="width:25%;">Sheet Classification</th>
+                            <th style="width:40%;">Item Description</th>
+                            <th style="width:15%;">Active Tag ID</th>
+                            <th style="width:20%; text-align:center;">Maintenance Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            maintenanceMatches.forEach(row => {
+                htmlTable += `
+                    <tr>
+                        <td class="locked-cell"><b>${row.category}</b></td>
+                        <td class="locked-cell">${row.itemDescription}</td>
+                        <td class="locked-cell" style="font-family:monospace; font-weight:bold;">${row.currentTag}</td>
+                        <td style="text-align:center;">
+                            ${row.currentTag === "UNTAGGED" ? 
+                                `<span style="color:#7f8c8d; font-size:0.85rem; font-style:italic;">Already Untagged</span>` : 
+                                `<button class="mini-btn" style="background:#c0392b; font-weight:bold;" onclick="UI.executeDirectTagWipe('${row.tableName}', ${row.rowIndex}, '${row.currentTag}')">⚠️ Decommission Tag</button>`
+                            }
+                        </td>
+                    </tr>`;
+            });
+
+            htmlTable += `</tbody></table>`;
+            resultsZone.innerHTML = htmlTable;
+
+        } catch (err) {
+            console.error("MAE Maintenance Core Sweep Crash:", err);
+            resultsZone.innerHTML = `<p style="color:red; padding:20px;">Routine sweep was interrupted. Check connection bounds.</p>`;
+        }
+    },
+//======  END Execute Search Logic for Tag Maintenance Wizard ========
+
+// =======Direct Tag Decommissioning Handler
+async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
+        const proceed = confirm(`CRITICAL REGULATION CONFIRMATION:\n\nYou are about to scrub Tag_ID: [${oldTagId}] out of this specific database ledger row.\n\nThis will reset the item to "UNTAGGED" status and push it straight into the compliance audit list for re-stickering. Proceed?`);
+        if (!proceed) return;
+
+        this.showLoading("Transmitting sparse data scrub to OneDrive...");
+
+        try {
+            const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            const tagIdIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+            
+            // Build sparse update structure to wipe tag field cleanly without corrupting other inputs
+            const rowValues = new Array(sheetConfig.columns.length).fill(null);
+            rowValues[tagIdIdx] = "UNTAGGED";
+
+            const token = await window.getGraphToken();
+            const url = `https://microsoft.com{encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${parseInt(rowIndex, 10)})`;
+
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ values: [rowValues] })
+            });
+
+            if (response.ok) {
+                alert("Tag Decommission Complete!\n\nThis row has been successfully stripped of its tracking numbers. Use the 'Audit Untagged Items' module on the dashboard to link a new physical label sticker to it.");
+                this.renderTagMaintenanceWizard(); // Reload clean state panel
+            } else {
+                alert("Sync Failure: OneDrive was unable to write changes.");
+                this.renderTagMaintenanceWizard();
+            }
+        } catch (err) {
+            console.error("MAE Tag Maintenance Scrub Error:", err);
+            this.showError("Failed to safely detach tag. Check workshop internet.");
+        }
+    }
+//==== END Direct Tag Decommissioning Handler ========
 
 };
 

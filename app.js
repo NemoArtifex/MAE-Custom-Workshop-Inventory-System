@@ -2397,5 +2397,8 @@ window.renderCentralRegistrationWizard = UI.renderCentralRegistrationWizard;
 window.renderUntaggedAuditGrid = UI.renderUntaggedAuditGrid;
 window.submitNewRow = submitNewRow;
 window.initiateTagReplacementWorkflow = initiateTagReplacementWorkflow;
+window.renderTagMaintenanceWizard = UI.renderTagMaintenanceWizard;
+window.executeMaintenanceSearch = UI.executeMaintenanceSearch;
+window.executeDirectTagWipe = UI.executeDirectTagWipe;
 
 startup();
