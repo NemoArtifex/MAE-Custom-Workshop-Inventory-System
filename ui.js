@@ -574,7 +574,7 @@ renderCommandBar(tableName) {
             else {
                 const isTag = col.header === "Tag_ID";
                 
-                // MAE PROTECTION GATE: If editing an existing item, lock the Tag_ID to prevent database breakage
+                // PATH A: If editing an existing item, freeze the Tag_ID permanently
                 if (isTag && isEdit) {
                     formHtml += `
                         <div style="position: relative;">
@@ -584,7 +584,20 @@ renderCommandBar(tableName) {
                                 🔒 PERMANENT MATRIX ANCHOR: Locked Against Editing
                             </span>
                         </div>`;
-                } else {
+                } 
+                // PATH B: If registering a fresh item via scanner injection, check for a pending mailbox value
+                else if (isTag && window.pendingScanValue) {
+                    formHtml += `
+                        <div style="position: relative;">
+                            <input type="text" id="${fieldId}" value="${window.pendingScanValue}" readonly 
+                                   style="background-color: #e8f8f5; color: #27ae60; border: 2px solid #27ae60; font-weight: bold; cursor: not-allowed; width: 100%; box-sizing: border-box;">
+                            <span style="display: block; font-size: 0.65rem; color: #27ae60; font-weight: bold; margin-top: 4px; text-transform: uppercase;">
+                                🔒 SCANNED HARDWARE TOKEN: Locked Against Manual Typing
+                            </span>
+                        </div>`;
+                }
+                // PATH C: Fallback to open text field for manual entry (Base Tier / Manual Clicks)
+                else {
                     formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
                 }
             }
