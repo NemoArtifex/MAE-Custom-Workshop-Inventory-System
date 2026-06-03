@@ -515,16 +515,29 @@ renderCommandBar(tableName) {
         const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
         const val = (isEdit && existingData) ? existingData[index] : "";
 
-        if (col.hidden || col.type === "formula") {
+        // If it's a new item, expose Tag_Type so the user can classify the tag
+        const forceExposeTagType = (!isEdit && col.header === "Tag_Type");
+
+        if ((col.hidden || col.type === "formula" || col.locked) && !forceExposeTagType) {     
             formHtml += `<input type="hidden" id="${fieldId}" value="${val}">`;
         } 
         else {
             formHtml += `<div class="input-group"><label>${col.header}</label>`;
 
-            // 1. BOOLEAN
+            // 1A. BOOLEAN
             if (col.type === "boolean") {
                 const isChecked = val.toString().toUpperCase() === "TRUE";
                 formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
+            }
+            //1B. TAG_TYPE DISCIPLINE EXPLICIT ENTRY (Injected for Advanced Tier Intake)
+            else if (col.header === "Tag_Type") {
+                formHtml += `
+                    <select id="${fieldId}" required style="border: 2px solid var(--accent); background: #fffde7; font-weight: bold; height: 45px;">
+                        <option value="">-- CHOOSE TAG TYPE --</option>
+                        <option value="UNIQUE" ${val === "UNIQUE" ? "selected" : ""}>UNIQUE (One Tag for One Single Machine/Asset)</option>
+                        <option value="MULTIPLE" ${val === "MULTIPLE" ? "selected" : ""}>MULTIPLE (One Tag for a Container/Bin/Drawer Group)</option>
+                    </select>
+                `;
             }
             // 2. LOCATION_ID (Foundation Discipline)
             else if (col.header === "Location_ID") {
