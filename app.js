@@ -2418,5 +2418,7 @@ window.initiateTagReplacementWorkflow = initiateTagReplacementWorkflow;
 window.renderTagMaintenanceWizard = UI.renderTagMaintenanceWizard;
 window.executeMaintenanceSearch = UI.executeMaintenanceSearch;
 window.executeDirectTagWipe = UI.executeDirectTagWipe;
+window.evaluateAuditCheckboxStateChanges = UI.evaluateAuditCheckboxStateChanges;
+window.clearBulkAuditSelection = UI.clearBulkAuditSelection;
 
 startup();

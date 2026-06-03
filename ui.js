@@ -2562,7 +2562,8 @@ printInspectedLocationTable() {
 
     //====== Virtual Table View Renderer for UNTAGGED Audit ========
 
-    renderUntaggedAuditGrid(auditData) {
+   //====== Virtual Table View Renderer for UNTAGGED Audit with Bulk-Selection Checkboxes ======
+renderUntaggedAuditGrid(auditData) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     title.innerText = "Audit: Items Awaiting Physical Tag Assignment";
@@ -2580,29 +2581,63 @@ printInspectedLocationTable() {
         return;
     }
 
+    // 1. MAE ENGINE UPGRADE: Inject the hidden placeholder for the Dynamic Container Group Header Bar
+    let html = `
+        <div id="mae-bulk-tagging-control-bar" style="display:none; margin-bottom:20px; transition: all 0.3s ease;">
+            <div class="form-card" style="border-left: 6px solid var(--accent); background: #ffffde; padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                <div>
+                    <h4 style="margin:0 0 5px 0; color:var(--accent); font-weight:800; text-transform:uppercase;">⚡ Bulk Container Assembly Active</h4>
+                    <p style="margin:0; font-size:0.85rem; color:#444;">Scan or type a single barcode to group all <span id="mae-bulk-checked-count" style="font-weight:bold; color:var(--primary);">0</span> checked items into a shared space.</p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="mae-bulk-container-input" placeholder="Scan shared label sticker here..." 
+                           style="height:45px; width:300px; padding:0 12px; border:2px solid var(--accent); border-radius:4px; font-weight:bold; font-size:0.95rem; background:#ffffff;"
+                           onchange="window.executeBulkContainerGroupingTransition(this.value)">
+                    <button class="cancel-btn" style="height:45px; margin-left:5px;" onclick="UI.clearBulkAuditSelection()">Clear Selection</button>
+                </div>
+            </div>
+        </div>
+    `;
+
     const grouped = auditData.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
     }, {});
 
-    let html = `<table class="inventory-table" id="main-data-table">`;
+    html += `<table class="inventory-table" id="main-data-table">`;
     for (const [category, items] of Object.entries(grouped)) {
         html += `
             <thead>
-                <tr><th colspan="2" style="background:#c0392b; color:white; padding:12px;">${category.toUpperCase()} (${items.length} Gaps)</th></tr>
-                <tr><th style="width:60%;">Item Description Name</th><th style="width:40%;">Scan / Type New Tag_ID Reference</th></tr>
+                <tr>
+                    <th colspan="3" style="background:#c0392b; color:white; padding:12px;">
+                        ${category.toUpperCase()} (${items.length} Gaps)
+                    </th>
+                </tr>
+                <tr>
+                    <th style="width:8%; text-align:center; background: var(--primary) !important;">Select</th>
+                    <th style="width:52%; background: var(--primary) !important;">Item Description Name</th>
+                    <th style="width:40%; background: var(--primary) !important;">Scan / Type Individual Tag_ID (UNIQUE)</th>
+                </tr>
             </thead>
             <tbody>`;
         
         items.forEach(item => {
-            // Clean primary key row tracking indicators
             const htmlRowId = `untagged-row-${item.rowIndex}`;
             html += `
-                <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.4s ease;">
-                    <td class="locked-cell" style="padding: 12px 15px;"><b>${item.itemName}</b></td>
-                    <td style="padding: 8px 15px;">
-                        <input type="text" placeholder="Scan fresh label sticker here..." 
+                <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.3s ease;">
+                    <!-- Checkbox column for bulk grouping operations -->
+                    <td style="text-align:center; vertical-align:middle; padding:10px;">
+                        <input type="checkbox" class="mae-audit-bulk-checkbox" 
+                               style="transform: scale(1.6); cursor:pointer; width:25px; height:25px;"
+                               data-table="${item.tableName}" 
+                               data-id="${item.mae_id}" 
+                               data-row="${item.rowIndex}"
+                               onchange="UI.evaluateAuditCheckboxStateChanges()">
+                    </td>
+                    <td class="locked-cell" style="padding: 12px 15px; vertical-align:middle;"><b>${item.itemName}</b></td>
+                    <td style="padding: 8px 15px; vertical-align:middle;">
+                        <input type="text" placeholder="Scan standalone label sticker..." class="mae-individual-scan-box"
                                style="width:100%; height:38px; background:#fffde7; border:2px solid var(--accent); padding:0 8px; font-weight:bold; box-sizing: border-box;"
                                onchange="window.handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
                     </td>
@@ -2621,8 +2656,54 @@ printInspectedLocationTable() {
                 <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
             </div>`;
     }
+    
+    // Explicitly lock window table identifier context to protect tracking scanner interrupts
+    window.currentTable = "untagged_audit_grid_view";
 },
 
+// ==========================================
+// STATE OBSERVERS FOR THE BULK AUDIT GRID
+// ==========================================
+evaluateAuditCheckboxStateChanges() {
+    const checkboxes = document.querySelectorAll('.mae-audit-bulk-checkbox:checked');
+    const controlBar = document.getElementById('mae-bulk-tagging-control-bar');
+    const countDisplay = document.getElementById('mae-bulk-checked-count');
+    const individualInputs = document.querySelectorAll('.mae-individual-scan-box');
+
+    if (checkboxes.length > 0) {
+        // 1. Reveal the bulk command header bar
+        controlBar.style.display = "block";
+        countDisplay.innerText = checkboxes.length;
+        
+        // 2. INDUSTRIAL SAFETY GUARD: Disable individual row inputs while checking boxes to prevent user confusion
+        individualInputs.forEach(input => {
+            input.disabled = true;
+            input.style.opacity = "0.4";
+            input.style.cursor = "not-allowed";
+        });
+    } else {
+        // 3. Hide bar if selection returns to empty state
+        this.clearBulkAuditSelection();
+    }
+},
+
+clearBulkAuditSelection() {
+    const checkboxes = document.querySelectorAll('.mae-audit-bulk-checkbox');
+    const controlBar = document.getElementById('mae-bulk-tagging-control-bar');
+    const individualInputs = document.querySelectorAll('.mae-individual-scan-box');
+    const bulkInput = document.getElementById('mae-bulk-container-input');
+
+    checkboxes.forEach(cb => cb.checked = false);
+    if (controlBar) controlBar.style.display = "none";
+    if (bulkInput) bulkInput.value = "";
+
+    // Re-enable standalone inputs
+    individualInputs.forEach(input => {
+        input.disabled = false;
+        input.style.opacity = "1";
+        input.style.cursor = "text";
+    });
+},
 //====== END  Virtual Table View Renderer for UNTAGGED Audit ========
 
 //========== TAG MAINTENANCE ===================
