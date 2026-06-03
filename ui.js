@@ -2790,8 +2790,7 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
             rowValues[tagIdIdx] = "UNTAGGED";
 
             const token = await window.getGraphToken();
-            const url = `https://microsoft.com{encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${parseInt(rowIndex, 10)})`;
-
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${parseInt(rowIndex, 10)})`;
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
