@@ -1644,6 +1644,32 @@ async function handleUniversalLookup(scannedId) {
     const cleanId = scannedId.toString().trim();
     console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
+    // 🌟 MAE ENGINE UPGRADE: EXPLICIT RE-STICKERING & BULK ASSEMBLY CONTROL GATE 🌟
+    const activeTitle = document.getElementById("current-view-title")?.innerText || "";
+    const isAuditViewActive = activeTitle.includes("Awaiting Physical Tag Assignment");
+    
+    // Check if the user is actively working inside the untagged compliance audit workspace
+    if (isAuditViewActive) {
+        const focusedInput = document.activeElement;
+        
+        // CONDITION 1: User is focused inside the top stationary BULK assembly input box
+        const isInsideBulkBarField = focusedInput && focusedInput.id === "mae-bulk-container-input";
+        
+        // CONDITION 2: User is focused inside an individual single-row text input box
+        const isInsideAuditRowField = focusedInput && focusedInput.tagName === "INPUT" && focusedInput.closest("tr")?.id?.startsWith("untagged-row-");
+
+        if (isInsideBulkBarField || isInsideAuditRowField) {
+            console.log("MAE Security Guard: Audit workspace input focused. Halting background router to prevent blank form collisions.");
+            
+            // If the background listener caught the scan instead of the box's change event, force it to process here
+            if (isInsideBulkBarField) {
+                // Remove focus to trigger the input's native onchange event cleanly
+                focusedInput.blur();
+            }
+            return; // EXIT FUNCTION: Let the dedicated form inputs run their precise transaction methods!
+        }
+    }
+
     const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
     let matchedAssetRowsList = [];
     let matchingTableName = "";
@@ -2388,7 +2414,8 @@ async function executeBulkContainerGroupingTransition(rawScannerInput) {
     const cleanTagId = window.Labels.extractCleanId(rawScannerInput).toUpperCase();
     console.log("MAE Bulk Engine: Initializing container build for Tag:", cleanTagId);
 
-    const bulkInputField = document.getElementById("mae-bulk-container-input");
+    const bulkInputField = document.getElementById("mae-bulk-container-input")
+    if (bulkInputField) bulkInputField.value = cleanTagId;
 
     // 2. ANTI-COLLISION SAFETY BLOCK
     // Check if the scanned sticker is already used as a unique tool or a different container
@@ -2441,7 +2468,7 @@ async function executeBulkContainerGroupingTransition(rawScannerInput) {
 
             console.log(`MAE Bulk Sync: Updating row index ${rowIndex} inside ${tableName} to Container Tag [${cleanTagId}]`);
 
-            const url = `https://microsoft.com{encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
 
             const response = await fetch(url, {
                 method: 'PATCH',
