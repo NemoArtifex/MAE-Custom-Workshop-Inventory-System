@@ -2305,7 +2305,73 @@ async function runUntaggedAudit() {
 
 //====== END UNTAGGED ASSETS AUDIT AND REGISTRATION SUB-SYSTEM ==========
 
+// =========================================================================
+//  MAE REGISTERED TAG DISCIPLINE: DECOMMISSION AND REPLACEMENT SUB-SYSTEM
+// =========================================================================
+async function initiateTagReplacementWorkflow(tableName, rowIndex, oldTagId) {
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    const tagTypeIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_Type");
+    const tagIdIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+    
+    // Fetch row directly to read its type state fact reliably
+    const rowsData = await Dashboard.getFullTableData(tableName);
+    const targetRow = rowsData.find(r => parseInt(r.index, 10) === parseInt(rowIndex, 10));
+    const targetRowCells = (targetRow.values && Array.isArray(targetRow.values)) ? targetRow.values : targetRow.values;
+    
+    const isMultipleContainer = targetRowCells && tagTypeIdx !== -1 && String(targetRowCells[tagTypeIdx]).trim().toUpperCase() === "MULTIPLE";
 
+    let warningPrompt = `MAE MAINTENANCE SERVICE NOTICE:\n\nYou are altering the physical tag attachment for Tag_ID: [${oldTagId}].\n\n`;
+    if (isMultipleContainer) {
+        warningPrompt += `⚠️ ATTENTION: This label represents a MULTIPLE item container space. Changing or removing it will apply to ALL items bundled within this spot in the spreadsheet ledger.\n\n`;
+    }
+    warningPrompt += `Select an action:\n\n• Click OK to mark this asset record as "UNTAGGED" and route it straight to the compliance audit workspace queue.\n• Click CANCEL to abort operation completely.`;
+
+    const proceedToUntagged = confirm(warningPrompt);
+    if (!proceedToUntagged) {
+        console.log("MAE System: Tag replacement aborted by user choice.");
+        return;
+    }
+
+    UI.showLoading("Decommissioning active sticker identifier from ledger...");
+
+    try {
+        // Prepare Sparse Update Row Array
+        const rowValues = new Array(sheetConfig.columns.length).fill(null);
+        
+        // Inject absolute tracking tokens
+        rowValues[tagIdIdx] = "UNTAGGED";
+        
+        // Standardize tag type back to safe UNIQUE initial default state since the group is broken
+        if (tagTypeIdx !== -1) rowValues[tagTypeIdx] = "UNIQUE";
+
+        const token = await window.getGraphToken();
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${parseInt(rowIndex, 10)})`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values: [rowValues] })
+        });
+
+        if (response.ok) {
+            console.log(`MAE Ledger Update Success: Item row index ${rowIndex} reset to UNTAGGED status.`);
+            alert("System Alignment Complete!\n\nThis asset has been stripped of its previous ID tracking data. Please proceed to 'Audit Untagged Items' on the dashboard to register your replacement label sticker roll.");
+            
+            // Redirect smoothly straight back to dashboard workspace panels
+            window.loadTableData("Master_Dashboard");
+        } else {
+            const errData = await response.json();
+            throw new Error(errData.error.message || "OneDrive network timeout.");
+        }
+    } catch (err) {
+        console.error("MAE Tag Decommission Routine Crash:", err);
+        UI.showError("Failed to detach tracking parameters. Verify cloud asset links.");
+    }
+}
+
+//===== END  MAE REGISTERED TAG DISCIPLINE: DECOMMISSION AND REPLACEMENT SUB-SYSTEM ==========
 
 
 window.Dashboard = Dashboard;
@@ -2342,5 +2408,6 @@ window.runUntaggedAudit = runUntaggedAudit;
 window.renderCentralRegistrationWizard = UI.renderCentralRegistrationWizard;
 window.renderUntaggedAuditGrid = UI.renderUntaggedAuditGrid;
 window.submitNewRow = submitNewRow;
+window.initiateTagReplacementWorkflow = initiateTagReplacementWorkflow;
 
 startup();

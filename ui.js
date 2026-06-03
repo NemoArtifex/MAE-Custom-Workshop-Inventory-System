@@ -1208,16 +1208,24 @@ renderScanResultCard(rowData, tableName, sheetConfig, rowIndex) {
     html += `</div>`; 
 
     html += `
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 15px;">
+                <button class="action-btn" 
+                        style="flex: 2; height: 70px; font-size: 1.3rem; background: var(--accent);" 
+                        onclick="UI.openEditFormFromScan('${tableName}', ${JSON.stringify(rowData).replace(/"/g, '&quot;')}, ${rowIndex})">
+                    ✏️ Update Record
+                </button>
+                <button class="action-btn" 
+                        style="flex: 1; height: 70px; font-size: 1.3rem; background: #7f8c8d;" 
+                        onclick="window.loadTableData('Master_Dashboard')">
+                    Done
+                </button>
+            </div>
+            <!-- MAE REPAIR MODULE WORKFLOW CARRIER -->
             <button class="action-btn" 
-                    style="flex: 2; height: 70px; font-size: 1.3rem; background: var(--accent);" 
-                    onclick="UI.openEditFormFromScan('${tableName}', ${JSON.stringify(rowData).replace(/"/g, '&quot;')}, ${rowIndex})">
-                ✏️ Update Record
-            </button>
-            <button class="action-btn" 
-                    style="flex: 1; height: 70px; font-size: 1.3rem; background: #7f8c8d;" 
-                    onclick="window.loadTableData('Master_Dashboard')">
-                Done
+                    style="width: 100%; height: 50px; font-size: 1.1rem; background: #c0392b; font-weight: bold;" 
+                    onclick="window.initiateTagReplacementWorkflow('${tableName}', ${rowIndex}, '${rowData[sheetConfig.columns.findIndex(c => c.header === "Tag_ID")]}')">
+                ⚠️ Replace Damaged / Missing Physical Tag
             </button>
         </div>
     </div>`;
