@@ -33,7 +33,8 @@
  * Version 1.6:   Changed/hid several headers to reduce unnecessary columns 
  * Version 1.6.1: Hid two columns in Location
  * Version 2.0:   Adding Tag_Type for the Scannable Label feature.
- * Version xxxx:  
+ * Version 2.1:  Changed inventory item name to a common: Item_Description for ease and reliability of filtering
+ * Version: xxxxx:
  */
 
 export const maeSystemConfig = {
@@ -225,7 +226,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
-                { header: "Item Name", type: "string", locked: false },
+                { header: "Item_Description", type: "string", locked: false },
                 { 
                     header: "Category",
                     type: "dropdown",
@@ -265,7 +266,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
-                { header: "Machine Name/Brand/Model", type: "string", locked: false },
+                { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Location", type: "string", hidden: true, locked: false },
@@ -317,7 +318,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
-                { header: "Tool Name/Brand/Model", type: "string", locked: false },
+                { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
                     header: "Functional Category",
@@ -359,7 +360,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
-                { header: "Tool Name/Brand/Model/Description", type: "string", locked: false },
+                { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
                     header: "Category",
@@ -399,7 +400,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
-                { header: "Item Name", type: "string", locked: false },
+                { header: "Item_Description", type: "string", locked: false },
                 { 
                   header: "Category",
                   type: "dropdown",
