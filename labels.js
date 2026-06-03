@@ -12,7 +12,20 @@ export const Labels = {
         try {
             if (decodedText.startsWith("http")) {
                 const url = new URL(decodedText);
-                return url.pathname.split('/').pop() || url.searchParams.get("id");
+                
+                // 1. Check for query parameters first (e.g., ?id=ABCDE12345)
+                const queryId = url.searchParams.get("id");
+                if (queryId) return queryId.trim();
+
+                // 2. Clean up trailing slashes from path (e.g., /lookup/ABCDE12345/ -> /lookup/ABCDE12345)
+                let cleanPath = url.pathname;
+                if (cleanPath.endsWith('/')) {
+                    cleanPath = cleanPath.slice(0, -1);
+                }
+
+                // 3. Extract the final trailing chunk cleanly
+                const pathId = cleanPath.split('/').pop();
+                if (pathId) return pathId.trim();
             }
             return decodedText.trim();
         } catch (e) {
