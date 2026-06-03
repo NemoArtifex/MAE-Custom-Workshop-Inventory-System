@@ -1820,13 +1820,22 @@ async function handleUniversalLookup(scannedId) {
 // ============ FUNCTION TO HANDLE SINGLE-ROW UPDATES===========
 async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
     // 1. Gather data from the form fields
-    const rowData = sheetConfig.columns.map(col => {
+    const rowData = sheetConfig.columns.map((col, index) => {
         const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
         const input = document.getElementById(fieldId);
         
         if (col.type === "formula") return null; // Don't overwrite formulas
-        if (col.type === "boolean") return input.checked ? "TRUE" : "FALSE";
-        return input ? input.value : "";
+        if (col.type === "boolean") return input ? (input.checked ? "TRUE" : "FALSE") : "FALSE";
+        
+        // MAE INTEGRITY FIX: If the field is an input, explicitly capture its data value 
+        // even if it has a 'disabled' parameter active on screen
+        if (input) {
+            if (col.type === "number") {
+                return input.value === "" ? null : parseFloat(input.value);
+            }
+            return input.value.trim();
+        }
+        return "";
     });
 
     try {

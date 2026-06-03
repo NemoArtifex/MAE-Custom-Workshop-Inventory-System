@@ -529,13 +529,14 @@ renderCommandBar(tableName) {
                 const isChecked = val.toString().toUpperCase() === "TRUE";
                 formHtml += `<input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
             }
-            //1B. TAG_TYPE DISCIPLINE EXPLICIT ENTRY (Injected for Advanced Tier Intake)
+            // 1B. TAG_TYPE DISCIPLINE EXPLICIT ENTRY (Injected for Advanced Tier Intake)
             else if (col.header === "Tag_Type") {
+                // RUGGED DEFENSE: Force a solid default fallback state to UNIQUE if data is missing/empty
+                const currentSelection = val || "UNIQUE";
                 formHtml += `
                     <select id="${fieldId}" required style="border: 2px solid var(--accent); background: #fffde7; font-weight: bold; height: 45px;">
-                        <option value="">-- CHOOSE TAG TYPE --</option>
-                        <option value="UNIQUE" ${val === "UNIQUE" ? "selected" : ""}>UNIQUE (One Tag for One Single Machine/Asset)</option>
-                        <option value="MULTIPLE" ${val === "MULTIPLE" ? "selected" : ""}>MULTIPLE (One Tag for a Container/Bin/Drawer Group)</option>
+                        <option value="UNIQUE" ${currentSelection === "UNIQUE" ? "selected" : ""}>UNIQUE (One Tag for One Single Machine/Asset) [DEFAULT]</option>
+                        <option value="MULTIPLE" ${currentSelection === "MULTIPLE" ? "selected" : ""}>MULTIPLE (One Tag for a Container/Bin/Drawer Group)</option>
                     </select>
                 `;
             }
@@ -572,11 +573,24 @@ renderCommandBar(tableName) {
             // 6. STANDARD TEXT
             else {
                 const isTag = col.header === "Tag_ID";
-                formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
+                
+                // MAE PROTECTION GATE: If editing an existing item, lock the Tag_ID to prevent database breakage
+                if (isTag && isEdit) {
+                    formHtml += `
+                        <div style="position: relative;">
+                            <input type="text" id="${fieldId}" value="${val}" disabled 
+                                   style="background-color: #eeeeee; color: #888888; border: 1px solid var(--border); font-weight: bold; cursor: not-allowed; width: 100%; box-sizing: border-box;">
+                            <span style="display: block; font-size: 0.65rem; color: var(--accent); font-weight: bold; margin-top: 4px; text-transform: uppercase;">
+                                🔒 PERMANENT MATRIX ANCHOR: Locked Against Editing
+                            </span>
+                        </div>`;
+                } else {
+                    formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
+                }
             }
-            formHtml += `</div>`;
+            formHtml += `</div>`; // Closes the <div class="input-group"> row container
         }
-    }); 
+    });
 
     formHtml += `</div>
         <div class="form-actions">
@@ -589,77 +603,80 @@ renderCommandBar(tableName) {
 
     // RUGGED SCANNER INJECTION: Auto-fills Tag_ID if a scan is pending
     if (window.pendingScanValue) {
-        const tagInput = document.getElementById("field-Tag_ID") || document.getElementById("field-mae_id");
+        // MAE ENGINE REPAIR: Explicitly isolate unhidden tracking target field
+        const tagInput = document.getElementById("field-Tag_ID");
         if (tagInput) {
             tagInput.value = window.pendingScanValue;
             tagInput.style.backgroundColor = "#fffde7"; 
             tagInput.style.border = "2px solid var(--accent)";
-            console.log("MAE System: Scan auto-filled into form.");
+            console.log("MAE System Focus Control: Scan successfully bound to field-Tag_ID layout cell.");
+        } else {
+            console.warn("MAE Intake Exception: Hardware burst intercepted, but this sheet does not contain a visible Tag_ID column layout anchor.");
         }
         window.pendingScanValue = null; 
     }
 
     //====== SILO CONTROLLER for Methodology Enforcement in Shop_Consumables 
     if (tableName === "Shop_Consumables") {
-    const levelSelect = document.getElementById('field-Stock_Level');
-    
-    // Methodology Silo Mapping
-    const unitSiloIds = ['field-UnitCost', 'field-Stock_Count', 'field-ReorderPoint'];
-    const bulkSiloIds = ['field-Bulk_Value'];
-
-    const applySiloGovernance = () => {
-        const method = levelSelect.value; // "None", "Few", "Adequate", "Many", "Counted"
+        const levelSelect = document.getElementById('field-Stock_Level');
         
-        // 1. Reset all fields to 'Active' first
-        const allSiloIds = [...unitSiloIds, ...bulkSiloIds];
-        allSiloIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.disabled = false;
-            el.parentElement.classList.remove('silo-locked', 'silo-active');
-        });
+        // Methodology Silo Mapping
+        const unitSiloIds = ['field-UnitCost', 'field-Stock_Count', 'field-ReorderPoint'];
+        const bulkSiloIds = ['field-Bulk_Value'];
 
-        // 2. ENFORCE SILOS
-        if (method === "Counted") {
-            // SILO A: Unit-Based is Active
-            bulkSiloIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.disabled = true;
-                    el.parentElement.classList.add('silo-locked');
-                    el.value = ""; // Methodology Wipe
-                }
-            });
-            unitSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
-        } 
-        else if (["Few", "Adequate", "Many"].includes(method)) {
-            // SILO B: Bulk-Based is Active
-            unitSiloIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.disabled = true;
-                    el.parentElement.classList.add('silo-locked');
-                    el.value = ""; // Methodology Wipe
-                }
-            });
-            bulkSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
-        }
-        else {
-            // "None" or Empty: Lock both to prevent accidental data entry
+        const applySiloGovernance = () => {
+            const method = levelSelect.value; // "None", "Few", "Adequate", "Many", "Counted"
+            
+            // 1. Reset all fields to 'Active' first
+            const allSiloIds = [...unitSiloIds, ...bulkSiloIds];
             allSiloIds.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.disabled = true;
-                    el.parentElement.classList.add('silo-locked');
-                }
+                if (!el) return;
+                el.disabled = false;
+                el.parentElement.classList.remove('silo-locked', 'silo-active');
             });
-        }
-    };
 
-    // Initialize state on form open and listen for changes
-    levelSelect.addEventListener('change', applySiloGovernance);
-    applySiloGovernance();
-}
+            // 2. ENFORCE SILOS
+            if (method === "Counted") {
+                // SILO A: Unit-Based is Active
+                bulkSiloIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.disabled = true;
+                        el.parentElement.classList.add('silo-locked');
+                        el.value = ""; // Methodology Wipe
+                    }
+                });
+                unitSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
+            } 
+            else if (["Few", "Adequate", "Many"].includes(method)) {
+                // SILO B: Bulk-Based is Active
+                unitSiloIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.disabled = true;
+                        el.parentElement.classList.add('silo-locked');
+                        el.value = ""; // Methodology Wipe
+                    }
+                });
+                bulkSiloIds.forEach(id => document.getElementById(id)?.parentElement.classList.add('silo-active'));
+            }
+            else {
+                // "None" or Empty: Lock both to prevent accidental data entry
+                allSiloIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.disabled = true;
+                        el.parentElement.classList.add('silo-locked');
+                    }
+                });
+            }
+        };
+
+        // Initialize state on form open and listen for changes
+        levelSelect.addEventListener('change', applySiloGovernance);
+        applySiloGovernance();
+    }
 
     // 7. SAVE HANDLER
     const submitBtn = document.getElementById("submit-form-btn");
