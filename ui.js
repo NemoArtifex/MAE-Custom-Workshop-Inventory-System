@@ -2563,62 +2563,65 @@ printInspectedLocationTable() {
     //====== Virtual Table View Renderer for UNTAGGED Audit ========
 
     renderUntaggedAuditGrid(auditData) {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
-        title.innerText = "Audit: Items Awaiting Physical Tag Assignment";
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = "Audit: Items Awaiting Physical Tag Assignment";
 
-        if (!auditData || auditData.length === 0) {
-            container.innerHTML = `
-                <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
-                    <h3 style="color:#27ae60; margin-top:0;">✅ Tag Compliance Verified</h3>
-                    <p>Excellent discipline! Every single asset inside the workshop database ledger has a registered Tag_ID.</p>
-                    <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">Return to Dashboard</button>
-                </div>`;
-            this.renderCommandBar("");
-            return;
-        }
-
-        const grouped = auditData.reduce((acc, item) => {
-            if (!acc[item.category]) acc[item.category] = [];
-            acc[item.category].push(item);
-            return acc;
-        }, {});
-
-        let html = `<table class="inventory-table" id="main-data-table">`;
-        for (const [category, items] of Object.entries(grouped)) {
-            html += `
-                <thead>
-                    <tr><th colspan="2" style="background:#c0392b; color:white; padding:12px;">${category.toUpperCase()}</th></tr>
-                    <tr><th style="width:60%;">Item Description Name</th><th style="width:40%;">Scan / Type New Tag_ID Reference</th></tr>
-                </thead>
-                <tbody>`;
-            
-            items.forEach(item => {
-                const htmlRowId = `untagged-row-${item.mae_id}`;
-                html += `
-                    <tr id="${htmlRowId}" style="transition: opacity 0.4s ease;">
-                        <td class="locked-cell"><b>${item.itemName}</b></td>
-                        <td>
-                            <input type="text" placeholder="Scan notebook page or barcode label here..." 
-                                   style="width:100%; height:38px; background:#fffde7; border:1px solid var(--accent); padding:0 8px; font-weight:bold;"
-                                   onchange="handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
-                        </td>
-                    </tr>`;
-            });
-        }
-        html += `</tbody></table>`;
+    if (!auditData || auditData.length === 0) {
+        container.innerHTML = `
+            <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+                <h3 style="color:#27ae60; margin-top:0;">✅ Tag Compliance Verified</h3>
+                <p>Excellent discipline! Every single asset inside the workshop database ledger has a registered Tag_ID.</p>
+                <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">Return to Dashboard</button>
+            </div>`;
         
-        container.innerHTML = html;
-
-        // Load custom bottom action controls row
         const actionZone = document.getElementById("action-bar-zone");
-        if (actionZone) {
-            actionZone.innerHTML = `
-                <div class="command-bar" style="justify-content: center;">
-                    <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
-                </div>`;
-        }
-    },
+        if (actionZone) actionZone.innerHTML = "";
+        return;
+    }
+
+    const grouped = auditData.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    let html = `<table class="inventory-table" id="main-data-table">`;
+    for (const [category, items] of Object.entries(grouped)) {
+        html += `
+            <thead>
+                <tr><th colspan="2" style="background:#c0392b; color:white; padding:12px;">${category.toUpperCase()} (${items.length} Gaps)</th></tr>
+                <tr><th style="width:60%;">Item Description Name</th><th style="width:40%;">Scan / Type New Tag_ID Reference</th></tr>
+            </thead>
+            <tbody>`;
+        
+        items.forEach(item => {
+            // Clean primary key row tracking indicators
+            const htmlRowId = `untagged-row-${item.rowIndex}`;
+            html += `
+                <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.4s ease;">
+                    <td class="locked-cell" style="padding: 12px 15px;"><b>${item.itemName}</b></td>
+                    <td style="padding: 8px 15px;">
+                        <input type="text" placeholder="Scan fresh label sticker here..." 
+                               style="width:100%; height:38px; background:#fffde7; border:2px solid var(--accent); padding:0 8px; font-weight:bold; box-sizing: border-box;"
+                               onchange="window.handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
+                    </td>
+                </tr>`;
+        });
+        html += `</tbody>`;
+    }
+    html += `</table>`;
+    
+    container.innerHTML = html;
+
+    const actionZone = document.getElementById("action-bar-zone");
+    if (actionZone) {
+        actionZone.innerHTML = `
+            <div class="command-bar" style="justify-content: center;">
+                <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
+            </div>`;
+    }
+},
 
 //====== END  Virtual Table View Renderer for UNTAGGED Audit ========
 
@@ -2776,40 +2779,103 @@ async executeMaintenanceSearch(searchType) {
 
 // =======Direct Tag Decommissioning Handler
 async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
-        const proceed = confirm(`CRITICAL REGULATION CONFIRMATION:\n\nYou are about to scrub Tag_ID: [${oldTagId}] out of this specific database ledger row.\n\nThis will reset the item to "UNTAGGED" status and push it straight into the compliance audit list for re-stickering. Proceed?`);
-        if (!proceed) return;
+        if (oldTagId === "UNTAGGED") {
+            alert("This item is already untagged.");
+            return;
+        }
 
-        this.showLoading("Transmitting sparse data scrub to OneDrive...");
+        // 1. DUAL WORKFLOW SELECTION PROMPT
+        const promptMsg = `MAE INDUSTRIAL TAG MAINTENANCE SYSTEM:\n\nYou are decommissioning Tag_ID [${oldTagId}]. Choose a remediation path:\n\n` +
+                          `• Click OK to completely STRIP this tag. ALL items holding this tag across ALL tables will reset to "UNTAGGED" status and route to the compliance audit queue.\n\n` +
+                          `• Click CANCEL if you want to instantly RE-STICKER this container asset with a fresh physical tag instead.`;
+
+        const choice = confirm(promptMsg);
+        
+        let newTagValue = "UNTAGGED";
+        
+        if (!choice) {
+            // Path B: User clicked Cancel, indicating they want to re-sticker right now
+            const reStickerInput = prompt(`RE-STICKERING WORKSPACE FLUID INTERFACE:\n\nPlease scan or type your NEW replacement barcode token for this group:`);
+            if (!reStickerInput || reStickerInput.trim() === "") {
+                console.log("MAE System: Re-stickering process aborted by user.");
+                return;
+            }
+            newTagValue = reStickerInput.trim().toUpperCase();
+            
+            // Defend against assigning a literal string gap token as a real ID
+            if (newTagValue === "UNTAGGED") {
+                alert("Error: You cannot use 'UNTAGGED' as a functional tag label.");
+                return;
+            }
+        }
+
+        this.showLoading(`Syncing changes to OneDrive ledger for Tag [${oldTagId}] -> [${newTagValue}]...`);
 
         try {
-            const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-            const tagIdIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
-            
-            // Build sparse update structure to wipe tag field cleanly without corrupting other inputs
-            const rowValues = new Array(sheetConfig.columns.length).fill(null);
-            rowValues[tagIdIdx] = "UNTAGGED";
-
+            const priorityTables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
             const token = await window.getGraphToken();
-            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${tableName}/rows/itemAt(index=${parseInt(rowIndex, 10)})`;
-            const response = await fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ values: [rowValues] })
-            });
+            let matchedRowsToUpdate = [];
 
-            if (response.ok) {
-                alert("Tag Decommission Complete!\n\nThis row has been successfully stripped of its tracking numbers. Use the 'Audit Untagged Items' module on the dashboard to link a new physical label sticker to it.");
-                this.renderTagMaintenanceWizard(); // Reload clean state panel
-            } else {
-                alert("Sync Failure: OneDrive was unable to write changes.");
-                this.renderTagMaintenanceWizard();
+            // 2. SWEEP DATABASE PARTITIONS TO GATHER ALL ROWS MATCHING OLD TAG_ID
+            for (const table of priorityTables) {
+                const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
+                const rowsData = await window.Dashboard.getFullTableData(table);
+                if (!rowsData || rowsData.length === 0) continue;
+
+                const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                if (tagColIdx === -1) continue;
+
+                rowsData.forEach(row => {
+                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
+                    if (cells && String(cells[tagColIdx]).trim() === oldTagId) {
+                        matchedRowsToUpdate.push({
+                            tableName: table,
+                            rowIndex: parseInt(row.index, 10),
+                            config: sheetConfig
+                        });
+                    }
+                });
             }
+
+            console.log(`MAE Engine: Located ${matchedRowsToUpdate.length} rows to update sequentially.`);
+
+            // 3. SEQUENTIAL BLOCK TRANSACTION: Process array updates through Microsoft Graph API
+            for (const item of matchedRowsToUpdate) {
+                const tagIdIdx = item.config.columns.findIndex(c => c.header === "Tag_ID");
+                const tagTypeIdx = item.config.columns.findIndex(c => c.header === "Tag_Type");
+
+                const rowValues = new Array(item.config.columns.length).fill(null);
+                rowValues[tagIdIdx] = newTagValue;
+                
+                // If re-stickering a multiple container, keep its status. If clearing, drop it back to UNIQUE initial status.
+                if (tagTypeIdx !== -1) {
+                    rowValues[tagTypeIdx] = (newTagValue === "UNTAGGED") ? "UNIQUE" : "MULTIPLE";
+                }
+
+                const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${item.tableName}/rows/itemAt(index=${item.rowIndex})`;
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ values: [rowValues] })
+                });
+
+                if (!response.ok) {
+                    console.error(`MAE Failure processing row index ${item.rowIndex} inside ${item.tableName}`);
+                }
+                
+                // Throttling protection to avoid API write locks
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            alert(`System Synchronization Complete!\n\nSuccessfully updated ${matchedRowsToUpdate.length} inventory record rows to hold Tag ID: [${newTagValue}].`);
+            this.renderTagMaintenanceWizard(); // Reload clean workspace panel
+
         } catch (err) {
-            console.error("MAE Tag Maintenance Scrub Error:", err);
-            this.showError("Failed to safely detach tag. Check workshop internet.");
+            console.error("MAE Bulk Maintenance Core Exception:", err);
+            this.showError("Failed to cleanly update tag groups. Check your network sync links.");
         }
     }
 //==== END Direct Tag Decommissioning Handler ========

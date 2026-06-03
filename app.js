@@ -2252,7 +2252,7 @@ async function executeFocusedAssetSearch(searchQuery) {
 // UNTAGGED ASSETS AUDIT AND REGISTRATION SUB-SYSTEM 
 // =========================================================================
 async function runUntaggedAudit() {
-    UI.showLoading("Performing cross-table audit of UNTAGGED assets...");
+    UI.showLoading("Performing cross-table compliance sweep of UNTAGGED assets...");
     
     const inventoryTables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
     let untaggedResultsList = [];
@@ -2260,29 +2260,47 @@ async function runUntaggedAudit() {
     try {
         for (const tableName of inventoryTables) {
             const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+            if (!sheetConfig) continue;
+
             const dataRows = await Dashboard.getFullTableData(tableName); 
+            if (!dataRows || dataRows.length === 0) continue;
 
-            if (dataRows && dataRows.length > 0) {
-                const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
-                const nameIdx = sheetConfig.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool") || c.header.includes("Description")));
+            const tagIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+            // MAE REPAIR: Clean lookup pointing directly to your new standardized text field axis
+            const nameIdx = sheetConfig.columns.findIndex(c => c.header === "Item_Description");
+            const idIdx = sheetConfig.columns.findIndex(c => c.header === "mae_id");
 
-                dataRows.forEach(rowObj => {
-                    const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj.values;
+            if (tagIdx === -1 || nameIdx === -1) continue;
+
+            dataRows.forEach(rowObj => {
+                // 🌟 MAE ENGINE RUGGED APPARATUS FIX: Dig down inside Graph's 2D nested array cell container safely 🌟
+                const cells = (rowObj.values && Array.isArray(rowObj.values[0])) 
+                    ? rowObj.values[0] 
+                    : (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : null;
+
+                if (cells && cells[tagIdx] !== undefined && cells[tagIdx] !== null) {
+                    const currentTagTextValue = String(cells[tagIdx]).trim().toUpperCase();
                     
-                    // Match rows containing our strict default fallback code string "UNTAGGED"
-                    if (cells && String(cells[tagIdx]).trim().toUpperCase() === "UNTAGGED") {
+                    // Match rows containing your strict default fallback code string "UNTAGGED"
+                    if (currentTagTextValue === "UNTAGGED" || currentTagTextValue === "") {
+                        // Extract unique row identification key safely
+                        const rowUniqueMaeId = idIdx !== -1 ? cells[idIdx] : `ROW-${rowObj.index}`;
+
                         untaggedResultsList.push({
                             category: sheetConfig.tabName,
-                            itemName: cells[nameIdx] || "N/A",
-                            mae_id: cells, // Index 0 handles primary mapping keys
-                            tableName: tableName
+                            itemName: cells[nameIdx] || "Unnamed Asset Row",
+                            mae_id: rowUniqueMaeId, // Extracted cell primary key value
+                            tableName: tableName,
+                            rowIndex: rowObj.index // Persistent row tracker index anchor
                         });
                     }
-                });
-            }
+                }
+            });
         }
 
-        // Forward matched arrays straight to our dedicated virtual table layout renderer inside ui.js
+        console.log(`MAE Audit Engine: Complete. Located ${untaggedResultsList.length} compliance gaps.`);
+        
+        // Forward matched arrays straight to your dedicated virtual table layout renderer inside ui.js
         UI.renderUntaggedAuditGrid(untaggedResultsList);
 
     } catch (error) {
