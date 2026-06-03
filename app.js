@@ -1686,8 +1686,10 @@ async function handleUniversalLookup(scannedId) {
             const typeIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_Type");
             if (tagIdx === -1) continue;
 
+            // Find rows where the Tag_ID matches the scanner payload
             const internalMatches = rowsData.filter(row => {
-                const rowCells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : row.values;
+                // 🌟 MAE REGULATION FIX: Explicitly unwrap Graph API's 2D double-nested array cell matrix container safely 🌟
+                const rowCells = (row.values && Array.isArray(row.values)) ? row.values : (Array.isArray(row.values) ? row.values : null);
                 return rowCells && String(rowCells[tagIdx]).trim() === cleanId;
             });
 
@@ -1696,12 +1698,12 @@ async function handleUniversalLookup(scannedId) {
                 matchingTableName = table;
                 sheetConfigMatch = sheetConfig;
                 
-                const sampleRowCells = (internalMatches[0].values && Array.isArray(internalMatches[0].values[0])) 
-                    ? internalMatches[0].values[0] 
-                    : internalMatches[0].values;
+                // 🌟 MAE REGULATION FIX: Dig directly into index 0 of the first matched row object 🌟
+                const firstMatchedRow = internalMatches[0];
+                const sampleRowCells = (firstMatchedRow.values && Array.isArray(firstMatchedRow.values)) ? firstMatchedRow.values : (Array.isArray(firstMatchedRow.values) ? firstMatchedRow.values : null);
                 
-                foundTagType = typeIdx !== -1 ? String(sampleRowCells[typeIdx]).trim().toUpperCase() : "UNIQUE";
-                break; 
+                foundTagType = typeIdx !== -1 && sampleRowCells ? String(sampleRowCells[typeIdx]).trim().toUpperCase() : "UNIQUE";
+                break; // Escape outer loop since we've identified the tag profile
             }
         }
 
@@ -1790,10 +1792,14 @@ async function handleUniversalLookup(scannedId) {
             return;
         }
 
+        // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO CARD VIEW
         if (foundTagType === "UNIQUE") {
             window.currentTable = matchingTableName;
-            const singleFlattenedCells = (matchedAssetRowsList[0].values && Array.isArray(matchedAssetRowsList[0].values[0])) ? matchedAssetRowsList[0].values[0] : matchedAssetRowsList[0].values;
-            UI.renderScanResultCard(singleFlattenedCells, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
+            // Extract the first row object matching our search collection list
+            const targetedRowObj = matchedAssetRowsList[0];
+            const singleFlattenedCells = (targetedRowObj.values && Array.isArray(targetedRowObj.values)) ? targetedRowObj.values : (Array.isArray(targetedRowObj.values) ? targetedRowObj.values : null);
+            
+            UI.renderScanResultCard(singleFlattenedCells, matchingTableName, sheetConfigMatch, targetedRowObj.index);
             return;
         }
 
