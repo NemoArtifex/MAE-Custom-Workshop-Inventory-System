@@ -2830,7 +2830,8 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 if (tagColIdx === -1) continue;
 
                 const matchFound = rowsData.find(row => {
-                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
+                    // MAE FIXED APPARATUS: Dig down safely to index 0 of Graph's double-nested array structure [[...]]
+                    const cells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : (Array.isArray(row.values) ? row.values : null);
                     return cells && String(cells[tagColIdx]).trim() === newTagValue;
                 });
 
@@ -2867,7 +2868,9 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 if (tagColIdx === -1) continue;
 
                 rowsData.forEach(row => {
-                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
+                    // 🌟 MAE FIXED APPARATUS: Explicitly unwrap Graph API's 2D double-nested array cell matrix container safely 🌟
+                    const cells = (row.values && Array.isArray(row.values[0])) ? row.values[0] : (Array.isArray(row.values) ? row.values : null);
+                    
                     if (cells && cells[tagColIdx] !== undefined && cells[tagColIdx] !== null) {
                         if (String(cells[tagColIdx]).trim() === oldTagId.toString().trim()) {
                             matchedRowsToUpdate.push({
@@ -2881,6 +2884,12 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
             }
 
             console.log(`MAE Maintenance Engine: Located ${matchedRowsToUpdate.length} matching rows requiring transformation.`);
+
+            if (matchedRowsToUpdate.length === 0) {
+                alert(`MAE SYSTEM EXCEPTION:\n\nCould not identify any active rows mapping to Tag ID: [${oldTagId}] in the data structures. Verify that the file matches the current metadata sync indicators.`);
+                this.renderTagMaintenanceWizard();
+                return;
+            }
 
             // ==========================================
             // 3. TRANSACTION EXECUTION (PRESERVES ITEM DATA)
