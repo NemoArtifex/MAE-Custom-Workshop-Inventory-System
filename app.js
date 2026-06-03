@@ -1677,6 +1677,7 @@ async function handleUniversalLookup(scannedId) {
     let foundTagType = "";
 
     try {
+              
         for (const table of priorityTables) {
             const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === table);
             const rowsData = await Dashboard.getFullTableData(table);
@@ -1688,22 +1689,24 @@ async function handleUniversalLookup(scannedId) {
 
             // Find rows where the Tag_ID matches the scanner payload
             const internalMatches = rowsData.filter(row => {
-                // 🌟 MAE REGULATION FIX: Explicitly unwrap Graph API's 2D double-nested array cell matrix container safely 🌟
-                const rowCells = (row.values && Array.isArray(row.values)) ? row.values : (Array.isArray(row.values) ? row.values : null);
+                // 🌟 MAE SYSTEM REALITY FIX: Force-target index 0 of Graph's double-nested array wrapper [[...]] 🌟
+                const rowCells = row.values && Array.isArray(row.values[0]) ? row.values[0] : (Array.isArray(row.values) ? row.values : null);
                 return rowCells && String(rowCells[tagIdx]).trim() === cleanId;
             });
 
             if (internalMatches.length > 0) {
+                // Save the full matching rows collection list array
                 matchedAssetRowsList = internalMatches;
                 matchingTableName = table;
                 sheetConfigMatch = sheetConfig;
                 
-                // 🌟 MAE REGULATION FIX: Dig directly into index 0 of the first matched row object 🌟
-                const firstMatchedRow = internalMatches[0];
-                const sampleRowCells = (firstMatchedRow.values && Array.isArray(firstMatchedRow.values)) ? firstMatchedRow.values : (Array.isArray(firstMatchedRow.values) ? firstMatchedRow.values : null);
+                // 🌟 MAE SYSTEM REALITY FIX: Dig directly into index 0 of the first cell block array mapping 🌟
+                const firstMatchedRowCells = matchedAssetRowsList[0].values && Array.isArray(matchedAssetRowsList[0].values[0]) 
+                    ? matchedAssetRowsList[0].values[0] 
+                    : matchedAssetRowsList[0].values;
                 
-                foundTagType = typeIdx !== -1 && sampleRowCells ? String(sampleRowCells[typeIdx]).trim().toUpperCase() : "UNIQUE";
-                break; // Escape outer loop since we've identified the tag profile
+                foundTagType = typeIdx !== -1 && firstMatchedRowCells ? String(firstMatchedRowCells[typeIdx]).trim().toUpperCase() : "UNIQUE";
+                break; // Escape outer loop since we've identified the tag profile tracking variables
             }
         }
 
@@ -1795,29 +1798,33 @@ async function handleUniversalLookup(scannedId) {
         // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO CARD VIEW
         if (foundTagType === "UNIQUE") {
             window.currentTable = matchingTableName;
-            // Extract the first row object matching our search collection list
-            const targetedRowObj = matchedAssetRowsList[0];
-            const singleFlattenedCells = (targetedRowObj.values && Array.isArray(targetedRowObj.values)) ? targetedRowObj.values : (Array.isArray(targetedRowObj.values) ? targetedRowObj.values : null);
             
-            UI.renderScanResultCard(singleFlattenedCells, matchingTableName, sheetConfigMatch, targetedRowObj.index);
+            // MAE FIXED ARRAYS: Pull flat row cell list securely from index 0 position
+            const singleFlattenedCells = matchedAssetRowsList[0].values && Array.isArray(matchedAssetRowsList[0].values[0])
+                ? matchedAssetRowsList[0].values[0]
+                : matchedAssetRowsList[0].values;
+            
+            UI.renderScanResultCard(singleFlattenedCells, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
             return;
         }
 
+        // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO SEARCH HUB GRID VIEW
         if (foundTagType === "MULTIPLE") {
             window.currentTable = matchingTableName;
             
-            // MAE REPAIR: Absolute target lookup for your unified header name
             const nameIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Item_Description");
             const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
 
             const containerBundleResults = matchedAssetRowsList.map(rowObj => {
-                const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : rowObj.values;
+                // MAE FIXED ARRAYS: Pull flat row cell list securely from index 0 position inside loop mapper
+                const cells = rowObj.values && Array.isArray(rowObj.values[0]) ? rowObj.values[0] : rowObj.values;
                 const physicalLocation = cells[locationColumnIdx] || "TBD";
                 
                 return {
                     category: `${sheetConfigMatch.tabName} [Storage: ${physicalLocation}]`,
                     itemName: cells[nameIdx] || "N/A",
-                    tableName: matchingTableName
+                    tableName: matchingTableName,
+                    rowIndex: rowObj.index
                 };
             });
 
