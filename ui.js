@@ -2778,64 +2778,98 @@ async executeMaintenanceSearch(searchType) {
 //======  END Execute Search Logic for Tag Maintenance Wizard ========
 
 // =======Direct Tag Decommissioning Handler
+// const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${item.tableName}/rows/itemAt(index=${item.rowIndex})`;
+//======
+
 async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
         if (oldTagId === "UNTAGGED") {
-            alert("This item is already untagged.");
+            alert("MAE System: This item is already marked as untagged.");
             return;
         }
 
-        // 1. DUAL WORKFLOW SELECTION PROMPT
-        const promptMsg = `MAE INDUSTRIAL TAG MAINTENANCE SYSTEM:\n\nYou are decommissioning Tag_ID [${oldTagId}]. Choose a remediation path:\n\n` +
-                          `• Click OK to completely STRIP this tag. ALL items holding this tag across ALL tables will reset to "UNTAGGED" status and route to the compliance audit queue.\n\n` +
-                          `• Click CANCEL if you want to instantly RE-STICKER this container asset with a fresh physical tag instead.`;
+        // ==========================================
+        // 1. DUAL WORKFLOW SELECTION PROMPT GATES
+        // ==========================================
+        const promptMsg = `MAE INDUSTRIAL TAG MAINTENANCE SYSTEM:\n\n` +
+                          `You are modifying the physical label configuration for Tag_ID [${oldTagId}].\n\n` +
+                          `• Click OK to completely STRIP this tag. ALL items holding this identifier across ALL tables will reset to "UNTAGGED" status and move to the compliance audit queue.\n\n` +
+                          `• Click CANCEL if you are holding a brand-new physical sticker and want to perform an INSTANT "HOT-SWAP" replacement right now.`;
 
         const choice = confirm(promptMsg);
         
         let newTagValue = "UNTAGGED";
         
         if (!choice) {
-            // Path B: User clicked Cancel, indicating they want to re-sticker right now
-            const reStickerInput = prompt(`RE-STICKERING WORKSPACE FLUID INTERFACE:\n\nPlease scan or type your NEW replacement barcode token for this group:`);
+            // PATH B: The operator wants to perform an instantaneous "Hot-Swap" right now
+            const reStickerInput = prompt(`RE-STICKERING WORKSPACE INTERFACE:\n\nPlease scan or type your NEW replacement label sticker value right now:`);
+            
             if (!reStickerInput || reStickerInput.trim() === "") {
-                console.log("MAE System: Re-stickering process aborted by user.");
+                console.log("MAE System: Re-stickering procedure canceled by user choice.");
                 return;
             }
+            
             newTagValue = reStickerInput.trim().toUpperCase();
             
-            // Defend against assigning a literal string gap token as a real ID
             if (newTagValue === "UNTAGGED") {
-                alert("Error: You cannot use 'UNTAGGED' as a functional tag label.");
+                alert("CRITICAL REGULATION BLOCKED:\n\nYou cannot assign the absolute fallback string 'UNTAGGED' as a functional hardware sticker token.");
+                return;
+            }
+
+            // 1B. ANTI-COLLISION DOUBLE CHECK: Prevent mapping an already active tag
+            this.showLoading("Verifying new tag uniqueness across database ledger partitions...");
+            const token = await window.getGraphToken();
+            const priorityTables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
+            let isCollisionDetected = false;
+
+            for (const table of priorityTables) {
+                const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
+                const rowsData = await window.Dashboard.getFullTableData(table);
+                if (!rowsData || rowsData.length === 0) continue;
+
+                const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+                if (tagColIdx === -1) continue;
+
+                const matchFound = rowsData.find(row => {
+                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
+                    return cells && String(cells[tagColIdx]).trim() === newTagValue;
+                });
+
+                if (matchFound) {
+                    isCollisionDetected = true;
+                    break;
+                }
+            }
+
+            if (isCollisionDetected) {
+                alert(`CRITICAL COLLISION ERROR:\n\nThe scanned tag [${newTagValue}] is ALREADY actively assigned to an asset row inside your database ledger.\n\nYou cannot cross-contaminate tracking tokens. Grab a completely fresh, unused sticker roll.`);
+                this.renderTagMaintenanceWizard();
                 return;
             }
         }
 
-        this.showLoading(`Syncing changes to OneDrive ledger for Tag [${oldTagId}] -> [${newTagValue}]...`);
+        // ==========================================
+        // 2. TRANSACTION PREPARATION & BATCH ASSEMBLY
+        // ==========================================
+        this.showLoading(`Transmitting tracking data adjustments to OneDrive: [${oldTagId}] ➔ [${newTagValue}]...`);
 
         try {
             const priorityTables = ["Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables", "Resell_Inventory"];
             const token = await window.getGraphToken();
             let matchedRowsToUpdate = [];
 
-            // 2. SWEEP DATABASE PARTITIONS TO GATHER ALL ROWS MATCHING OLD TAG_ID
-            // MAE INDUSTRIAL SYSTEM MAINTENANCE LOOP
+            // Sweep tables to locate EVERY single row holding the old damaged identifier string
             for (const table of priorityTables) {
                 const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
-                const dataRows = await window.Dashboard.getFullTableData(table);
-                if (!dataRows || dataRows.length === 0) continue;
+                const rowsData = await window.Dashboard.getFullTableData(table);
+                if (!rowsData || rowsData.length === 0) continue;
 
                 const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
                 if (tagColIdx === -1) continue;
 
-                dataRows.forEach(row => {
-                    // 🌟 MAE ENGINE REPAIR: Explicitly unwrap Graph API's 2D double-nested array cell matrix container 🌟
-                    const cells = (row.values && Array.isArray(row.values[0])) 
-                        ? row.values[0] 
-                        : (row.values && Array.isArray(row.values)) ? row.values : row.values;
-
+                rowsData.forEach(row => {
+                    const cells = (row.values && Array.isArray(row.values)) ? row.values : row.values;
                     if (cells && cells[tagColIdx] !== undefined && cells[tagColIdx] !== null) {
-                        const cellTagValueText = String(cells[tagColIdx]).trim();
-                        
-                        if (cellTagValueText === oldTagId.toString().trim()) {
+                        if (String(cells[tagColIdx]).trim() === oldTagId.toString().trim()) {
                             matchedRowsToUpdate.push({
                                 tableName: table,
                                 rowIndex: parseInt(row.index, 10),
@@ -2846,18 +2880,21 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 });
             }
 
-            console.log(`MAE Engine: Located ${matchedRowsToUpdate.length} rows to update sequentially.`);
+            console.log(`MAE Maintenance Engine: Located ${matchedRowsToUpdate.length} matching rows requiring transformation.`);
 
-            // 3. SEQUENTIAL BLOCK TRANSACTION: Process array updates through Microsoft Graph API
+            // ==========================================
+            // 3. TRANSACTION EXECUTION (PRESERVES ITEM DATA)
+            // ==========================================
             for (const item of matchedRowsToUpdate) {
                 const tagIdIdx = item.config.columns.findIndex(c => c.header === "Tag_ID");
                 const tagTypeIdx = item.config.columns.findIndex(c => c.header === "Tag_Type");
 
+                // Sparse mapping: Array of nulls guarantees existing item specifications remain untouched
                 const rowValues = new Array(item.config.columns.length).fill(null);
                 rowValues[tagIdIdx] = newTagValue;
                 
-                // If re-stickering a multiple container, keep its status. If clearing, drop it back to UNIQUE initial status.
                 if (tagTypeIdx !== -1) {
+                    // Logic Guard: If hot-swapping a container, keep its status as MULTIPLE. If clearing it, drop back to safe UNIQUE initial default status.
                     rowValues[tagTypeIdx] = (newTagValue === "UNTAGGED") ? "UNIQUE" : "MULTIPLE";
                 }
 
@@ -2872,19 +2909,19 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 });
 
                 if (!response.ok) {
-                    console.error(`MAE Failure processing row index ${item.rowIndex} inside ${item.tableName}`);
+                    console.error(`MAE Fault Intercept: Network update lock failed on row index ${item.rowIndex} inside table ${item.tableName}`);
                 }
                 
-                // Throttling protection to avoid API write locks
+                // 400ms Throttling protection delay to safeguard Microsoft Graph workbook concurrency locks
                 await new Promise(r => setTimeout(r, 400));
             }
 
-            alert(`System Synchronization Complete!\n\nSuccessfully updated ${matchedRowsToUpdate.length} inventory record rows to hold Tag ID: [${newTagValue}].`);
-            this.renderTagMaintenanceWizard(); // Reload clean workspace panel
+            alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
+            this.renderTagMaintenanceWizard(); // Reload clean status wizard screen
 
         } catch (err) {
-            console.error("MAE Bulk Maintenance Core Exception:", err);
-            this.showError("Failed to cleanly update tag groups. Check your network sync links.");
+            console.error("MAE Hot-Swap Transaction Sub-System Crash:", err);
+            this.showError("Failed to safely complete tag re-homing updates. Check network links.");
         }
     }
 //==== END Direct Tag Decommissioning Handler ========
