@@ -1857,24 +1857,44 @@ async finalizeDecommission(locName) {
 //====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
 
 //========Virtual Search Hub for Multiple ITems on a Single Tag 
-renderVirtualSearchHub(auditData) {
+renderVirtualSearchHub(auditData, scannedTagId = null, activeTableName = null) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     
     title.innerText = "Search Results: Multiple Items on Scanned Tag";
 
-    // 1. Group the data by category for visual organization on the shop floor
+    // Group the data by category for visual organization on the shop floor
     const grouped = auditData.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
     }, {});
 
-    // 2. Build the grouped table
-    let html = `<table class="inventory-table" id="main-data-table">`;
+    // 1. MAE ENGINE UPGRADE: Inject a prominent Rapid Action Add Button right above the table list if context matches
+    let html = "";
+    if (scannedTagId && activeTableName) {
+        // Find the user-facing tab name to keep the UI instructions friendly
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === activeTableName);
+        const classificationLabel = sheetConfig ? sheetConfig.tabName : "this classification";
+
+        html += `
+            <div class="form-card" style="border-left: 6px solid var(--accent); background: #fff; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                <div>
+                    <h4 style="margin:0 0 5px 0; color:var(--primary);">CONTAINER ACTIVE: [Tag ID: ${scannedTagId}]</h4>
+                    <p style="margin:0; font-size:0.85rem; color:#666;">Quickly append a new tool or component record into this physical storage space.</p>
+                </div>
+                <button class="action-btn" 
+                        style="background: #e67e22; font-weight: bold; padding: 12px 25px; font-size: 1rem; flex-shrink: 0;" 
+                        onclick="window.pendingScanValue='${scannedTagId}'; window.handleAddClick('${activeTableName}')">
+                    ➕ Add Item to this Container
+                </button>
+            </div>
+        `;
+    }
+
+    html += `<table class="inventory-table" id="main-data-table">`;
     
     for (const [category, items] of Object.entries(grouped)) {
-        // Render Category Header and Sub-Headers
         html += `
             <thead>
                 <tr>
@@ -1907,7 +1927,6 @@ renderVirtualSearchHub(auditData) {
     
     html += `</table>`;
     
-    // Add a back button to the bottom so they can clear the search
     html += `
         <div class="form-actions" style="margin-top: 20px; text-align: center;">
             <button class="cancel-btn" style="width:50%;" onclick="loadTableData('Master_Dashboard')">
@@ -1917,7 +1936,6 @@ renderVirtualSearchHub(auditData) {
         
     container.innerHTML = html;
 
-    // Render a localized back-to-dashboard command bar
     const actionZone = document.getElementById("action-bar-zone");
     if (actionZone) {
         actionZone.innerHTML = `

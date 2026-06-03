@@ -1786,12 +1786,11 @@ async function handleUniversalLookup(scannedId) {
         if (foundTagType === "MULTIPLE") {
             window.currentTable = matchingTableName;
             
-            // Build the multi-item structural collection array for the UI Search Hub compiler
             const nameIdx = sheetConfigMatch.columns.findIndex(c => !c.hidden && (c.header.includes("Name") || c.header.includes("Tool")));
             const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
 
             const containerBundleResults = matchedAssetRowsList.map(rowObj => {
-                const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
+                const cells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values : rowObj.values;
                 const physicalLocation = cells[locationColumnIdx] || "TBD";
                 
                 return {
@@ -1801,7 +1800,8 @@ async function handleUniversalLookup(scannedId) {
                 };
             });
 
-            UI.renderVirtualSearchHub(containerBundleResults);
+            // MAE ENGINE UPDATE: Pass the target barcode token and matching database table down to UI grid compiler
+            UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName); 
             return;
         }
 
