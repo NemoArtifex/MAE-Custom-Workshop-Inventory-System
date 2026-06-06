@@ -1651,6 +1651,33 @@ async function handleUniversalLookup(scannedId) {
 
     console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE 🌟
+    // Locate any input elements that were frozen by labels.js during the capture phase
+    const frozenInput = document.querySelector('input[disabled], select[disabled]');
+    
+    if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
+        console.warn(`MAE Focus Protection: Reclaiming frozen field [${frozenInput.id}] following scan intercept.`);
+        
+        // 1. Re-enable the form field so it is fully interactive again
+        frozenInput.disabled = false;
+
+        // 2. Restore their original human data from the backup snapshot attribute
+        const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
+        frozenInput.value = originalValue;
+
+        // 3. Alert the user of the focus layout conflict
+        alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
+        
+        // 4. Safely return focus so the worker can continue their data entry seamlessly
+        setTimeout(() => {
+            if (frozenInput) frozenInput.focus();
+        }, 50);
+
+        return; // Terminate background lookup immediately to save ledger values from pollution
+    }
+
+
+
     // Identify active visual layout component states
     const focusedInput = document.activeElement;
     const formPanelActive = document.getElementById("entry-form") !== null;
