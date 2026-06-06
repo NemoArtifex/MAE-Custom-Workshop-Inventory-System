@@ -1,4 +1,3 @@
-
 /**
  * ui.js - MAE Custom Digital Solutions
  * Purpose: Handle all DOM manipulation and visual states.
@@ -3060,9 +3059,26 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
                 await new Promise(r => setTimeout(r, 400));
             }
 
-            alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
-            this.renderTagMaintenanceWizard(); // Reload clean status wizard screen
+            //==alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
+            //==this.renderTagMaintenanceWizard(); // Reload clean status wizard screen
 
+            alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
+
+        // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: ABSOLUTE SYNC PIPELINE FLUSH 🌟
+        // Instead of drawing the wizard context from local stale parameters,
+        // we display a loading frame and force the global router to re-download 
+        // your updated ground-truth ledger files directly from OneDrive.
+        this.showLoading("Synchronizing local ledger partitions... please wait.");
+
+        // 1200ms Industrial Settle Delay: Gives Microsoft's cloud workbook parameters
+        // ample time to process, calculate, and write file metadata completely on their servers.
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Reset the active state tracking variables
+        window.currentTable = "Master_Dashboard";
+
+        // Pull a clean download from OneDrive and safely bounce the view back to the main layout screen
+        window.loadTableData("Master_Dashboard");
         } catch (err) {
             console.error("MAE Hot-Swap Transaction Sub-System Crash:", err);
             this.showError("Failed to safely complete tag re-homing updates. Check network links.");
