@@ -3028,45 +3028,60 @@ async executeDirectTagWipe(tableName, rowIndex, oldTagId) {
             // ==========================================
             // 3. TRANSACTION EXECUTION (PRESERVES ITEM DATA)
             // ==========================================
-            for (const item of matchedRowsToUpdate) {
-                const tagIdIdx = item.config.columns.findIndex(c => c.header === "Tag_ID");
-                const tagTypeIdx = item.config.columns.findIndex(c => c.header === "Tag_Type");
-
-                // Sparse mapping: Array of nulls guarantees existing item specifications remain untouched
-                const rowValues = new Array(item.config.columns.length).fill(null);
-                rowValues[tagIdIdx] = newTagValue;
-                
-                if (tagTypeIdx !== -1) {
-                    // Logic Guard: If hot-swapping a container, keep its status as MULTIPLE. If clearing it, drop back to safe UNIQUE initial default status.
-                    rowValues[tagTypeIdx] = (newTagValue === "UNTAGGED") ? "UNIQUE" : "MULTIPLE";
-                }
-
-                const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${item.tableName}/rows/itemAt(index=${item.rowIndex})`;
-                const response = await fetch(url, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ values: [rowValues] })
-                });
-
-                if (!response.ok) {
-                    console.error(`MAE Fault Intercept: Network update lock failed on row index ${item.rowIndex} inside table ${item.tableName}`);
-                }
-                
-                // 400ms Throttling protection delay to safeguard Microsoft Graph workbook concurrency locks
-                await new Promise(r => setTimeout(r, 400));
+            for (const row of matchedRowsToUpdate) {for (const item of matchedRowsToUpdate) {
+            const tagIdIdx = item.config.columns.findIndex(c => c.header === "Tag_ID");
+            const tagTypeIdx = item.config.columns.findIndex(c => c.header === "Tag_Type");
+            
+            // Sparse mapping: Array of nulls guarantees existing item specifications remain untouched
+            const rowValues = new Array(item.config.columns.length).fill(null);
+            rowValues[tagIdIdx] = newTagValue;
+            if (tagTypeIdx !== -1) {
+                rowValues[tagTypeIdx] = (newTagValue === "UNTAGGED") ? "UNIQUE" : "MULTIPLE";
             }
 
-            alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
-            this.renderTagMaintenanceWizard(); // Reload clean status wizard screen
+            const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(window.maeSystemConfig.spreadsheetName)}:/workbook/tables/${item.tableName}/rows/itemAt(index=${item.rowIndex})`;
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ values: [rowValues] })
+            });
 
-        } catch (err) {
-            console.error("MAE Hot-Swap Transaction Sub-System Crash:", err);
-            this.showError("Failed to safely complete tag re-homing updates. Check network links.");
+            if (!response.ok) {
+                console.error(`MAE Fault Intercept: Network update lock failed on row index ${item.rowIndex} inside table ${item.tableName}`);
+            }
+            
+            // 400ms Throttling protection delay to safeguard Microsoft Graph workbook concurrency locks
+            await new Promise(r => setTimeout(r, 400));
         }
+
+        alert(`System Integrity Verified!\n\nSuccessfully transformed ${matchedRowsToUpdate.length} database ledger row entries to hold Tag ID: [${newTagValue}]. All descriptive asset features remain preserved.`);
+        
+        // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: ABSOLUTE SYNC PIPELINE FLUSH 🌟
+        // Instead of instantly re-drawing the wizard context from local stale variables,
+        // we display a high-visibility loading frame and force the global router 
+        // to re-download your updated ground-truth files directly from OneDrive servers.
+        this.showLoading("Synchronizing local ledger partitions... please wait.");
+        
+        // 1200ms Industrial Settle Delay: Gives Microsoft's cloud servers ample time to write file metadata properties completely
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Wipe the administrative routing tracking flag safely
+        window.currentTable = "Master_Dashboard";
+        
+        // Pull clean ground-truth files and smoothly bounce the user back to the Master Dashboard grid
+        window.loadTableData("Master_Dashboard");
+
+    } catch (err) {
+        console.error("MAE Hot-Swap Transaction Sub-System Crash:", err);
+        this.showError("Failed to safely complete tag re-homing updates. Check network links.");
     }
+}
+
+
+
 //==== END Direct Tag Decommissioning Handler ========
 
 };
