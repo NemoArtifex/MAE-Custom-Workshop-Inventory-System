@@ -34,7 +34,8 @@
  * Version 1.6.1: Hid two columns in Location
  * Version 2.0:   Adding Tag_Type for the Scannable Label feature.
  * Version 2.1:  Changed inventory item name to a common: Item_Description for ease and reliability of filtering
- * Version: xxxxx:
+ * Version: 2.2: Added isInventory: true (false); for use in logic for button visibility
+ * Version xxxx:
  */
 
 export const maeSystemConfig = {
@@ -219,6 +220,7 @@ export const maeSystemConfig = {
         {
             tabName: "Resell Inventory",
             tableName: "Resell_Inventory",
+            isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -259,6 +261,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Machinery",
             tableName: "Shop_Machinery",
+            isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -282,6 +285,7 @@ export const maeSystemConfig = {
         {
             tabName: "Maintenance Log",
             tableName: "Maintenance_Log",
+            isInventory: false,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -311,6 +315,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Power Tools",
             tableName: "Shop_Power_Tools",
+            isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -353,6 +358,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Hand Tools",
             tableName: "Shop_Hand_Tools",
+            isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -393,6 +399,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Consumables",
             tableName: "Shop_Consumables",
+            isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -459,6 +466,7 @@ export const maeSystemConfig = {
         {
             tabName: "Shop Overhead",
             tableName: "Shop_Overhead",
+            isInventory: false,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -493,6 +501,7 @@ export const maeSystemConfig = {
         {
             tabName: "Supplier Contacts",
             tableName: "Supplier_Contacts",
+            isInventory: false,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
@@ -507,6 +516,7 @@ export const maeSystemConfig = {
         {
             tabName: "Location",
             tableName: "Location",
+            isInventory: false,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
