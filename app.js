@@ -1641,52 +1641,77 @@ async function handleQuickUpdate(tableName) {
 // =========== UNIFIED UNIVERSAL SCANNER LOOKUP (Item_Description AXIS) ===========
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
-    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SYMMETRICAL STRING PAYLOAD CLEANING 🌟
-    // Enforces strict token discipline by routing the incoming hardware scan burst 
-    // straight through your Labels extraction module. This strips web parameters and 
-    // forces uppercase comparison parity before any table checks are executed.
+    // 1. Enforce strict token discipline by cleaning the hardware payload string
     const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
 
     if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
-        console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned string tokens.");
+        console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
         return;
     }
 
     console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
-    // Check if the user is actively working inside the untagged compliance audit workspace
-    const activeTitleElement = document.getElementById("current-view-title");
-    const activeTitle = activeTitleElement ? activeTitleElement.innerText : "";
-    const isAuditViewActive = activeTitle.includes("Awaiting Physical Tag Assignment");
-  
-    // Check if the user is actively working inside the untagged compliance audit workspace
-    if (isAuditViewActive) {
-        const focusedInput = document.activeElement;
-        
-        // CONDITION 1: User is focused inside the top stationary BULK assembly input box
-        const isInsideBulkBarField = focusedInput && focusedInput.id === "mae-bulk-container-input";
-        
-        // CONDITION 2: User is focused inside an individual single-row text input box
-        const isInsideAuditRowField = focusedInput && focusedInput.tagName === "INPUT" && focusedInput.closest("tr")?.id?.startsWith("untagged-row-");
+    // Identify active visual layout component states
+    const focusedInput = document.activeElement;
+    const formPanelActive = document.getElementById("entry-form") !== null;
 
-        if (isInsideBulkBarField || isInsideAuditRowField) {
-            console.log("MAE Security Guard: Audit workspace input focused. Halting background router to prevent blank form collisions.");
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: BINARY FOCUS ISOLATION SAFEGUARD 🌟
+    // Rule: If ANY input form field is focused on the screen, the data payload 
+    // is ONLY allowed to land if the user's cursor is explicitly inside the 'field-Tag_ID' box.
+    if (focusedInput && (focusedInput.tagName === "INPUT" || focusedInput.tagName === "SELECT")) {
+        
+        // Is the cursor sitting exactly inside your standardized Tag_ID input box?
+        const isCursorInTagField = focusedInput.id === "field-Tag_ID";
+
+        if (!isCursorInTagField) {
+            console.warn(`MAE Focus Protection: Scanner burst intercepted inside invalid field [${focusedInput.id}]. Executing immediate rejection.`);
             
-            // If the background listener caught the scan instead of the box's change event, force it to process here
-            if (isInsideBulkBarField) {
-                // Remove focus to trigger the input's native onchange event cleanly
-                focusedInput.blur();
-            }
-            return; // EXIT FUNCTION: Let the dedicated form inputs run their precise transaction methods!
+            // 1. Force immediate focus loss to freeze the wrong field from receiving text characters
+            focusedInput.blur();
+            
+            // 2. Alert the shop hand of the focus variance without hanging the terminal screen
+            alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
+            
+            // 3. Smoothly return focus back to where they were typing so they don't lose their place
+            setTimeout(() => {
+                if (focusedInput) focusedInput.focus();
+            }, 50);
+            
+            return; // Terminate execution pass immediately to save cell ledger values from pollution
         }
     }
 
+    // --- WORKSPACE OVERRIDE 2: UNTAGGED AUDIT VIEW SYSTEM INTERCEPT ---
+    const activeTitleElement = document.getElementById("current-view-title");
+    const activeTitle = activeTitleElement ? activeTitleElement.innerText : "";
+    const isAuditViewActive = activeTitle.includes("Awaiting Physical Tag Assignment");
+
+    if (isAuditViewActive) {
+        // CONDITION A: Operator is actively focused inside the top stationary bulk group assembly box
+        const isInsideBulkBarField = focusedInput && focusedInput.id === "mae-bulk-container-input";
+        // CONDITION B: Operator is focused inside an individual single-row manual input box
+        const isInsideAuditRowField = focusedInput && focusedInput.tagName === "INPUT" && focusedInput.closest("tr")?.id?.startsWith("untagged-row-");
+
+        if (isInsideBulkBarField || isInsideAuditRowField) {
+            console.log("MAE Security Guard: Audit workspace input focused. Halting background router to prevent collision.");
+            
+            if (isInsideBulkBarField) {
+                setTimeout(() => {
+                    focusedInput.value = cleanId;
+                    focusedInput.blur();
+                }, 0);
+            }
+            return; // EXIT FUNCTION: Let the dedicated form inputs process their local methods safely
+        }
+    }
+
+    // --- STANDARD CROSS-TABLE SEARCH PIPELINE PROCEEDS (Cursor is safe or field is un-focused) ---
     const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
     let matchedAssetRowsList = [];
     let matchingTableName = "";
     let sheetConfigMatch = null;
     let foundTagType = "";
-
+    
     try {
               
         for (const table of priorityTables) {
