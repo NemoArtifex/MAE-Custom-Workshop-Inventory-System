@@ -2520,28 +2520,48 @@ async function executeBulkContainerGroupingTransition(rawScannerInput) {
 }
 //==== END Registered tag discipline: Batch Container Group Update Engine ========
 
-//  MAE REGISTERED TAG DISCIPLINE: UTILITY COMPLIANCE CROSS-TABLE SCANNER
+// ==== MAE REGISTERED TAG DISCIPLINE: UTILITY COMPLIANCE CROSS-TABLE SCANNER
+// == Name-Based Utility Compliance Cross-Table Scanner
 // =========================================================================
 async function verifyTagUniquenessCrossTable(tagIdToCheck) {
+    if (!tagIdToCheck || tagIdToCheck.toString().trim() === "" || tagIdToCheck.toString().toUpperCase() === "UNTAGGED") {
+        return false; // The absolute fallback string 'UNTAGGED' is skipped to allow grouping audits to process cleanly
+    }
+
+    const targetSearchToken = tagIdToCheck.toString().trim().toUpperCase();
     const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
-    
+
     for (const table of priorityTables) {
         const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === table);
-        const rowsData = await Dashboard.getFullTableData(table);
-        if (!rowsData || rowsData.length === 0) continue;
+        if (!sheetConfig) continue;
 
-        const tagColIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
-        if (tagColIdx === -1) continue;
+        // Fetch the raw row arrays from Microsoft Graph
+        const rawRowsData = await Dashboard.getFullTableData(table);
+        if (!rawRowsData || rawRowsData.length === 0) continue;
 
-        const match = rowsData.find(row => {
-            // Unwrap Microsoft Graph API's 2D nested array cell container safely [[...]]
-            const cells = (row.values && Array.isArray(row.values)) ? row.values : (Array.isArray(row.values) ? row.values : null);
-            return cells && String(cells[tagColIdx]).trim() === tagIdToCheck.toString().trim();
+        // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: PARSE RAW MATRIX TO KEYED DATABASE RECORDS 🌟
+        // This invokes your new dashboard normalizer pass, transforming fragile double-nested cell
+        // arrays into highly reliable JSON objects bound permanently to your configuration headers.
+        const normalizedRecords = Dashboard.transformRowsToObjects(rawRowsData, sheetConfig);
+
+        // Scan across your clean database records looking for an explicit text name property match
+        const matchFound = normalizedRecords.find(record => {
+            // Extract the tag text value by its exact column string name key
+            const recordTagValue = record.data["Tag_ID"];
+            if (recordTagValue !== undefined && recordTagValue !== null) {
+                return String(recordTagValue).trim().toUpperCase() === targetSearchToken;
+            }
+            return false;
         });
-        
-        if (match) return true; // Collision found! Tag is already assigned elsewhere.
+
+        if (matchFound) {
+            console.warn(`MAE Security Matrix Intercept: Label collision detected inside sheet classification [${sheetConfig.tabName}] at row index ${matchFound.index}`);
+            return true; // Collision verified! This tag is already in use by an active asset record row.
+        }
     }
-    return false; // Safe and clean! Tag is completely unique.
+
+    console.log(`MAE Security Matrix Verification: Label token [${targetSearchToken}] confirmed safe and unique.`);
+    return false; // Safe and clean! The tag is verified unique and ready for assignment.
 }
 
 // ===== END MAE REGISTERED TAG DISCIPLINE: UTILITY COMPLIANCE CROSS-TABLE SCANNER ========
