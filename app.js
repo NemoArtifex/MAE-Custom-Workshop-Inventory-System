@@ -1655,24 +1655,37 @@ async function handleUniversalLookup(scannedId) {
     const focusedInput = document.activeElement;
     const formPanelActive = document.getElementById("entry-form") !== null;
 
-    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: BINARY FOCUS ISOLATION SAFEGUARD 🌟
-    // Rule: If ANY input form field is focused on the screen, the data payload 
-    // is ONLY allowed to land if the user's cursor is explicitly inside the 'field-Tag_ID' box.
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: BINARY FOCUS ISOLATION SAFEGUARD WITH TEXT REVERSION 🌟
     if (focusedInput && (focusedInput.tagName === "INPUT" || focusedInput.tagName === "SELECT")) {
         
         // Is the cursor sitting exactly inside your standardized Tag_ID input box?
         const isCursorInTagField = focusedInput.id === "field-Tag_ID";
 
         if (!isCursorInTagField) {
-            console.warn(`MAE Focus Protection: Scanner burst intercepted inside invalid field [${focusedInput.id}]. Executing immediate rejection.`);
+            console.warn(`MAE Focus Protection: Scanner burst intercepted inside invalid field [${focusedInput.id}]. Executing immediate rejection and data scrub.`);
             
-            // 1. Force immediate focus loss to freeze the wrong field from receiving text characters
+            // 🌟 THE SOLUTION: REVERT TEXT INJECTION POLLUTION 🌟
+            // We read the raw unscanned token burst string to determine exactly what the 
+            // hardware scanner just typed into your focused text input box cell.
+            const rawScannerBurstText = scannedId.toString().trim();
+            const currentFieldTextValue = focusedInput.value || "";
+
+            // Programmatically strip focus to lock down the element from further typing
             focusedInput.blur();
-            
-            // 2. Alert the shop hand of the focus variance without hanging the terminal screen
+
+            // If the wrong field contains the scanner text, scrub it out cleanly
+            if (currentFieldTextValue.includes(rawScannerBurstText)) {
+                // Remove the raw barcode string payload from their notes text entirely
+                focusedInput.value = currentFieldTextValue.replace(rawScannerBurstText, "").trim();
+            } else if (focusedInput.value && focusedInput.value.length >= rawScannerBurstText.length) {
+                // Robust fallback: If trailing parameters altered the text string, slice away the exact length of the burst
+                focusedInput.value = currentFieldTextValue.slice(0, -rawScannerBurstText.length).trim();
+            }
+
+            // Alert the shop hand of the focus variance without hanging the terminal screen
             alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
             
-            // 3. Smoothly return focus back to where they were typing so they don't lose their place
+            // Smoothly return focus back to where they were typing so they can continue their entry
             setTimeout(() => {
                 if (focusedInput) focusedInput.focus();
             }, 50);
@@ -1711,7 +1724,7 @@ async function handleUniversalLookup(scannedId) {
     let matchingTableName = "";
     let sheetConfigMatch = null;
     let foundTagType = "";
-    
+
     try {
               
         for (const table of priorityTables) {
