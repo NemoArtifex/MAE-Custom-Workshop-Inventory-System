@@ -1641,13 +1641,24 @@ async function handleQuickUpdate(tableName) {
 // =========== UNIFIED UNIVERSAL SCANNER LOOKUP (Item_Description AXIS) ===========
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
-    const cleanId = scannedId.toString().trim();
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SYMMETRICAL STRING PAYLOAD CLEANING 🌟
+    // Enforces strict token discipline by routing the incoming hardware scan burst 
+    // straight through your Labels extraction module. This strips web parameters and 
+    // forces uppercase comparison parity before any table checks are executed.
+    const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
+
+    if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
+        console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned string tokens.");
+        return;
+    }
+
     console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
-    // 🌟 MAE ENGINE UPGRADE: EXPLICIT RE-STICKERING & BULK ASSEMBLY CONTROL GATE 🌟
-    const activeTitle = document.getElementById("current-view-title")?.innerText || "";
+    // Check if the user is actively working inside the untagged compliance audit workspace
+    const activeTitleElement = document.getElementById("current-view-title");
+    const activeTitle = activeTitleElement ? activeTitleElement.innerText : "";
     const isAuditViewActive = activeTitle.includes("Awaiting Physical Tag Assignment");
-    
+  
     // Check if the user is actively working inside the untagged compliance audit workspace
     if (isAuditViewActive) {
         const focusedInput = document.activeElement;
