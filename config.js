@@ -2,40 +2,18 @@
  * MAE Custom Digital Solutions - Master System Manifest
  * Philosophy: Practical, Functional, Simple, Rugged.
  * THE MASTER SPREADSHEET MUST HAVE FORMULAS IN THE SPREADSHEET TO MATCH THIS
- * Version 1.2.1: added active:true to json file
- * Version 1.2.2: added two TEST worksheets in the beginning
- * Version 1.2.3: changed "locked: true" to "locked: false" to allow editing from app 
- *      [except for mae_id, formulas, Master Dashboard (should be read-only) ]
- * Version 1.2.4: modified several worksheets, added columns/dropdowns/added formulas
- *      to spreadsheet itself to match this file
- * Version 1.2.5: added Location_ID to Inv Sheets (to support future scannable tags), matched
- *      dropdowns with excel, added "Location" Table/Worksheet for future scannable tag
- * Version 1.3: FINALIZED Master Dashboard content and updated
- * Version 1.3.1: Updated Master Dashboard by adding 4 columns for calculations to support chart.js
- * Version 1.3.2: Updated Master Dashboard "Overhead Snapshot" to "Total Amount Due Next 30 Days" with new formula
- * Version 1.3.3: Added new worksheet: OVerhead Summary to support Master Dashboard Overhead calculations and source for graph
- * Version 1.3.4: Modified header in Master Dashboard table "Equipment With Operational Issues" and changed formula
- * Version 1.3.5: Added header in Master Dashboard for Maintenance Items card
- * Version 1.4:  Added features: enableScanning: true to support label scanning
- * Version 1.5: changed Asset_ID and Log_ID to "hidden:true", added checkboxes, modified some names
- * Version: 1.5.1: Modified formula for Maint Items Due in 30 days to include past due and not complete
- * Version: 1.5.2: updated Table: Location: changed "Name" to "Description; Added Tag_ID columns to 
- *                 Inventory related worksheets, adjusted column placement; made Location_ID type: "dropdown"
- * Version 1.5.3: changed quantity/current stock in hand tools and consumables to "hybrid inventory" type to 
- *                support both dropdown and number input
- * Version 1.5.4: removed hybrid-inventory and added column in Shop_Hand_Tool and Shop_Consumables
- *                for Stock_Level and Stock_Count to make app more rugged; changed low stock formula
- * Version 1.5.5: Changed formula in Master Dashboard, Total Actual Sales to factor in "Sold"
- *                deleted Header: "Sold"
- * Version 1.5.6: Updated Shop_Consumables: Stock_Level options adding "None"; added header: Bulk_Value
- * Version 1.5.7: Updated Master Dashboard Low Stock Level formula; in Shop_Hand_Tools hid Stock_Level
- * Version 1.5.8: In Maintenance Log: renamed Service Date to Completion Date and moved after Complete checkbox
- * Version 1.6:   Changed/hid several headers to reduce unnecessary columns 
- * Version 1.6.1: Hid two columns in Location
- * Version 2.0:   Adding Tag_Type for the Scannable Label feature.
- * Version 2.1:  Changed inventory item name to a common: Item_Description for ease and reliability of filtering
- * Version: 2.2: Added isInventory: true (false); for use in logic for button visibility
- * Version xxxx:
+ *
+ * Version 3.0:  Finalized design.  Old Version Saved in another Word Document. 
+ *                New Baseline: Master Dashboard/Overhead Summary (Hidden files) first; 
+ *                then Location; then Inventory Worksheets; then Maintenance Log 
+ *                then Non-Inventory worksheets;
+ *                For future Customization (per customer)  will avoid changes impacting
+ *                Master Dashboard and Inventory worksheets as much as possible
+ *                to maintain integrity of system and ease of updates.
+ *                Inventory Sheets: Tag_ID and Tag_Type available have hidden: true(false)
+ *                BASE OPTION (NO Scannable label option): hidden: true;
+ *                ADVANCED OPTION (Scannable label option): hidden: false; 
+ * Version: xxxx:
  */
 
 export const maeSystemConfig = {
@@ -47,51 +25,6 @@ export const maeSystemConfig = {
     },
     
     worksheets: [
-        {
-            tabName: "TEST Inventory",
-            tableName: "TEST_Inventory",
-            active: false,
-            columns: [
-                { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "TEST String", type: "string", locked: false },
-                { header: "TEST Integer", type: "number", format: "0", locked: false },
-                { header: "TEST Currency", type: "number", format: "$#,##0.00", locked: false },
-                {
-                    header: "TEST Formula", 
-                    type: "formula",
-                    formula: "=[@[TEST Integer]]*[@[TEST Currency]]",
-                    format: "$#,##0.00",
-                    locked: true
-                },
-                {
-                    header: "TEST Dropdown",
-                    type: "dropdown",
-                    options: ["Red", "White", "Blue"],
-                    locked: false
-                }
-            ]
-        },
-        {
-            tabName: "TEST Dashboard",
-            tableName: "TEST_Dashboard",
-            active: false,
-            columns: [
-                {
-                    header: "TEST calc from other table",
-                    type: "formula",
-                    formula: "=SUM(TEST_Inventory[TEST Currency])",
-                    format: "$#,##0.00",
-                    locked: true
-                },
-                {
-                    header: "TEST Number Calc from other table",
-                    type: "formula",
-                    formula: "=SUM(TEST_Inventory[TEST Integer])",
-                    format: "0",
-                    locked: true
-                }
-            ]
-        },
         {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
@@ -192,7 +125,7 @@ export const maeSystemConfig = {
                 {
                     header: "Maintenance Items Due in Next 30 Days",
                     type: "formula",
-                    formula: `=COUNTIFS(Maintenance_Log[Next Service Date], "<="&TODAY()+30, Maintenance_Log[Complete], FALSE)`.trim(),
+                    formula: `=COUNTIFS(Maintenance_Log[Scheduled Service Date], "<="&TODAY()+30, Maintenance_Log[Complete], FALSE)`.trim(),
                     format: "0",
                     locked: true
                 }
@@ -218,14 +151,24 @@ export const maeSystemConfig = {
             ]
         },
         {
+            tabName: "Location",
+            tableName: "Location",
+            isInventory: false,
+            active: true,
+            columns: [
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Location_ID", type: "dropdown", locked: false },
+                { header: "Description", type: "string", locked: false },     
+            ]
+        },
+        {
             tabName: "Resell Inventory",
             tableName: "Resell_Inventory",
             isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset ID", type: "string", hidden:true, locked: false },
-                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Tag_ID", type: "string", hidden: false,  locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
@@ -254,8 +197,7 @@ export const maeSystemConfig = {
                 },
                 { header: "Target Sale Price", type: "number", format: "$#,##0.00", locked: false },
                 { header: "Actual Sale Price", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Date Sold", type: "date", format: "mm/dd/yyyy", locked: false },
-                { header: "Location", type: "string", hidden:true,locked: false }
+                { header: "Date Sold", type: "date", format: "mm/dd/yyyy", locked: false }
             ]
         },
         {
@@ -265,14 +207,12 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset ID", type: "string", hidden: true, locked: false },
-                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
                 { header: "Purchase Cost", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Location", type: "string", hidden: true, locked: false },
                 { 
                     header: "Condition",
                     type: "dropdown",
@@ -283,44 +223,13 @@ export const maeSystemConfig = {
             ]
         },
         {
-            tabName: "Maintenance Log",
-            tableName: "Maintenance_Log",
-            isInventory: false,
-            active: true,
-            columns: [
-                { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Log ID", type: "string", hidden: true, locked: false },
-                { header: "Asset ID", type: "string", hidden: true, locked: false },
-                { header: "Asset and Service Description", type: "string", locked: false},
-                { 
-                    header: "Service Type",
-                    type: "dropdown",
-                    options: ["Preventive","Repair"],
-                    hidden: true,
-                    locked: false 
-                },
-                { 
-                    header: "Performed By",
-                    type: "dropdown",
-                    options: ["Self in Shop","Contractor in Shop","Outside Facility"],
-                    locked: false 
-                    },
-                { header: "Cost", type: "number", format: "$#,##0.00", locked: false },
-                { header: "Next Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
-                { header: "Complete", type: "boolean", locked: false },
-                { header: "Completion Date", type: "date", format: "mm/dd/yyyy", locked: false },
-                { header: "Remarks", type: "string", locked: false }
-            ]
-        },
-        {
             tabName: "Shop Power Tools",
             tableName: "Shop_Power_Tools",
             isInventory: true,
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset_ID", type: "string", hidden: true, locked: false },
-                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
@@ -362,8 +271,7 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset_ID", type: "string", hidden: true, locked: false },
-                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
@@ -385,7 +293,7 @@ export const maeSystemConfig = {
                     header: "Stock_Level", 
                     type: "dropdown", 
                     options: ["Few", "Adequate", "Many", "Counted"],
-                    hidden: true, 
+                    hidden: false, 
                     locked: false },
                 {
                     header: "Stock_Count",
@@ -403,8 +311,7 @@ export const maeSystemConfig = {
             active: true,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Asset_ID", type: "string", hidden: true, locked: false },
-                { header: "Tag_ID", type: "string", locked: false },
+                { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
@@ -464,6 +371,27 @@ export const maeSystemConfig = {
             ]
         },
         {
+            tabName: "Maintenance Log",
+            tableName: "Maintenance_Log",
+            isInventory: false,
+            active: true,
+            columns: [
+                { header: "mae_id", type: "string", hidden: true, locked: true },
+                { header: "Asset and Service Description", type: "string", locked: false},
+                { 
+                    header: "Performed By",
+                    type: "dropdown",
+                    options: ["Self in Shop","Contractor in Shop","Outside Facility"],
+                    locked: false 
+                    },
+                { header: "Cost", type: "number", format: "$#,##0.00", locked: false },
+                { header: "Scheduled Service Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Complete", type: "boolean", locked: false },
+                { header: "Completion Date", type: "date", format: "mm/dd/yyyy", locked: false },
+                { header: "Remarks", type: "string", locked: false }
+            ]
+        },
+        {
             tabName: "Shop Overhead",
             tableName: "Shop_Overhead",
             isInventory: false,
@@ -512,20 +440,7 @@ export const maeSystemConfig = {
                 { header: "Website", type: "string", locked: false},
                 { header: "Notes/Other Info", type: "string", locked: false}
             ]
-        },
-        {
-            tabName: "Location",
-            tableName: "Location",
-            isInventory: false,
-            active: true,
-            columns: [
-                { header: "mae_id", type: "string", hidden: true, locked: true },
-                { header: "Location_ID", type: "dropdown", locked: false },
-                { header: "Description", type: "string", locked: false },
-                { header: "Type", type: "string", hidden: true, locked: false },
-                { header: "Parent_Location", type: "string", hidden: true, locked: false}
-            ]
-        }
+        }       
     ]
 };
 
