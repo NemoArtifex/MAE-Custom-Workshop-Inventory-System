@@ -1659,7 +1659,7 @@ async function handleUniversalLookup(scannedId) {
     
     console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
-    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE 🌟
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE (WITH LEAKAGE SCRUBBER) 🌟
     // Locate any input elements that were frozen by labels.js during the capture phase
     const frozenInput = document.querySelector('input[disabled], select[disabled]');
     if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
@@ -1668,7 +1668,7 @@ async function handleUniversalLookup(scannedId) {
         // 1. Re-enable the form field so it is fully interactive again
         frozenInput.disabled = false;
         
-        // 2. Restore their original human data from the backup snapshot attribute
+        // 2. 🌟 THE CLEANSE: Restore the pristine human data snapshot, wiping out leaked "htt" characters
         const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
         frozenInput.value = originalValue;
         
@@ -1707,7 +1707,6 @@ async function handleUniversalLookup(scannedId) {
             if (internalMatches.length > 0) {
                 // Map the structured database objects back into Graph-style row format for downstream UI compliance
                 matchedAssetRowsList = internalMatches.map(rec => {
-                    // Reconstruct raw nested array values to pass down to legacy components safely
                     const rawValuesArray = sheetConfig.columns.map(col => rec.data[col.header] ?? null);
                     return { index: rec.index, id: rec.id, values: [rawValuesArray] };
                 });
