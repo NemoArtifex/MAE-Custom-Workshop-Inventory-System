@@ -2688,7 +2688,7 @@ printInspectedLocationTable() {
                 tableSelect.disabled = true;
             }
             // 🌟 EXPLICIT OBJECT CALL
-            UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
+            window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
         };
 
         document.getElementById("modal-btn-multiple").onclick = () => {
@@ -2702,7 +2702,7 @@ printInspectedLocationTable() {
                 tableSelect.disabled = true;
             }
             // 🌟 EXPLICIT OBJECT CALL
-            UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
+            window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
         };
 
         document.getElementById("modal-btn-return").onclick = () => {

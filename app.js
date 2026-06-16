@@ -2610,5 +2610,6 @@ window.processWizardStageOneScan = UI.processWizardStageOneScan;
 window.processWizardStageOneUntagged = UI.processWizardStageOneUntagged;
 window.resetCentralRegistrationWizard = UI.resetCentralRegistrationWizard;
 window.renderTagTypeWizardModal = UI.renderTagTypeWizardModal;
+window.renderCentralRegistrationWizardStageTwo = UI.renderCentralRegistrationWizardStageTwo;
 
 startup();
