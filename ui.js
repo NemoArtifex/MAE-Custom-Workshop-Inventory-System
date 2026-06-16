@@ -2804,6 +2804,83 @@ printInspectedLocationTable() {
         // Changed 'this' to 'UI' to guarantee execution scope stability
         UI.renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId);
     },
+    // 🌟 STAGE TWO GENERATION: FORM COMPILATION & EXPLICIT ATTRIBUTE INJECTION PASS
+    renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType) {
+        const formZone = document.getElementById("central-form-render-zone");
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+        
+        formZone.innerHTML = ""; // Clear zone completely for fresh generation pass
+
+        // 1. Trigger your proven, table-contextual entry form generator model
+        window.UI.renderEntryForm('add', targetTable, sheetConfig, async () => {
+            // Submit row using name-parsed input dictionary collection rules
+            const success = await window.submitNewRow(targetTable, sheetConfig);
+            if (success) {
+                formZone.innerHTML = ""; 
+                alert(`Central Entry Successfully Committed to OneDrive Ledger!\n\nClassification: ${sheetConfig.tabName}`);
+                window.currentTable = "Master_Dashboard";
+                window.loadTableData("Master_Dashboard");
+            }
+        });
+
+        // Force-inject validated Stage 1 data parameters directly into newly rendered fields
+        setTimeout(() => {
+            const formCard = document.getElementById("entry-form");
+            if (!formCard) return;
+
+            const closeBtn = formCard.querySelector(".close-x");
+            if (closeBtn) closeBtn.remove();
+
+            // A. TARGET AND INJECT THE VALIDATED BARCODE STRING VALUE
+            const tagIdInputBox = document.getElementById("field-Tag_ID");
+            if (tagIdInputBox) {
+                tagIdInputBox.value = validatedTagId; 
+                tagIdInputBox.readOnly = true; // Protect field against manual typing edits
+                
+                tagIdInputBox.style.backgroundColor = "#e8f8f5"; // Mint green success fill
+                tagIdInputBox.style.color = "#27ae60"; // Deep emerald text
+                tagIdInputBox.style.borderColor = "#27ae60"; // Emerald container border outline
+                tagIdInputBox.style.fontWeight = "bold";
+                tagIdInputBox.style.cursor = "not-allowed";
+
+                let statusLabel = tagIdInputBox.parentNode.querySelector('.foundation-alert');
+                if (!statusLabel) {
+                    statusLabel = document.createElement("span");
+                    statusLabel.className = "foundation-alert";
+                    tagIdInputBox.parentNode.appendChild(statusLabel);
+                }
+                statusLabel.style.color = "#27ae60";
+                statusLabel.innerText = "🔒 SCANNED TOKEN: Locked Against Manual Typing";
+            }
+
+            // B. TARGET AND INJECT THE ASSIGNED TAG CLASSIFICATION TYPE (UNIQUE / MULTIPLE)
+            const tagTypeSelectBox = document.getElementById("field-Tag_Type");
+            if (tagTypeSelectBox) {
+                tagTypeSelectBox.value = tagType; 
+                tagTypeSelectBox.disabled = true; // Lock dropdown from alteration
+                
+                tagTypeSelectBox.style.backgroundColor = "#eeeeee";
+                tagTypeSelectBox.style.color = "#888888";
+                tagTypeSelectBox.style.cursor = "not-allowed";
+                
+                let secretPayload = document.getElementById("field-Tag_Type-hidden-backup");
+                if (!secretPayload) {
+                    secretPayload = document.createElement("input");
+                    secretPayload.type = "hidden";
+                    secretPayload.id = "field-Tag_Type-hidden-backup";
+                    tagTypeSelectBox.parentNode.appendChild(secretPayload);
+                }
+                secretPayload.value = tagType;
+            }
+
+            // C. OPTIMIZATION: Shift typing focus straight inside item description text box
+            const descInput = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
+            if (descInput) {
+                descInput.focus();
+                descInput.style.backgroundColor = "#fffde7"; // Highlight active typing field yellow
+            }
+        }, 150); // 150ms delay guarantees the browser frame paint buffer is settled
+    },
 
     launchContextualFormFromCentral() {
         const tableSelect = document.getElementById("mae-central-table-selector");
