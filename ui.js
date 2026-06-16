@@ -2774,50 +2774,88 @@ printInspectedLocationTable() {
         // Deploy fields with the default untagged parameters hardcoded
         this.renderCentralRegistrationWizardStageTwo(targetTable, "UNTAGGED", "UNIQUE");
     },
-    renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType) {
+    async processWizardStageOneScan() {
+        // 🌟 REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS 🌟
+        const currentTransactionId = Date.now();
+        window.activeScanTransactionId = currentTransactionId;
+
+        const tableSelect = document.getElementById("mae-central-table-selector");
+        const tagInput = document.getElementById("field-Tag_ID");
+        const feedback = document.getElementById("wizard-tag-feedback");
         const formZone = document.getElementById("central-form-render-zone");
-        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+
+        const targetTable = tableSelect ? tableSelect.value : "";
+        const rawTag = tagInput ? tagInput.value.trim() : "";
+
+        if (!targetTable) {
+            alert("Mandatory Selection Required:\n\nPlease choose a target inventory classification table before checking the tag.");
+            if (tagInput) tagInput.value = "";
+            return;
+        }
+
+        if (!rawTag) {
+            alert("Scan Required:\n\nPlease focus the input field and scan a sticker or choose the UNTAGGED track.");
+            return;
+        }
+
+        const cleanTag = window.Labels.extractCleanId(rawTag).toUpperCase();
+        if (tagInput) tagInput.value = cleanTag;
+
+        if (feedback) {
+            feedback.style.color = "var(--primary)";
+            feedback.innerText = "⌛ Verifying label uniqueness across partitions...";
+        }
+
+        // --- ANTI-COLLISION SECURITY CHECK ---
+        const isCollision = await window.verifyTagUniquenessCrossTable(cleanTag);
         
-        formZone.innerHTML = ""; // Clear zone completely for fresh generation pass
+        // 🌟 CIRCUIT BREAKER CHECK 🌟
+        if (window.activeScanTransactionId !== currentTransactionId) {
+            console.warn("MAE Circuit Breaker: Wizard execution terminated mid-fetch via form reset.");
+            return;
+        }
 
-        // Trigger your proven, table-contextual entry form generator model
-        this.renderEntryForm('add', targetTable, sheetConfig, async () => {
-            
-            // Explicitly force the hidden form fields to match our Stage 1 validation parameters
-            const tagField = document.getElementById("field-Tag_ID");
-            const typeField = document.getElementById("field-Tag_Type");
-            
-            if (tagField) tagField.value = validatedTagId;
-            if (typeField) typeField.value = tagType;
-
-            // Submit row using name-parsed input dictionary collection rules
-            const success = await window.submitNewRow(targetTable, sheetConfig);
-            if (success) {
-                formZone.innerHTML = ""; // Reset entry fields container on success
-                alert(`Central Entry Successfully Committed to OneDrive Ledger!\n\nClassification: ${sheetConfig.tabName}`);
-                
-                // Return system routing configuration state safely to the home cockpit view
-                window.currentTable = "Master_Dashboard";
-                window.loadTableData("Master_Dashboard");
+        if (isCollision) {
+            if (tagInput) {
+                tagInput.value = "";
+                tagInput.style.borderColor = "#e74c3c";
+                tagInput.style.backgroundColor = "#fadbd8";
             }
-        });
-
-        // Auto-focus management macro: Direct focus to item description, bypassing locked tags
-        setTimeout(() => {
-            const formCard = document.getElementById("entry-form");
-            if (!formCard) return;
-
-            // Remove the standard modal close button since this is embedded inside the page grid flow layout
-            const closeBtn = formCard.querySelector(".close-x");
-            if (closeBtn) closeBtn.remove();
-
-            // Locate the descriptive label textbox element fields
-            const descInput = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
-            if (descInput) {
-                descInput.focus();
-                descInput.style.backgroundColor = "#fffde7"; // Action yellow hint
+            if (feedback) {
+                feedback.style.color = "#c0392b";
+                feedback.innerHTML = `❌ COLLISION ERROR: Barcode [${cleanTag}] is already registered to an asset row inside the spreadsheet ledger. Choose another sticker.`;
             }
-        }, 150);
+            formZone.innerHTML = "";
+            return;
+        }
+
+        // --- CHOOSE TAG STRUCTURE PROFILE ---
+        const tagTypeChoice = confirm(
+            `MAE INTAKE REGULATION HANDSHAKE:\n\n` +
+            `Tag [${cleanTag}] is verified UNIQUE and available.\n\n` +
+            `• Click OK if this sticker maps to a SINGLE individual asset (UNIQUE).\n` +
+            `• Click CANCEL if this sticker maps to a shared BIN/DRAWER group (MULTIPLE).`
+        );
+
+        // 🌟 FINAL CIRCUIT BREAKER SANITY CHECK 🌟
+        if (window.activeScanTransactionId !== currentTransactionId) {
+            console.warn("MAE Circuit Breaker: Post-prompt cancel detected. Aborting form generation.");
+            return;
+        }
+
+        const assignedType = tagTypeChoice ? "UNIQUE" : "MULTIPLE";
+
+        if (feedback) {
+            feedback.style.color = "#27ae60";
+            feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as ${assignedType}.`;
+            tagInput.style.borderColor = "#27ae60";
+            tagInput.style.backgroundColor = "#e8f8f5";
+            tagInput.disabled = true;
+            tableSelect.disabled = true;
+        }
+
+        // Proceed to deploy the Stage 2 entry fields dynamically
+        this.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, assignedType);
     },
 
     launchContextualFormFromCentral() {
