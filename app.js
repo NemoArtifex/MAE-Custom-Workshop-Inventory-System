@@ -2606,5 +2606,9 @@ window.evaluateAuditCheckboxStateChanges = UI.evaluateAuditCheckboxStateChanges;
 window.clearBulkAuditSelection = UI.clearBulkAuditSelection;
 window.executeBulkContainerGroupingTransition = executeBulkContainerGroupingTransition;
 window.verifyTagUniquenessCrossTable = verifyTagUniquenessCrossTable;
+window.processWizardStageOneScan = UI.processWizardStageOneScan;
+window.processWizardStageOneUntagged = UI.processWizardStageOneUntagged;
+window.resetCentralRegistrationWizard = UI.resetCentralRegistrationWizard;
+window.renderTagTypeWizardModal = UI.renderTagTypeWizardModal;
 
 startup();
