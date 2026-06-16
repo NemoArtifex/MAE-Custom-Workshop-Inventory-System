@@ -2764,6 +2764,10 @@ printInspectedLocationTable() {
     },
     // 🌟 ADD NEW function to clear and reset the onboarding wizard canvas completely
     resetCentralRegistrationWizard() {
+        // 🌟 TRIP THE CIRCUIT BREAKER 🌟
+        // Changing this value completely invalidates any background network loops currently running
+        window.activeScanTransactionId = null;
+
         const tableSelect = document.getElementById("mae-central-table-selector");
         const tagInput = document.getElementById("field-Tag_ID");
         const feedback = document.getElementById("wizard-tag-feedback");

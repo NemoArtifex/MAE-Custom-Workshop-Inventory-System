@@ -1650,6 +1650,12 @@ async function handleQuickUpdate(tableName) {
 // =========== UNIFIED UNIVERSAL SCANNER LOOKUP (Item_Description AXIS) ===========
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
+    // 🌟 TRANSACTION CIRCUIT BREAKER REGISTRATION 🌟
+    // Generate an authoritative token for this specific asynchronous network thread pass
+    const currentTransactionId = Date.now();
+    window.activeScanTransactionId = currentTransactionId;
+    
+    
     // 1. Enforce strict token discipline by cleaning the hardware payload string
     const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
     if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
@@ -1689,6 +1695,13 @@ async function handleUniversalLookup(scannedId) {
 
     try {
         for (const table of priorityTables) {
+            // 🌟 CIRCUIT BREAKER CHECK (Inside Loop) 🌟
+            // If the user reset the form while fetching, kill this thread immediately
+            if (window.activeScanTransactionId !== currentTransactionId) {
+                console.warn("MAE Circuit Breaker: Form reset detected mid-fetch. Aborting loop.");
+                return;
+            }
+
             const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
             if (!sheetConfig) continue;
 
@@ -1719,6 +1732,14 @@ async function handleUniversalLookup(scannedId) {
                 break; // Escape search cycle loop early
             }
         }
+        // 🌟 CIRCUIT BREAKER CHECK (Post-Loop) 🌟
+        // Verify system state alignment before modifying any UI layouts or panels
+        if (window.activeScanTransactionId !== currentTransactionId) {
+            console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
+            return;
+        }
+
+
         // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---
         const formPanelActive = document.getElementById("entry-form") !== null;
         const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
