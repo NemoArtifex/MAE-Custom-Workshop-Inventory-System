@@ -2535,7 +2535,7 @@ printInspectedLocationTable() {
         const title = document.getElementById("current-view-title");
         title.innerText = "Administrative: Centralized Item Intake Portal";
         
-        // Lock the router configuration state flag
+        // Establish unified routing state context
         window.currentTable = "inventory_registration";
 
         let html = `
@@ -2574,17 +2574,18 @@ printInspectedLocationTable() {
         container.innerHTML = html;
         this.renderCommandBar("");
 
-        // Set real-time listener to handle direct input swipes into the box
+        // RUGGED REFIX: Focus input field cleanly without attaching a duplicate change listener
         setTimeout(() => {
             const input = document.getElementById("field-Tag_ID");
-            if (input) {
-                input.focus();
-                input.addEventListener("change", () => UI.processWizardStageOneScan());
-            }
+            if (input) input.focus();
         }, 100);
     },
     // 2. ADD NEW function to process an actual scanned barcode in Stage 1
     async processWizardStageOneScan() {
+        // 🌟 REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS 🌟
+        const currentTransactionId = Date.now();
+        window.activeScanTransactionId = currentTransactionId;
+
         const tableSelect = document.getElementById("mae-central-table-selector");
         const tagInput = document.getElementById("field-Tag_ID");
         const feedback = document.getElementById("wizard-tag-feedback");
@@ -2614,6 +2615,13 @@ printInspectedLocationTable() {
 
         // --- ANTI-COLLISION SECURITY CHECK ---
         const isCollision = await window.verifyTagUniquenessCrossTable(cleanTag);
+        
+        // 🌟 CIRCUIT BREAKER CHECK 🌟
+        if (window.activeScanTransactionId !== currentTransactionId) {
+            console.warn("MAE Circuit Breaker: Wizard execution terminated mid-fetch via form reset.");
+            return;
+        }
+
         if (isCollision) {
             if (tagInput) {
                 tagInput.value = "";
@@ -2635,6 +2643,12 @@ printInspectedLocationTable() {
             `• Click OK if this sticker maps to a SINGLE individual asset (UNIQUE).\n` +
             `• Click CANCEL if this sticker maps to a shared BIN/DRAWER group (MULTIPLE).`
         );
+
+        // 🌟 FINAL CIRCUIT BREAKER SANITY CHECK 🌟
+        if (window.activeScanTransactionId !== currentTransactionId) {
+            console.warn("MAE Circuit Breaker: Post-prompt cancel detected. Aborting form generation.");
+            return;
+        }
 
         const assignedType = tagTypeChoice ? "UNIQUE" : "MULTIPLE";
 
