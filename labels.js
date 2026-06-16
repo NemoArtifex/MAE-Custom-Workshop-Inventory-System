@@ -1,8 +1,9 @@
-/** 
+/**
  * labels.js - MAE Custom Digital Solutions
  * Purpose: Handle Industrial HID Scanning (Inateck-75S) and ID extraction.
  * Philosophy: Practical, Functional, Simple, Rugged.
  */
+
 import { UI } from './ui.js';
 
 export const Labels = {
@@ -13,12 +14,11 @@ export const Labels = {
                 const url = new URL(decodedText);
                 const queryId = url.searchParams.get("id");
                 if (queryId) return queryId.trim();
-
+                
                 let cleanPath = url.pathname;
                 if (cleanPath.endsWith('/')) {
                     cleanPath = cleanPath.slice(0, -1);
                 }
-
                 const pathId = cleanPath.split('/').pop();
                 if (pathId) return pathId.trim();
             }
@@ -37,10 +37,10 @@ export const Labels = {
         let lastKeyTime = Date.now();
         
         // Global tracking flag tells app.js what device sent the input stream
-        window.isScannerActive = false; 
+        window.isScannerActive = false;
 
-        // Setting the trailing parameter to 'true' forces this listener to run 
-        // during the capture phase, intercepting keys before they hit the text box.
+        // Setting the trailing parameter to 'true' activates the capture phase loop,
+        // allowing the shield to intercept keys before they hit the active text box.
         document.addEventListener('keydown', (e) => {
             const currentTime = Date.now();
             const timeDelta = currentTime - lastKeyTime;
@@ -54,8 +54,9 @@ export const Labels = {
                     
                     const focusedEl = document.activeElement;
                     if (focusedEl && (focusedEl.tagName === "INPUT" || focusedEl.tagName === "SELECT")) {
+                        // Protect against overriding the valid Tag_ID destination inputs
                         if (focusedEl.id !== "field-Tag_ID" && focusedEl.id !== "mae-bulk-container-input") {
-                            // Secure a pristine snapshot of their text data values
+                            // Secure a pristine snapshot of their text data values from the human typing session
                             focusedEl.setAttribute("data-pre-scan-value", focusedEl.value || "");
                             focusedEl.disabled = true;
                             focusedEl.blur();
@@ -73,12 +74,13 @@ export const Labels = {
                 return;
             }
 
-            // Standard human typing recovery path
+            // Standard human typing recovery path (Resets buffer if a long pause occurs)
             if (timeDelta > 120) {
                 buffer = "";
                 window.isScannerActive = false;
             }
 
+            // Processing the complete hardware barcode array
             if (e.key === 'Enter') {
                 if (buffer.length > 2) {
                     const cleanId = this.extractCleanId(buffer);
