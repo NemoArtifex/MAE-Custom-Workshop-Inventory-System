@@ -35,28 +35,34 @@ export const Labels = {
     initHIDScanner: function(onSuccessCallback) {
         let buffer = "";
         let lastKeyTime = Date.now();
+        let fastKeyCount = 0; // 🌟 Track consecutive fast keystrokes
         
         // Global tracking flag tells app.js what device sent the input stream
         window.isScannerActive = false;
 
-        // Setting the trailing parameter to 'true' activates the capture phase loop,
-        // allowing the shield to intercept keys before they hit the active text box.
         document.addEventListener('keydown', (e) => {
             const currentTime = Date.now();
             const timeDelta = currentTime - lastKeyTime;
             lastKeyTime = currentTime;
 
-            // If typing speed is extremely fast, flag it as a hardware scanner burst
-            if (timeDelta < 30 && buffer.length >= 1) {
+            // Ignore modifier keys like Shift or Control that don't add characters
+            if (e.key.length === 1) {
+                if (timeDelta < 30) {
+                    fastKeyCount++;
+                } else {
+                    fastKeyCount = 0; // Reset if the user pauses normally
+                }
+            }
+
+            // 🌟 RIGID BARRIER: Only lock if at least 3 consecutive characters arrive at hardware speeds
+            if (fastKeyCount >= 3 && buffer.length >= 2) {
                 if (!window.isScannerActive) {
                     window.isScannerActive = true;
                     console.warn("MAE Shield: Hardware scanner burst confirmed. Activating input lock.");
                     
                     const focusedEl = document.activeElement;
                     if (focusedEl && (focusedEl.tagName === "INPUT" || focusedEl.tagName === "SELECT")) {
-                        // Protect against overriding the valid Tag_ID destination inputs
                         if (focusedEl.id !== "field-Tag_ID" && focusedEl.id !== "mae-bulk-container-input") {
-                            // Secure a pristine snapshot of their text data values from the human typing session
                             focusedEl.setAttribute("data-pre-scan-value", focusedEl.value || "");
                             focusedEl.disabled = true;
                             focusedEl.blur();
@@ -67,16 +73,15 @@ export const Labels = {
 
             // If the system flags an active scan, stop the browser from printing characters
             if (window.isScannerActive && e.key !== 'Enter') {
-                if (e.key.length === 1) {
-                    buffer += e.key;
-                }
-                e.preventDefault(); // 🌟 BLOCKS THE CHARACTER FROM ENTERING THE BOX 🌟
+                if (e.key.length === 1) { buffer += e.key; }
+                e.preventDefault(); 
                 return;
             }
 
             // Standard human typing recovery path (Resets buffer if a long pause occurs)
-            if (timeDelta > 120) {
+            if (timeDelta > 150) {
                 buffer = "";
+                fastKeyCount = 0;
                 window.isScannerActive = false;
             }
 
@@ -85,6 +90,7 @@ export const Labels = {
                 if (buffer.length > 2) {
                     const cleanId = this.extractCleanId(buffer);
                     window.isScannerActive = false;
+                    fastKeyCount = 0;
                     onSuccessCallback(cleanId);
                     buffer = "";
                     e.preventDefault();
