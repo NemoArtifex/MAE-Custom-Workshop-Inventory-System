@@ -403,99 +403,141 @@ renderMenu(activeWorksheets, onClickCallback) {
 //================RENDER COMMAND BAR==========
  
 renderCommandBar(tableName) {
-    const container = document.getElementById("action-bar-zone");
-    if (!container) return;
+        const container = document.getElementById("action-bar-zone");
+        if (!container) return;
 
-    const normalizedName = tableName.trim().toLowerCase();
-    const config = window.maeSystemConfig;
-    const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
-    const table = document.getElementById("main-data-table");
-    const isQuickUpdating = table && table.classList.contains("is-quick-updating");
+        const normalizedName = tableName.trim().toLowerCase();
+        const config = window.maeSystemConfig;
+        const sheetConfig = config.worksheets.find(s => s.tableName === tableName);
+        const table = document.getElementById("main-data-table");
+        const isQuickUpdating = table && table.classList.contains("is-quick-updating");
 
-    // --- RULE 1: EDIT MODE / QUICK UPDATE GUARDRAIL ---
-    if (window.isEditing || isQuickUpdating) {
-        let buttons = "";
-        
-        // 🌟 MIGRATION: Print Manual Log ONLY appears here during Quick Update
-        if (isQuickUpdating && sheetConfig) {
-            buttons += `<button class="action-btn" onclick="UI.printManualLog('${tableName}', maeSystemConfig.worksheets.find(s => s.tableName === '${tableName}'))" style="background:#34495e;">🖨️ Print Manual Log</button>`;
+        if (window.isEditing || isQuickUpdating) {
+            let buttons = "";
+            if (isQuickUpdating && sheetConfig) {
+                buttons += `<button class="action-btn" onclick="UI.printManualLog('${tableName}', maeSystemConfig.worksheets.find(s => s.tableName === '${tableName}'))" style="background:#34495e;">🖨️ Print Manual Log</button>`;
+            }
+            buttons += `
+                <button class="action-btn" id="btn-commit-sync" style="background:#27ae60;">💾 Commit Changes</button>
+                <button class="action-btn" id="btn-discard-edit" style="background:#7f8c8d;">Discard Changes</button>
+            `;
+            container.innerHTML = `<div class="command-bar">${buttons}</div>`;
+            return;
         }
 
-        buttons += `
-            <button class="action-btn" id="btn-commit-sync" style="background:#27ae60;">💾 Commit Changes</button>
-            <button class="action-btn" id="btn-discard-edit" style="background:#7f8c8d;">Discard Changes</button>
-        `;
+        if (normalizedName === "location_audit") {
+            container.innerHTML = `<div class="command-bar">
+                <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
+                <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
+            </div>`;
+            return;
+        }
+
+        if (normalizedName === "location_inspector" || window.currentTable === "location_inspector") {
+            container.innerHTML = `
+                <div class="command-bar" style="justify-content: center;">
+                    <button class="action-btn" onclick="UI.printInspectedLocationTable()" style="background:#27ae60;">🖨️ Print Inspected View</button>
+                    <button class="action-btn" onclick="window.loadTableData('Location')">← Back to Location Map</button>
+                </div>`;
+            return;
+        }
+
+        if (normalizedName === "inventory_search" || window.currentTable === "inventory_search") {
+            container.innerHTML = `
+                <div class="command-bar" style="justify-content: center;">
+                    <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9;">🔍 Run New Search</button>
+                    <button class="action-btn" onclick="window.loadTableData('Location')">← Back to Location Map</button>
+                </div>`;
+            return;
+        }
+
+        if (!sheetConfig) return;
+        const isDashboard = normalizedName.includes("dashboard");
+        const hasManualField = sheetConfig.columns.some(col => ["Quantity", "Current Stock", "Stock_Count"].includes(col.header));
+        let buttons = "";
+
+        if (normalizedName === "location") {
+            buttons = `
+                <button class="action-btn" onclick="UI.renderLocationInspectorControls()" style="background:#8e44ad; font-weight:bold;">📊 Inspect on Location_ID</button>
+                <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9; font-weight:bold;">🔍 Search Inventory</button>
+                <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
+                <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
+                <button class="action-btn" id="btn-print">Print Location Map</button>
+            `;
+        } else if (!isDashboard) {
+            // 🌟 REGULATORY GATEWAY ENGAGED: HIDE '+' BUTTON ONLY IF SHEET IS AN INVENTORY TABLE
+            buttons = `
+                <button class="action-btn" id="btn-print">🖨️ Print Sheet</button>
+                ${hasManualField ? `<button class="action-btn" id="btn-manual-print">📋 Print Manual Log</button>` : ''}
+                ${!sheetConfig.isInventory ? `<button class="action-btn" id="btn-add">➕ Add Item</button>` : ''} 
+                <button class="action-btn" id="btn-edit">✏️ Edit Table</button>
+                ${hasManualField ? `<button class="action-btn" id="btn-inventory-update" style="background:#e67e22;">⚡ Quick Update</button>` : ''}
+                ${normalizedName === "resell_inventory" ? `<button class="action-btn" id="btn-resell-status-pivot" style="background:#8e44ad;">📊 Sort By Status</button>` : ''}
+            `;
+        } else {
+            buttons = `
+                <button class="action-btn" onclick="UI.renderCentralRegistrationWizard()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
+                <button class="action-btn" onclick="UI.renderTagMaintenanceWizard()" style="background:#8e44ad; font-weight:bold;">🔧 Manage Lost/Damaged Tags</button>
+                <button class="action-btn" onclick="runUntaggedAudit()" style="background:#c0392b; font-weight:bold;">⚠️ Audit Untagged Items</button>
+                <button class="action-btn" id="btn-print">Print Dashboard</button>
+            `;
+        }
         container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-        return; 
-    }
+    },
 
-    // --- RULE 2A: VIRTUAL AUDIT VIEW ---
-    if (normalizedName === "location_audit") {
-        container.innerHTML = `<div class="command-bar">
-            <button class="action-btn" onclick="loadTableData('Location')">← Back to Map</button>
-            <button class="action-btn" id="btn-print-audit">Print TBD Audit</button>
-        </div>`;
-        return;
-    }
+    // 2. STAGE ONE WIZARD: TOKEN IDENTIFICATION GATE
+    renderCentralRegistrationWizard() {
+        const container = document.getElementById("table-container");
+        const title = document.getElementById("current-view-title");
+        title.innerText = "Administrative: Centralized Item Intake Portal";
+        
+        // Lock the router configuration state flag
+        window.currentTable = "inventory_registration";
 
-    // --- RULE 2B: VIRTUAL LOCATION INSPECTOR VIEW COMMAND BAR ---
-    if (normalizedName === "location_inspector" || window.currentTable === "location_inspector") {
-        container.innerHTML = `
-            <div class="command-bar" style="justify-content: center;">
-                <button class="action-btn" onclick="UI.printInspectedLocationTable()" style="background:#27ae60;">🖨️ Print Inspected View</button>
-                <button class="action-btn" onclick="window.loadTableData('Location')">← Back to Location Map</button>
-            </div>`;
-        return;
-    }
+        let html = `
+            <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
+                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
+                        <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
+                            <option value="">-- Choose Target Table --</option>
+                            <option value="Shop_Machinery">Shop Machinery</option>
+                            <option value="Shop_Power_Tools">Shop Power Tools</option>
+                            <option value="Shop_Hand_Tools">Shop Hand Tools</option>
+                            <option value="Shop_Consumables">Shop Consumables</option>
+                            <option value="Resell_Inventory">Resell Inventory</option>
+                        </select>
+                    </div>
 
-    // --- RULE 2C: VIRTUAL INVENTORY SEARCH VIEW COMMAND BAR ---
-    if (normalizedName === "inventory_search" || window.currentTable === "inventory_search") {
-        container.innerHTML = `
-            <div class="command-bar" style="justify-content: center;">
-                <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9;">🔍 Run New Search</button>
-                <button class="action-btn" onclick="window.loadTableData('Location')">← Back to Location Map</button>
-            </div>`;
-        return;
-    }
+                    <div style="display: flex; flex-direction: column; position: relative;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
+                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
+                        <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
+                    </div>
+                </div>
 
-    // --- RULE 3: STANDARD INVENTORY TABLES ---
-    if (!sheetConfig) return;
-    const isDashboard = normalizedName.includes("dashboard");
-    const hasManualField = sheetConfig.columns.some(col => 
-        ["Quantity", "Current Stock", "Stock_Count"].includes(col.header)
-    );
-
-    let buttons = "";
-    if (normalizedName === "location") {
-        buttons = `
-            <button class="action-btn" onclick="UI.renderLocationInspectorControls()" style="background:#8e44ad; font-weight:bold;">📊 Inspect on Location_ID</button>
-            <button class="action-btn" onclick="renderSearchControls()" style="background:#2980b9; font-weight:bold;">🔍 Search Inventory</button>
-            <button class="action-btn" onclick="UI.manageLocationMap()">Manage Shop Location Map</button>
-            <button class="action-btn" onclick="runLocationAudit()">Audit of TBD Locations</button>
-            <button class="action-btn" id="btn-print">Print Location Map</button>
+                <div style="display: flex; gap: 15px;">
+                    <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
+                    <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
+                </div>
+            </div>
+            <div id="central-form-render-zone"></div>
         `;
-    } 
-    else if (!isDashboard) {
-        buttons = `
-            <button class="action-btn" id="btn-print">🖨️ Print Sheet</button>
-            ${hasManualField ? `<button class="action-btn" id="btn-manual-print">📋 Print Manual Log</button>` : ''}
-            <button class="action-btn" id="btn-add">➕ Add Item</button>
-            <button class="action-btn" id="btn-edit">✏️ Edit Table</button>
-            ${hasManualField ? `<button class="action-btn" id="btn-inventory-update" style="background:#e67e22;">⚡ Quick Update</button>` : ''}
-            ${normalizedName === "resell_inventory" ? `<button class="action-btn" id="btn-resell-status-pivot" style="background:#8e44ad;">📊 Sort By Status</button>` : ''}
-        `;
-    }
-    else {
-        buttons = `
-            <button class="action-btn" onclick="UI.renderCentralRegistrationWizard()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
-            <button class="action-btn" onclick="UI.renderTagMaintenanceWizard()" style="background:#8e44ad; font-weight:bold;">🔧 Manage Lost/Damaged Tags</button>
-            <button class="action-btn" onclick="runUntaggedAudit()" style="background:#c0392b; font-weight:bold;">⚠️ Audit Untagged Items</button>
-            <button class="action-btn" id="btn-print">Print Dashboard</button>   
-        `;
-    }
+        container.innerHTML = html;
+        this.renderCommandBar("");
 
-    container.innerHTML = `<div class="command-bar">${buttons}</div>`;
-},
+        // Set real-time listener to handle direct input swipes into the box
+        setTimeout(() => {
+            const input = document.getElementById("field-Tag_ID");
+            if (input) {
+                input.focus();
+                input.addEventListener("change", () => UI.processWizardStageOneScan());
+            }
+        }, 100);
+    },
 
 //========== END RENDER COMMAND BAR ================
 
@@ -2486,20 +2528,24 @@ printInspectedLocationTable() {
 
 // =========================================================================
     // THE CENTRAL INTAKE REGISTRATION PORTAL 
+    //   CENTRAL ASSET WIZARD 
     // =========================================================================
     renderCentralRegistrationWizard() {
         const container = document.getElementById("table-container");
         const title = document.getElementById("current-view-title");
         title.innerText = "Administrative: Centralized Item Intake Portal";
+        
+        // Lock the router configuration state flag
+        window.currentTable = "inventory_registration";
 
         let html = `
             <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
                 <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
-                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">Select a target inventory classification sheet from the dropdown below to instantly deploy its specialized database entry form.</p>
+                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
                 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom:5px;">
-                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Select Target Inventory Classification Sheet</label>
+                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
                         <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
                             <option value="">-- Choose Target Table --</option>
                             <option value="Shop_Machinery">Shop Machinery</option>
@@ -2509,13 +2555,171 @@ printInspectedLocationTable() {
                             <option value="Resell_Inventory">Resell Inventory</option>
                         </select>
                     </div>
-                    <button class="action-btn" onclick="UI.launchContextualFormFromCentral()" style="background:var(--primary); height:45px; margin-top:22px; font-weight:bold;">⚡ Deploy System Form</button>
+
+                    <div style="display: flex; flex-direction: column; position: relative;">
+                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
+                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
+                        <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
+                    <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
                 </div>
             </div>
             <div id="central-form-render-zone"></div>
         `;
         container.innerHTML = html;
         this.renderCommandBar("");
+
+        // Set real-time listener to handle direct input swipes into the box
+        setTimeout(() => {
+            const input = document.getElementById("field-Tag_ID");
+            if (input) {
+                input.focus();
+                input.addEventListener("change", () => UI.processWizardStageOneScan());
+            }
+        }, 100);
+    },
+    // 2. ADD NEW function to process an actual scanned barcode in Stage 1
+    async processWizardStageOneScan() {
+        const tableSelect = document.getElementById("mae-central-table-selector");
+        const tagInput = document.getElementById("field-Tag_ID");
+        const feedback = document.getElementById("wizard-tag-feedback");
+        const formZone = document.getElementById("central-form-render-zone");
+
+        const targetTable = tableSelect ? tableSelect.value : "";
+        const rawTag = tagInput ? tagInput.value.trim() : "";
+
+        if (!targetTable) {
+            alert("Mandatory Selection Required:\n\nPlease choose a target inventory classification table before checking the tag.");
+            if (tagInput) tagInput.value = "";
+            return;
+        }
+
+        if (!rawTag) {
+            alert("Scan Required:\n\nPlease focus the input field and scan a sticker or choose the UNTAGGED track.");
+            return;
+        }
+
+        const cleanTag = window.Labels.extractCleanId(rawTag).toUpperCase();
+        if (tagInput) tagInput.value = cleanTag;
+
+        if (feedback) {
+            feedback.style.color = "var(--primary)";
+            feedback.innerText = "⌛ Verifying label uniqueness across partitions...";
+        }
+
+        // --- ANTI-COLLISION SECURITY CHECK ---
+        const isCollision = await window.verifyTagUniquenessCrossTable(cleanTag);
+        if (isCollision) {
+            if (tagInput) {
+                tagInput.value = "";
+                tagInput.style.borderColor = "#e74c3c";
+                tagInput.style.backgroundColor = "#fadbd8";
+            }
+            if (feedback) {
+                feedback.style.color = "#c0392b";
+                feedback.innerHTML = `❌ COLLISION ERROR: Barcode [${cleanTag}] is already registered to an asset row inside the spreadsheet ledger. Choose another sticker.`;
+            }
+            formZone.innerHTML = "";
+            return;
+        }
+
+        // --- CHOOSE TAG STRUCTURE PROFILE ---
+        const tagTypeChoice = confirm(
+            `MAE INTAKE REGULATION HANDSHAKE:\n\n` +
+            `Tag [${cleanTag}] is verified UNIQUE and available.\n\n` +
+            `• Click OK if this sticker maps to a SINGLE individual asset (UNIQUE).\n` +
+            `• Click CANCEL if this sticker maps to a shared BIN/DRAWER group (MULTIPLE).`
+        );
+
+        const assignedType = tagTypeChoice ? "UNIQUE" : "MULTIPLE";
+
+        if (feedback) {
+            feedback.style.color = "#27ae60";
+            feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as ${assignedType}.`;
+            tagInput.style.borderColor = "#27ae60";
+            tagInput.style.backgroundColor = "#e8f8f5";
+            tagInput.disabled = true;
+            tableSelect.disabled = true;
+        }
+
+        // Proceed to deploy the Stage 2 entry fields dynamically
+        this.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, assignedType);
+    },
+    // 3. ADD NEW function to process an untagged item path in Stage 1
+    processWizardStageOneUntagged() {
+        const tableSelect = document.getElementById("mae-central-table-selector");
+        const targetTable = tableSelect ? tableSelect.value : "";
+        const tagInput = document.getElementById("field-Tag_ID");
+        const feedback = document.getElementById("wizard-tag-feedback");
+
+        if (!targetTable) {
+            alert("Mandatory Selection Required:\n\nPlease choose a target inventory classification table before proceeding.");
+            return;
+        }
+
+        if (feedback) {
+            feedback.style.color = "var(--accent)";
+            feedback.innerHTML = `📦 Fallback Default Activated: Asset will be registered under structural token [UNTAGGED].`;
+            if (tagInput) {
+                tagInput.value = "UNTAGGED";
+                tagInput.disabled = true;
+                tagInput.style.borderColor = "var(--border)";
+                tagInput.style.backgroundColor = "#eee";
+            }
+            tableSelect.disabled = true;
+        }
+
+        // Deploy fields with the default untagged parameters hardcoded
+        this.renderCentralRegistrationWizardStageTwo(targetTable, "UNTAGGED", "UNIQUE");
+    },
+    renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType) {
+        const formZone = document.getElementById("central-form-render-zone");
+        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+        
+        formZone.innerHTML = ""; // Clear zone completely for fresh generation pass
+
+        // Trigger your proven, table-contextual entry form generator model
+        this.renderEntryForm('add', targetTable, sheetConfig, async () => {
+            
+            // Explicitly force the hidden form fields to match our Stage 1 validation parameters
+            const tagField = document.getElementById("field-Tag_ID");
+            const typeField = document.getElementById("field-Tag_Type");
+            
+            if (tagField) tagField.value = validatedTagId;
+            if (typeField) typeField.value = tagType;
+
+            // Submit row using name-parsed input dictionary collection rules
+            const success = await window.submitNewRow(targetTable, sheetConfig);
+            if (success) {
+                formZone.innerHTML = ""; // Reset entry fields container on success
+                alert(`Central Entry Successfully Committed to OneDrive Ledger!\n\nClassification: ${sheetConfig.tabName}`);
+                
+                // Return system routing configuration state safely to the home cockpit view
+                window.currentTable = "Master_Dashboard";
+                window.loadTableData("Master_Dashboard");
+            }
+        });
+
+        // Auto-focus management macro: Direct focus to item description, bypassing locked tags
+        setTimeout(() => {
+            const formCard = document.getElementById("entry-form");
+            if (!formCard) return;
+
+            // Remove the standard modal close button since this is embedded inside the page grid flow layout
+            const closeBtn = formCard.querySelector(".close-x");
+            if (closeBtn) closeBtn.remove();
+
+            // Locate the descriptive label textbox element fields
+            const descInput = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
+            if (descInput) {
+                descInput.focus();
+                descInput.style.backgroundColor = "#fffde7"; // Action yellow hint
+            }
+        }, 150);
     },
 
     launchContextualFormFromCentral() {
