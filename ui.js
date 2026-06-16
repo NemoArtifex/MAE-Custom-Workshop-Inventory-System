@@ -2566,6 +2566,7 @@ printInspectedLocationTable() {
                 <div style="display: flex; gap: 15px;">
                     <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
                     <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
+                    <button class="action-btn" onclick="UI.resetCentralRegistrationWizard()" style="background:#c0392b; height:45px; font-weight:bold; flex: 1;">🔄 Clear / Reset Form</button>
                 </div>
             </div>
             <div id="central-form-render-zone"></div>
@@ -2760,6 +2761,39 @@ printInspectedLocationTable() {
                 descriptiveInputField.style.backgroundColor = "#fffde7"; // Highlight active typing field yellow
             }
         }, 150);
+    },
+    // 🌟 ADD NEW function to clear and reset the onboarding wizard canvas completely
+    resetCentralRegistrationWizard() {
+        const tableSelect = document.getElementById("mae-central-table-selector");
+        const tagInput = document.getElementById("field-Tag_ID");
+        const feedback = document.getElementById("wizard-tag-feedback");
+        const formZone = document.getElementById("central-form-render-zone");
+
+        // 1. Clear text contents and reset visual tracking layouts
+        if (formZone) formZone.innerHTML = "";
+        if (feedback) feedback.innerHTML = "";
+        
+        if (tagInput) {
+            tagInput.value = "";
+            tagInput.disabled = false;
+            tagInput.style.borderColor = "var(--border)";
+            tagInput.style.backgroundColor = "#fffde7"; // Action yellow scan box hint
+        }
+
+        if (tableSelect) {
+            tableSelect.value = "";
+            tableSelect.disabled = false;
+        }
+
+        // 2. Clear any lingering mailbox variables inside global storage
+        window.pendingScanValue = null;
+
+        // 3. Re-orient focus instantly back to the scanner input field box
+        setTimeout(() => {
+            if (tagInput) tagInput.focus();
+        }, 50);
+        
+        console.log("MAE Wizard System: Central registration canvas successfully sanitized and reset.");
     },
 
     //========  END THE CENTRAL INTAKE REGISTRATION PORTAL ==========
