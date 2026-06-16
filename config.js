@@ -29,6 +29,7 @@ export const maeSystemConfig = {
             tabName: "Master Dashboard",
             tableName: "Master_Dashboard",
             active: false,
+            isInventory: false,
             columns: [
                 { header: "mae_id", type: "string", hidden: true, locked: true },
         // Snapshot A: Resell Inventory Summary
@@ -135,6 +136,7 @@ export const maeSystemConfig = {
             tabName: "Overhead Summary",
             tableName: "Overhead_Summary",
             active: false,
+            isInventory: false,
             columns: [
                 {
                     header: "Expense Category",
