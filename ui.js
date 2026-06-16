@@ -2642,49 +2642,34 @@ printInspectedLocationTable() {
     },
     // 🌟 ADD NEW custom layout popup model to clean up the intake handshake selection process 🌟
     renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId) {
-        // 1. Clean out any previous modal artifacts from the background DOM tree
         const existingModal = document.getElementById("mae-wizard-modal-overlay");
         if (existingModal) existingModal.remove();
 
-        // 2. Compile high-contrast, rugged tablet-optimized modal window HTML
         const modalHtml = `
             <div id="mae-wizard-modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
                 <div style="background: #ffffff; border-top: 8px solid var(--accent); border-radius: 8px; width: 100%; max-width: 550px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); box-sizing: border-box; text-align: center;">
-                    
-                    <!-- REQ 1: SPECIFIED HEADLINE TITLE TITLE -->
                     <h2 style="margin: 0 0 15px 0; color: var(--primary); text-transform: uppercase; font-weight: 800; font-size: 1.6rem; letter-spacing: 1px;">
                         SELECT ITEM CATEGORY
                     </h2>
-                    
                     <p style="font-size: 0.95rem; color: #444; margin-bottom: 25px; line-height: 1.5;">
-                        Barcode <b style="background: #fffde7; padding: 2px 6px; border: 1px dashed var(--accent); font-family: monospace;">${cleanTag}</b> is available for registration.<br>
+                        Barcode <b style="background: #fffde7; padding: 2px 6px; border: 1px dashed var(--accent); font-family: monospace;">${cleanTag}</b> is verified UNIQUE and available.<br>
                         Specify how this physical label will anchor inside your warehouse layout map.
                     </p>
-
-                    <!-- REQ 2, 3, 4: HIGH-TARGET PLACEMENT ACTION BUTTONS GRID -->
                     <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                        
-                        <!-- REQ 2 & 5: UNIQUE TRACK PATH ACTION -->
                         <button class="action-btn" id="modal-btn-unique" style="background: var(--primary); height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
                             🎯 UNIQUE (One Tag for One Single Asset)
                         </button>
-                        
-                        <!-- REQ 3 & 5: MULTIPLE CONTAINER TRACK PATH ACTION -->
                         <button class="action-btn" id="modal-btn-multiple" style="background: #e67e22; height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
                             📦 MULTIPLE (One Tag for a Bin / Drawer Group)
                         </button>
-                        
-                        <!-- REQ 4: ADMINISTRATIVE RETURN ROUTE ACTION -->
                         <button class="cancel-btn" id="modal-btn-return" style="background: #7f8c8d; height: 45px; font-size: 1rem; font-weight: bold; margin-left: 0; width: 100%;">
                             ↩️ Return to Wizard
                         </button>
-                        
                     </div>
                 </div>
             </div>
         `;
 
-        // 3. Inject the modal directly into the browser body container layer
         document.body.insertAdjacentHTML("beforeend", modalHtml);
 
         const modalOverlay = document.getElementById("mae-wizard-modal-overlay");
@@ -2692,12 +2677,8 @@ printInspectedLocationTable() {
         const tagInput = document.getElementById("field-Tag_ID");
         const feedback = document.getElementById("wizard-tag-feedback");
 
-        // --- INTERACTION WIRING FOR CUSTOM POPUP BUTTONS ---
-
-        // PATH A: UNIQUE BUTTON CLICK
         document.getElementById("modal-btn-unique").onclick = () => {
-            modalOverlay.remove(); // Close modal window popup
-
+            modalOverlay.remove();
             if (feedback) {
                 feedback.style.color = "#27ae60";
                 feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as UNIQUE.`;
@@ -2706,15 +2687,12 @@ printInspectedLocationTable() {
                 tagInput.disabled = true;
                 tableSelect.disabled = true;
             }
-
-            // REQ 5 FIX: Deploy fields, auto-populating Tag_ID and assigning UNIQUE parameters
-            this.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
+            // 🌟 EXPLICIT OBJECT CALL
+            UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
         };
 
-        // PATH B: MULTIPLE BUTTON CLICK
         document.getElementById("modal-btn-multiple").onclick = () => {
-            modalOverlay.remove(); // Close modal window popup
-
+            modalOverlay.remove();
             if (feedback) {
                 feedback.style.color = "#2980b9";
                 feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as MULTIPLE container.`;
@@ -2723,28 +2701,21 @@ printInspectedLocationTable() {
                 tagInput.disabled = true;
                 tableSelect.disabled = true;
             }
-
-            // REQ 5 FIX: Deploy fields, auto-populating Tag_ID and forcing MULTIPLE container profile track
-            this.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
+            // 🌟 EXPLICIT OBJECT CALL
+            UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
         };
 
-        // PATH C: RETURN BUTTON CLICK
         document.getElementById("modal-btn-return").onclick = () => {
-            modalOverlay.remove(); // Close modal window popup safely
-            
-            // Clear transaction IDs to stop unneeded background tasks from running
+            modalOverlay.remove();
             window.activeScanTransactionId = null;
-
             if (tagInput) {
                 tagInput.value = "";
                 tagInput.disabled = false;
                 tagInput.style.borderColor = "var(--border)";
-                tagInput.style.backgroundColor = "#fffde7"; // Focus action hint yellow
+                tagInput.style.backgroundColor = "#fffde7";
                 tagInput.focus();
             }
-            
             if (feedback) feedback.innerHTML = "";
-            console.log("MAE Wizard System: Intake prompt aborted safely. Form state reverted.");
         };
     },
     // 3. ADD NEW function to process an untagged item path in Stage 1
@@ -2775,7 +2746,7 @@ printInspectedLocationTable() {
         this.renderCentralRegistrationWizardStageTwo(targetTable, "UNTAGGED", "UNIQUE");
     },
     async processWizardStageOneScan() {
-        // 🌟 REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS 🌟
+        // REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS
         const currentTransactionId = Date.now();
         window.activeScanTransactionId = currentTransactionId;
 
@@ -2809,7 +2780,7 @@ printInspectedLocationTable() {
         // --- ANTI-COLLISION SECURITY CHECK ---
         const isCollision = await window.verifyTagUniquenessCrossTable(cleanTag);
         
-        // 🌟 CIRCUIT BREAKER CHECK 🌟
+        // CIRCUIT BREAKER CHECK
         if (window.activeScanTransactionId !== currentTransactionId) {
             console.warn("MAE Circuit Breaker: Wizard execution terminated mid-fetch via form reset.");
             return;
@@ -2829,33 +2800,9 @@ printInspectedLocationTable() {
             return;
         }
 
-        // --- CHOOSE TAG STRUCTURE PROFILE ---
-        const tagTypeChoice = confirm(
-            `MAE INTAKE REGULATION HANDSHAKE:\n\n` +
-            `Tag [${cleanTag}] is verified UNIQUE and available.\n\n` +
-            `• Click OK if this sticker maps to a SINGLE individual asset (UNIQUE).\n` +
-            `• Click CANCEL if this sticker maps to a shared BIN/DRAWER group (MULTIPLE).`
-        );
-
-        // 🌟 FINAL CIRCUIT BREAKER SANITY CHECK 🌟
-        if (window.activeScanTransactionId !== currentTransactionId) {
-            console.warn("MAE Circuit Breaker: Post-prompt cancel detected. Aborting form generation.");
-            return;
-        }
-
-        const assignedType = tagTypeChoice ? "UNIQUE" : "MULTIPLE";
-
-        if (feedback) {
-            feedback.style.color = "#27ae60";
-            feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as ${assignedType}.`;
-            tagInput.style.borderColor = "#27ae60";
-            tagInput.style.backgroundColor = "#e8f8f5";
-            tagInput.disabled = true;
-            tableSelect.disabled = true;
-        }
-
-        // Proceed to deploy the Stage 2 entry fields dynamically
-        this.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, assignedType);
+        // 🌟 EXPLICITLY BOUND ENGINE CALL 🌟
+        // Changed 'this' to 'UI' to guarantee execution scope stability
+        UI.renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId);
     },
 
     launchContextualFormFromCentral() {

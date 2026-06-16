@@ -1740,22 +1740,29 @@ async function handleUniversalLookup(scannedId) {
         }
 
 
-        // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---
+        // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---    
         const formPanelActive = document.getElementById("entry-form") !== null;
         const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
         
         if (isRegistrationMode) {
-            console.log("MAE Safety Guard: Form active. Checking token limits.");
+            console.log("MAE Safety Guard: Form active. Forwarding to Intake Modal Handler.");
+            
+            const tableSelect = document.getElementById("mae-central-table-selector");
+            const targetTable = tableSelect ? tableSelect.value : window.currentTable;
             const tagInputFieldBox = document.getElementById("field-Tag_ID");
             
+            // If we are actively inside the Registration Wizard layout, update the input field box
+            if (tagInputFieldBox && window.currentTable === "inventory_registration") {
+                tagInputFieldBox.value = cleanId;
+            }
+
             if (matchedAssetRowsList.length === 0) {
-                if (tagInputFieldBox) {
-                    tagInputFieldBox.value = cleanId;
-                    tagInputFieldBox.style.borderColor = "#27ae60";
-                    tagInputFieldBox.style.backgroundColor = "#e8f8f5";
-                    console.log("MAE Validation Engine: Tag unique.");
+                // 🌟 FRESH UNIQUE TAG: Forward straight to the custom modal categories picker window
+                if (tableSelect && tableSelect.value !== "") {
+                    window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
                 } else {
-                    alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease click into an input field or deploy a registration form.`);
+                    alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
+                    if (tagInputFieldBox) tagInputFieldBox.value = "";
                 }
                 return;
             }
@@ -1767,33 +1774,15 @@ async function handleUniversalLookup(scannedId) {
                     tagInputFieldBox.style.backgroundColor = "#fadbd8";
                 }
                 const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
-                const matchedItemLabelName = matchedAssetRowsList.values[sheetConfigMatch.columns.findIndex(c => c.header === nameKey)] || "Unknown Asset";
+                const matchedItemLabelName = matchedAssetRowsList[0].values[0][sheetConfigMatch.columns.findIndex(c => c.header === nameKey)] || "Unknown Asset";
                 
                 alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
                 return;
             }
 
             if (foundTagType === "MULTIPLE") {
-                const doubleCheckProceed = confirm(
-                    `MAE SYSTEM NOTIFICATION: Shared Container Tag Detected!\n\n` +
-                    `This barcode is registered as a storage group inside the database ledger.\n\n` +
-                    `Would you like to bundle this new item row under the same multi-item Tag_ID inside this storage space?`
-                );
-                if (doubleCheckProceed) {
-                    if (tagInputFieldBox) {
-                        tagInputFieldBox.value = cleanId;
-                        tagInputFieldBox.style.borderColor = "#2980b9";
-                        tagInputFieldBox.style.backgroundColor = "#fffde7";
-                        const tagTypeSelectBox = document.getElementById("field-Tag_Type");
-                        if (tagTypeSelectBox) tagTypeSelectBox.value = "MULTIPLE";
-                    }
-                } else {
-                    if (tagInputFieldBox) {
-                        tagInputFieldBox.value = "";
-                        tagInputFieldBox.style.borderColor = "var(--border)";
-                        tagInputFieldBox.style.backgroundColor = "#ffffff";
-                    }
-                }
+                // 🌟 FORWARD CONTAINER DETECTIONS CLEANLY THROUGH THE CUSTOM WINDOW
+                window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
                 return;
             }
         }
