@@ -45,6 +45,15 @@ async function startup() {
                 handleUniversalLookup(scannedId);
             });
 
+            // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
+            // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
+            document.addEventListener('input', (event) => {
+               const target = event.target;
+               if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
+                   target.setAttribute("data-pre-scan-value", target.value || "");
+               }
+           });
+
         } else {
             // SCENARIO 2: USER IS NOT LOGGED IN
             const authButton = document.getElementById("auth-btn");
