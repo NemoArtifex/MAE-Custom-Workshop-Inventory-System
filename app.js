@@ -2611,5 +2611,7 @@ window.processWizardStageOneUntagged = UI.processWizardStageOneUntagged;
 window.resetCentralRegistrationWizard = UI.resetCentralRegistrationWizard;
 window.renderTagTypeWizardModal = UI.renderTagTypeWizardModal;
 window.renderCentralRegistrationWizardStageTwo = UI.renderCentralRegistrationWizardStageTwo;
+window.UI.renderWizardSessionListGrid = UI.renderWizardSessionListGrid;
+window.UI.finalizeWizardBatchSession = UI.finalizeWizardBatchSession;
 
 startup();
