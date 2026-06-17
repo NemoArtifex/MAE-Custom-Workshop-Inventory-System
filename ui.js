@@ -2535,7 +2535,7 @@ printInspectedLocationTable() {
         const title = document.getElementById("current-view-title");
         title.innerText = "Administrative: Centralized Item Intake Portal";
         
-        // Establish unified routing state context
+        // Lock the router configuration state flag
         window.currentTable = "inventory_registration";
 
         let html = `
@@ -2558,7 +2558,7 @@ printInspectedLocationTable() {
 
                     <div style="display: flex; flex-direction: column; position: relative;">
                         <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
-                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
+                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;">
                         <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
                     </div>
                 </div>
@@ -2574,10 +2574,22 @@ printInspectedLocationTable() {
         container.innerHTML = html;
         this.renderCommandBar("");
 
-        // RUGGED REFIX: Focus input field cleanly without attaching a duplicate change listener
+        // Focus management pass without any browser-native change listeners attached
         setTimeout(() => {
             const input = document.getElementById("field-Tag_ID");
-            if (input) input.focus();
+            if (input) {
+                input.focus();
+                
+                // 🌟 THE SAFE INTERCEPT GATE 🌟
+                // If a user manual types or if an enter event hits this box, block native browser form 
+                // submission completely, and route it through our unified verification instead.
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Abort browser form triggers
+                        UI.processWizardStageOneScan(); // Run our controlled lookup pass instead
+                    }
+                };
+            }
         }, 100);
     },
     // 2. ADD NEW function to process an actual scanned barcode in Stage 1
