@@ -2887,7 +2887,7 @@ printInspectedLocationTable() {
             const closeBtn = formCard.querySelector(".close-x");
             if (closeBtn) closeBtn.remove();
 
-            // A. LOCK AND COLOR CODE TAG_ID CELL
+            // A. 🌟 TARGET AND INJECT THE VALIDATED BARCODE STRING VALUE (UNDERSCORE FIXED)
             const tagIdInputBox = document.getElementById("field-Tag_ID");
             if (tagIdInputBox) {
                 tagIdInputBox.value = validatedTagId; 
@@ -2906,9 +2906,11 @@ printInspectedLocationTable() {
                 }
                 statusLabel.style.color = "#27ae60";
                 statusLabel.innerText = "🔒 SCANNED TOKEN: Locked Against Manual Typing";
+            } else {
+                console.warn("MAE Intake Debug: Could not locate text field [field-Tag_ID] inside rendered DOM tree.");
             }
 
-            // B. LOCK AND COLOR CODE TAG_TYPE DROPDOWN
+            // B. 🌟 TARGET AND INJECT THE ASSIGNED TAG CLASSIFICATION TYPE (UNDERSCORE FIXED)
             const tagTypeSelectBox = document.getElementById("field-Tag_Type");
             if (tagTypeSelectBox) {
                 tagTypeSelectBox.value = tagType; 
@@ -2927,7 +2929,7 @@ printInspectedLocationTable() {
                 secretPayload.value = tagType;
             }
 
-            // C. FLOW FOCUS REDIRECTION: Focus description inputs immediately
+            // C. FLOW FOCUS REDIRECTION: Focus description inputs immediately (UNDERSCORE FIXED)
             const descInput = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
             if (descInput) {
                 descInput.focus();
