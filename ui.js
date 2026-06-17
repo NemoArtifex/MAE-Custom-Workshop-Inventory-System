@@ -2938,7 +2938,7 @@ printInspectedLocationTable() {
             if (isSubsequentEntry && typeof window.UI.renderWizardSessionListGrid === "function") {
                 window.UI.renderWizardSessionListGrid();
             }
-        }, 50); 
+        }, 150); 
     },
     // 🌟 ADD NEW method to compile and render your live session list grid rows on the fly 🌟
     renderWizardSessionListGrid() {
