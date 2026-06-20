@@ -987,6 +987,21 @@ window.confirmMobileAdd = async (scannedId) => {
 
 // ============ GLOBAL "CLICK OFF" HANDLER for all Edit Modes ==========
 async function globalClickOffHandler(e) {
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: INTAKE CANVAS SHIELD GATE 🌟
+    // If the craftsman is actively processing a centralized onboarding registration batch 
+    // or executing a tag compliance audit, completely block automatic click-off routines
+    // to protect their data session parameters from accidental tablet screen drops.
+    const isProtectedSessionActive = 
+        window.currentTable === "inventory_registration" || 
+        window.currentTable === "untagged_audit_grid_view" ||
+        window.currentTable === "resell_status_pivot" ||
+        window.currentTable === "location_inspector";
+
+    if (isProtectedSessionActive) {
+        // Intercept event silently. The session remains strictly locked until an action button is pushed.
+        return; 
+    }
+     
     // 1. If we aren't in Edit Mode, this handler does nothing
     if (!window.isEditing) return;
 
@@ -1020,6 +1035,8 @@ async function globalClickOffHandler(e) {
             
             // Clean up the UI without saving to OneDrive
             UI.exitEditMode();
+
+
         } else {
             // User clicked 'Cancel', keep everything exactly as it is
             console.log("MAE System: Discard cancelled. Continuing edit session.");
