@@ -1784,8 +1784,12 @@ async function handleUniversalLookup(scannedId) {
             tagInputFieldBox.style.borderColor = "#e74c3c";
             tagInputFieldBox.style.backgroundColor = "#fadbd8";
             }
+
+            // 🌟 FIXED STRUCTURE ANCHOR: Safely unwrap index 0 tracking objects 🌟
             const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
-            const matchedItemLabelName = matchedAssetRowsList[0].values[0][sheetConfigMatch.columns.findIndex(c => c.header === nameKey)] || "Unknown Asset";
+            const targetColumnIndexPosition = sheetConfigMatch.columns.findIndex(c => c.header === nameKey);
+            const matchedItemLabelName = matchedAssetRowsList[0].values[0][targetColumnIndexPosition] || "Unknown Asset";
+                    
             alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
             return;
         }
