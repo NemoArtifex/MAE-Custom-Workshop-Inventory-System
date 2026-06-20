@@ -2884,9 +2884,23 @@ printInspectedLocationTable() {
 
             // If managing a MULTIPLE tag session, clear descriptive cells and re-load form inline
             if (tagType === "MULTIPLE") {
-                // Loop back inline, flag as subsequent entry to preserve session array records
+                // 🌟 SYSTEM LAYOUT PARKING SHIELD 🌟
+                // If a global table load wiped our wizard canvas assembly, restore the container context smoothly
+                let formZoneCheck = document.getElementById("central-form-render-zone");
+                if (!formZoneCheck) {
+                console.log("MAE Wizard Engine: Restoring intake portal rendering canvas layout anchors...");
+                const tableContainer = document.getElementById("table-container");
+                tableContainer.innerHTML = `
+                    <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
+                    <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">CONTAINER BATCH MODE ACTIVE: Registering multiple entries to Tag ID [${validatedTagId}].</p>
+                    </div>
+                    <div id="central-form-render-zone"></div>`;
+                }
+
+                // Now safe to loop back inline, passing true to preserve the running array log rows
                 window.UI.renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, "MULTIPLE", true);
-                // Safe execution fallback: check if compiler engine is live before updating view elements
+        
                 if (typeof window.UI.renderWizardSessionListGrid === "function") {
                 window.UI.renderWizardSessionListGrid();
                 }
