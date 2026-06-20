@@ -542,7 +542,7 @@ renderCommandBar(tableName) {
 //========== END RENDER COMMAND BAR ================
 
 // ================RENDER ENTRY FORM===============
-   renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null) {
+   renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null, wizardIntakeData=null) {
     const container = document.getElementById("table-container");
     const isEdit = mode === 'edit';
     
@@ -659,7 +659,7 @@ renderCommandBar(tableName) {
                     const isTag = col.header === "Tag_ID";
   
                     // 🌟 DETERMINISTIC INTRA-WIZARD INJECTION PASS 🌟
-                    if (isTag && wizardIntakeData && wizardIntakeData.tagId) {
+                    if (isTag && wizardIntakeData !== null && wizardIntakeData.tagId) {
                         formHtml += `
                         <div style="position: relative;">
                             <input type="text" id="${fieldId}" value="${wizardIntakeData.tagId}" readonly style="background-color: #e8f8f5; color: #27ae60; border: 2px solid #27ae60; font-weight: bold; cursor: not-allowed; width: 100%; box-sizing: border-box;">
