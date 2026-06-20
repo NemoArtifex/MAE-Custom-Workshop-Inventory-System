@@ -30,7 +30,25 @@ export const UI = {
         authButton.style.background = "#c0392b"; // Red for Sign Out
         authButton.style.color = "white";
         authButton.disabled = false;
-        authButton.onclick = signOutCallback;
+        
+    // 🌟 AUTHENTICATION DISCONNECT GUARD SHIELD 🌟
+        authButton.onclick = () => {
+        const isProtectedSessionActive = 
+            window.currentTable === "inventory_registration" || 
+            window.currentTable === "untagged_audit_grid_view" ||
+            window.currentTable === "resell_status_pivot" ||
+            window.currentTable === "location_inspector";
+
+        if (isProtectedSessionActive) {
+            const confirmSignOut = confirm("MAE SYSTEM DISCONNECT WARNING:\n\nYou are currently inside an active batch registration or compliance audit session.\n\nDisconnecting your Microsoft Office 365 link right now will drop your workspace state and discard all uncommitted items on your screen.\n\nAre you sure you want to sign out?");
+            if (!confirmSignOut) {
+            return; // Abort sign-out request, keep session locked
+            }
+        }
+      
+        // Safe boundary confirmed, proceed to sign out macro execution
+        signOutCallback();
+        };
     },
 
     setDisconnected(signInCallback) {
