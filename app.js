@@ -2565,8 +2565,15 @@ async function verifyTagUniquenessCrossTable(tagIdToCheck) {
         // Scan across your database records checking tracking attributes via explicit text name dictionary values
         const matchFound = normalizedRecords.find(record => {
             const recordTagValue = record.data["Tag_ID"];
-            return recordTagValue && String(recordTagValue).trim().toUpperCase() === targetSearchToken;
-        });
+            const recordTagType = String(record.data["Tag_Type"] || "UNIQUE").trim().toUpperCase();
+      
+            // 🌟 MULTIPLE TAG AMNESTY GATEWAY 🌟
+            // A tag is only considered a "collision" if it is already mapped to an individual, 
+            // single UNIQUE asset row. Shared MULTIPLE tags are explicitly approved for duplication.
+            return recordTagValue && 
+                    String(recordTagValue).trim().toUpperCase() === targetSearchToken && 
+                    recordTagType === "UNIQUE";
+            });
 
         if (matchFound) {
             console.warn(`MAE Security Matrix Intercept: Label collision detected inside sheet classification [${sheetConfig.tabName}] at row index ${matchFound.index}`);
