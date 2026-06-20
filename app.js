@@ -38,12 +38,8 @@ async function startup() {
 
             // --- INDUSTRIAL SCANNER INTEGRATION ---
             // Purged old URL/QR lookup logic.
-            // Initializing the background listener for the Inateck-75S.
-            console.log("MAE System: Initializing Industrial HID Listener...");
-            Labels.initHIDScanner((scannedId) => {
-                // When a scan is detected, it triggers the universal search
-                handleUniversalLookup(scannedId);
-            });
+            console.log("MAE System: Using Native HID Hardware Ingest Input Port...");
+            
 
             // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
             // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
