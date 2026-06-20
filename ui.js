@@ -576,12 +576,15 @@ renderCommandBar(tableName) {
             else if (col.header === "Tag_Type") {
                 // MAE PROTECTION: Force-lock type selection to MULTIPLE when working inside the multi-item container panel view
                 const isAppendingToContainerView = document.getElementById("current-view-title")?.innerText.includes("Multiple Items");
-                
                 let currentSelection = val;
-                if (!isEdit && isAppendingToContainerView) {
-                    currentSelection = "MULTIPLE";
+
+                // 🌟 WIZARD INTAKE DATA ALIGNMENT GUARD 🌟
+                if (wizardIntakeData !== null && wizardIntakeData.tagType) {
+                currentSelection = wizardIntakeData.tagType;
+                } else if (!isEdit && isAppendingToContainerView) {
+                currentSelection = "MULTIPLE";
                 } else if (!currentSelection) {
-                    currentSelection = "UNIQUE"; 
+                currentSelection = "UNIQUE";
                 }
 
                 const isFormLocked = (!isEdit && isAppendingToContainerView);
