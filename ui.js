@@ -656,7 +656,19 @@ renderCommandBar(tableName) {
                 }
                 // PATH C: Fallback to open text field for manual entry (Base Tier / Manual Clicks)
                 else {
-                    formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
+                    const isTag = col.header === "Tag_ID";
+  
+                    // 🌟 DETERMINISTIC INTRA-WIZARD INJECTION PASS 🌟
+                    if (isTag && wizardIntakeData && wizardIntakeData.tagId) {
+                        formHtml += `
+                        <div style="position: relative;">
+                            <input type="text" id="${fieldId}" value="${wizardIntakeData.tagId}" readonly style="background-color: #e8f8f5; color: #27ae60; border: 2px solid #27ae60; font-weight: bold; cursor: not-allowed; width: 100%; box-sizing: border-box;">
+                            <span style="display: block; font-size: 0.65rem; color: #27ae60; font-weight: bold; margin-top: 4px; text-transform: uppercase;"> 🔒 WIZARD INTAKE TOKEN: Locked Against Manual Typing </span>
+                        </div>`;
+                    } else {
+                        // Standard baseline text box generation remains un-impacted
+                        formHtml += `<input type="text" id="${fieldId}" value="${val}" placeholder="Enter ${col.header}..." ${isTag ? 'autofocus' : ''}>`;
+                    }
                 }
             }
             formHtml += `</div>`; // Closes the <div class="input-group"> row container
