@@ -63,6 +63,19 @@ renderMenu(activeWorksheets, onClickCallback) {
     homeBtn.className = "menu-btn home-btn active"; 
     
     homeBtn.onclick = () => {
+        // 🌟 SIDEBAR NAVIGATION SHIELD 🌟
+        const isProtectedSessionActive = 
+            window.currentTable === "inventory_registration" || 
+            window.currentTable === "untagged_audit_grid_view" ||
+            window.currentTable === "resell_status_pivot" ||
+            window.currentTable === "location_inspector";
+
+        if (isProtectedSessionActive) {
+            const confirmExit = confirm("MAE SYSTEM WARNING:\n\nYou are currently inside an active batch session or filtered workspace. Navigating away right now will discard any unsaved entries on your screen.\n\nAre you sure you want to exit this view?");
+            if (!confirmExit) {
+            return; // Abort navigation change, keep session pinned!
+            }
+        }
         // Handle visual state
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         homeBtn.classList.add('active');
@@ -80,9 +93,22 @@ renderMenu(activeWorksheets, onClickCallback) {
         const li = document.createElement("li");
         const btn = document.createElement("button");
         btn.innerText = sheet.tabName;
-        btn.className = "menu-btn";
-        
+        btn.className = "menu-btn";     
         btn.onclick = () => {
+           // 🌟 SIDEBAR NAVIGATION SHIELD 🌟
+        const isProtectedSessionActive = 
+            window.currentTable === "inventory_registration" || 
+            window.currentTable === "untagged_audit_grid_view" ||
+            window.currentTable === "resell_status_pivot" ||
+            window.currentTable === "location_inspector";
+
+        if (isProtectedSessionActive) {
+            const confirmExit = confirm("MAE SYSTEM WARNING:\n\nYou are currently inside an active batch session or filtered workspace. Navigating away right now will discard any unsaved entries on your screen.\n\nAre you sure you want to exit this view?");
+            if (!confirmExit) {
+            return; // Abort navigation change, keep session pinned!
+            }
+        }
+                
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
