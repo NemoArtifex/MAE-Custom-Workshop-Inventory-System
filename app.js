@@ -1001,7 +1001,8 @@ async function globalClickOffHandler(e) {
         // Intercept event silently. The session remains strictly locked until an action button is pushed.
         return; 
     }
-     
+    
+ 
     // 1. If we aren't in Edit Mode, this handler does nothing
     if (!window.isEditing) return;
 
@@ -1752,52 +1753,60 @@ async function handleUniversalLookup(scannedId) {
             return;
         }
 
-
         // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---    
         const formPanelActive = document.getElementById("entry-form") !== null;
         const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
-        
         if (isRegistrationMode) {
             console.log("MAE Safety Guard: Form active. Forwarding to Intake Modal Handler.");
-            
             const tableSelect = document.getElementById("mae-central-table-selector");
             const targetTable = tableSelect ? tableSelect.value : window.currentTable;
             const tagInputFieldBox = document.getElementById("field-Tag_ID");
-            
-            // If we are actively inside the Registration Wizard layout, update the input field box
-            if (tagInputFieldBox && window.currentTable === "inventory_registration") {
-                tagInputFieldBox.value = cleanId;
-            }
 
-            if (matchedAssetRowsList.length === 0) {
-                // 🌟 FRESH UNIQUE TAG: Forward straight to the custom modal categories picker window
-                if (tableSelect && tableSelect.value !== "") {
-                    window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
-                } else {
-                    alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
-                    if (tagInputFieldBox) tagInputFieldBox.value = "";
-                }
-                return;
-            }
+        if (tagInputFieldBox && window.currentTable === "inventory_registration") {
+            tagInputFieldBox.value = cleanId;
+        }
 
-            if (foundTagType === "UNIQUE") {
-                if (tagInputFieldBox) {
-                    tagInputFieldBox.value = "";
-                    tagInputFieldBox.style.borderColor = "#e74c3c";
-                    tagInputFieldBox.style.backgroundColor = "#fadbd8";
-                }
-                const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
-                const matchedItemLabelName = matchedAssetRowsList[0].values[0][sheetConfigMatch.columns.findIndex(c => c.header === nameKey)] || "Unknown Asset";
-                
-                alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
-                return;
+        // PATH 1: Completely Fresh, Unused Barcode Tag
+        if (matchedAssetRowsList.length === 0) {
+            if (tableSelect && tableSelect.value !== "") {
+            window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
+            } else {
+            alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
+            if (tagInputFieldBox) tagInputFieldBox.value = "";
             }
+         return;
+        }
 
-            if (foundTagType === "MULTIPLE") {
-                // 🌟 FORWARD CONTAINER DETECTIONS CLEANLY THROUGH THE CUSTOM WINDOW
-                window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
-                return;
+        // PATH 2: Collision Circuit Breaker for Existing UNIQUE Assets
+        if (foundTagType === "UNIQUE") {
+            if (tagInputFieldBox) {
+            tagInputFieldBox.value = "";
+            tagInputFieldBox.style.borderColor = "#e74c3c";
+            tagInputFieldBox.style.backgroundColor = "#fadbd8";
             }
+            const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
+            const matchedItemLabelName = matchedAssetRowsList[0].values[0][sheetConfigMatch.columns.findIndex(c => c.header === nameKey)] || "Unknown Asset";
+            alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
+            return;
+        }
+
+        // PATH 3: Polymorphic Pass for Existing MULTIPLE Shared Tokens
+        if (foundTagType === "MULTIPLE") {
+            console.log(`MAE Intake Engine: Existing MULTIPLE tag detected [${cleanId}]. Bypassing collision rules to append new structural row instance.`);
+        
+            // De-allocate standard wizard form elements if they are blocking the canvas stage
+            const feedback = document.getElementById("wizard-tag-feedback");
+            if (feedback) {
+            feedback.style.color = "#2980b9";
+            feedback.innerHTML = `✅ Shared Token Located: Appending new location instance to MULTIPLE tag group [${cleanId}].`;
+            }
+            if (tagInputFieldBox) tagInputFieldBox.disabled = true;
+            if (tableSelect) tableSelect.disabled = true;
+
+            // Force-route straight to Stage 2, skipping modal type questions completely
+            window.UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE", false);
+            return;
+        }
         }
 
         // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
@@ -1856,11 +1865,6 @@ async function handleUniversalLookup(scannedId) {
     }
 }
 // =========== END UNIVERSAL SCANNER LOOKUP ===========
-
-
-
-
-
 
 // ============ FUNCTION TO HANDLE SINGLE-ROW UPDATES===========
 async function updateSingleRowFromForm(tableName, rowIndex, sheetConfig) {
