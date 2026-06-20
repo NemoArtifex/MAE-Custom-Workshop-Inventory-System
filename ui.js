@@ -2884,7 +2884,7 @@ printInspectedLocationTable() {
 
             // If managing a MULTIPLE tag session, clear descriptive cells and re-load form inline
             if (tagType === "MULTIPLE") {
-                // 🌟 SYSTEM LAYOUT PARKING SHIELD 🌟
+                // 🌟 SYSTEM LAYOUT PARKING SHIELD   🌟
                 // If a global table load wiped our wizard canvas assembly, restore the container context smoothly
                 let formZoneCheck = document.getElementById("central-form-render-zone");
                 if (!formZoneCheck) {
