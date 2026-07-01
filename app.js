@@ -439,6 +439,10 @@ async function loadTableData(tableName, filterType = null) {
   
   try {
     let formattedRows = [];
+
+    // 🌟 THE ARCHITECTURE SECURE FIX: Define a default base title string literal here!
+    let displayTitle = `View: ${sheetConfig.tabName}`;
+
     const isInventorySheet = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"].includes(tableName);
     
     // TRACK A: INVENTORY MODULE REQUESTS -> ROUTE TO LOCAL MEMORY CACHE INSTANTLY
