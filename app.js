@@ -163,15 +163,22 @@ async function getGraphToken() {
 // ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
 // the startup() function calls updateUIForLoggedInUser() if successful 'login'
 // changes text on button and triggers loadDynamicMenu() function  
-function updateUIForLoggedInUser(userAccount) {
+// ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
+async function updateUIForLoggedInUser(userAccount) {
   UI.setConnected(userAccount.username, signOut);
   loadDynamicMenu();
   
-  // Kick off cache warming instantly in background memory without blocking landing page paints
-  warmInventoryCache().then(() => {
-    console.log("MAE Startup Matrix: Memory structures synchronized with Cloud ledger state properties.");
-  });
+  // --- 🌟 SYNCHRONOUS LIFECYCLE INTERLOCK ENGAGED 🌟 ---
+  // Force the system to wait until your parallel memory cache partitions 
+  // are completely stabilized before letting the screen draw components.
+  try {
+    await warmInventoryCache();
+    console.log("MAE Startup Matrix: Local memory snapshot successfully locked.");
+  } catch (err) {
+    console.error("MAE Startup Matrix Error: Cache warming cycle failed to settle securely.", err);
+  }
   
+  // Safe to load dashboard panels now. No background promises will hijack your scans!
   loadTableData("Master_Dashboard");
 }
 
