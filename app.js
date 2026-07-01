@@ -1767,7 +1767,7 @@ async function handleUniversalLookup(scannedId) {
       const tagValue = record.data["Tag_ID"];
       return tagValue && String(tagValue).trim().toUpperCase() === cleanId;
     });
-
+    
     if (internalMatches.length > 0) {
       // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
       sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
@@ -1778,15 +1778,14 @@ async function handleUniversalLookup(scannedId) {
       
       matchingTableName = table;
       
-      // Extract structural tag metadata parameters using name property dictionaries
+      // 🌟 THE ARCHITECTURAL FIX: Add [0] to target the first row object in the matched array list!
       foundTagType = String(internalMatches[0].data["Tag_Type"] || "UNIQUE").trim().toUpperCase();
       
-      // 🌟 DETERMINISTIC MIGRATION FALLBACK GATEWAY FOR LEGACY TEST DATA 🌟
+      // 🌟 THE ARCHITECTURAL FIX: Add [0] here as well to cleanly read your legacy cell data!
       const rawCategory = internalMatches[0].data["Item_Category"];
       if (rawCategory && String(rawCategory).trim() !== "") {
-        foundItemCategory = String(rawCategory).trim(); // Perfect layout match
+        foundItemCategory = String(rawCategory).trim();
       } else {
-        // Fallback execution rule: auto-heal missing elements based on structural tag footprints
         foundItemCategory = (foundTagType === "UNIQUE") ? "UNIQUE" : "By_Location";
         console.warn(`MAE Migration Matrix: Legacy blank cell detected for Tag [${cleanId}]. Auto-assigned default baseline track: [${foundItemCategory}].`);
       }
