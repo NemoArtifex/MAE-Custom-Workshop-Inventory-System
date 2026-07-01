@@ -473,8 +473,8 @@ async function loadTableData(tableName, filterType = null) {
       // Check for hidden dashboard data calculation processing metrics unboxing path
       if (tableName === "Master_Dashboard") {
         const hasData = data.value && data.value.length > 0;
-        const summaryValues = (hasData && data.value[0].values) ? data.value[0].values[0] :;
         
+        const summaryValues = (hasData && data.value[0].values) ? data.value[0].values[0] :[0,0,0,0,0,0,0];
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         const homeBtn = document.querySelector('.home-btn');
         if (homeBtn) homeBtn.classList.add('active');
