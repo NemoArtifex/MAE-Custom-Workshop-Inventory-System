@@ -84,23 +84,28 @@ async function startup() {
             if (accounts.length > 0) account = accounts[0];
         }
 
+
+
         if (window.account) {
             // SCENARIO 1: USER IS LOGGED IN
-            updateUIForLoggedInUser(window.account); 
-
-            // --- INDUSTRIAL SCANNER INTEGRATION ---
-            // Purged old URL/QR lookup logic.
-            console.log("MAE System: Using Native HID Hardware Ingest Input Port...");
-            
-
+            updateUIForLoggedInUser(window.account);
+      
+            // --- 🌟 INDUSTRIAL SCANNER RESTORATION AXIS 🌟 ---
+            // Re-link the background window listener so physical swiping functions application-wide
+            if (window.Labels && typeof window.Labels.initializeGlobalScanner === "function") {
+                window.Labels.initializeGlobalScanner();
+            } else {
+                console.warn("MAE Boot Fault: Global scanner initializer could not be located inside Labels library registry.");
+            }
+      
             // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
             // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
             document.addEventListener('input', (event) => {
-               const target = event.target;
-               if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
-                   target.setAttribute("data-pre-scan-value", target.value || "");
-               }
-           });
+                const target = event.target;
+                if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
+                target.setAttribute("data-pre-scan-value", target.value || "");
+                }
+            });
 
         } else {
             // SCENARIO 2: USER IS NOT LOGGED IN
@@ -1767,7 +1772,7 @@ async function handleUniversalLookup(scannedId) {
       const tagValue = record.data["Tag_ID"];
       return tagValue && String(tagValue).trim().toUpperCase() === cleanId;
     });
-    
+
     if (internalMatches.length > 0) {
       // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
       sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);

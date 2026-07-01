@@ -29,6 +29,78 @@ export const Labels = {
         }
     },
 
+    // 🌟 RESTORED INDUSTRIAL HID LISTENER: HARDWARE TIMEOUT DEFERRAL BUFFER 🌟
+  initializeGlobalScanner: function() {
+    let scanBuffer = "";
+    let lastKeyTime = 0;
+    let scanTimeout = null;
+
+    console.log("MAE Scanner Matrix: Global window-level background HID listener activated.");
+
+    window.addEventListener("keydown", (event) => {
+      // 1. SAFETY SCREEN: Skip structural control keys that don't represent barcode characters
+      if (event.key === "Shift" || event.key === "Control" || event.key === "Alt" || event.key === "Meta") {
+        return;
+      }
+
+      // 2. EXPLICIT FORM PASS-THROUGH: If an operator is intentionally typing inside an input box,
+      // let their typing pass normally UNLESS it's the specific field-Tag_ID or bulk container boxes.
+      const activeElement = document.activeElement;
+      const isUserTypingInOpenForm = activeElement && activeElement.tagName === "INPUT" && 
+                                   activeElement.id !== "field-Tag_ID" && 
+                                   activeElement.id !== "mae-bulk-container-input";
+
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTime;
+      lastKeyTime = currentTime;
+
+      // 3. RAPID TIMING EVALUATION: Hardware devices stream keys with sub-30ms deltas.
+      // If the delta is tiny, or if this is the absolute first key character hit, process as a device burst.
+      if (timeDiff < 30 || scanBuffer === "") {
+        // If an operator is typing manually in a generic form box, block background collection
+        if (isUserTypingInOpenForm && timeDiff >= 30) {
+          return; 
+        }
+
+        // Intercept and swallow the browser's default input behaviors to freeze cell leakage
+        if (!isUserTypingInOpenForm && event.key !== "Enter") {
+          event.preventDefault();
+        }
+
+        if (event.key !== "Enter") {
+          scanBuffer += event.key;
+        }
+
+        // Reset the 40ms safety window tracking lock
+        clearTimeout(scanTimeout);
+        scanTimeout = setTimeout(async () => {
+          if (scanBuffer.trim().length > 2) {
+            const cleanBarcode = this.extractCleanId(scanBuffer);
+            console.log(`MAE Scanner Matrix: Valid device burst assembled cleanly: [${cleanBarcode}]. Dispatching to In-Memory Router...`);
+            
+            // Wipe buffer states instantly to prevent processing duplicates
+            const finalPayload = cleanBarcode;
+            scanBuffer = "";
+            
+            // Forward cleanly to your polymorphic traffic cop engine
+            if (typeof window.handleUniversalLookup === "function") {
+              await window.handleUniversalLookup(finalPayload);
+            } else {
+              console.warn("MAE Ingest Fault: universal lookup router function is missing from the global window context.");
+            }
+          } else {
+            scanBuffer = ""; // Flush short accidental keystrokes or manual single button hits
+          }
+        }, 40);
+
+      } else {
+        // Time gap exceeded -> treat as normal human hand typing, flush background buffer completely
+        scanBuffer = "";
+      }
+    });
+  },
+
+
     // 🌟 2. INDUSTRIAL HID LISTENER: IMPENETRABLE TIMEOUT DEFERRAL SHIELD 🌟
     // Purpose: Defers all character entry by 40ms during the capture phase.
     // If a rapid succession of keys piles up during that window, it is locked 
