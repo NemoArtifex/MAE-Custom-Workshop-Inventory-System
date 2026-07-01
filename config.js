@@ -238,8 +238,8 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
-                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
@@ -281,8 +281,8 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
-                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
@@ -322,8 +322,8 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
-                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
+                { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { 
                   header: "Category",
