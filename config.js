@@ -13,7 +13,10 @@
  *                Inventory Sheets: Tag_ID and Tag_Type available have hidden: true(false)
  *                BASE OPTION (NO Scannable label option): hidden: true;
  *                ADVANCED OPTION (Scannable label option): hidden: false; 
- * Version: xxxx:
+ * Version: 3.1:  Added new column ("Item_Category") to all inventory worksheets to allow for more flexible categorization of items. 
+ *                This column will be a dropdown with options: "UNIQUE", "By_Location", and "By_Topic". 
+ *                This change is intended to enhance the organization and tracking of inventory items across different categories.
+ * Version xxxx:   
  */
 
 export const maeSystemConfig = {
@@ -172,6 +175,7 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tag_ID", type: "string", hidden: false,  locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
+                { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { 
@@ -211,6 +215,7 @@ export const maeSystemConfig = {
                 { header: "mae_id", type: "string", hidden: true, locked: true },
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
+                { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
                 { header: "Location_ID", type: "dropdown", locked: false},
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Date", type: "date", format: "mm/dd/yyyy", locked: false },
@@ -234,6 +239,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
+                { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
@@ -276,6 +282,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
+                { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
                 { header: "Item_Description", type: "string", locked: false },
                 { header: "Purchase Price", type: "number", format: "$#,##0.00", locked: false},
                 { 
@@ -316,6 +323,7 @@ export const maeSystemConfig = {
                 { header: "Tag_ID", type: "string", hidden: false, locked: false },
                 { header: "Tag_Type", type: "dropdown", options: ["UNIQUE", "MULTIPLE"], hidden: false, locked: true },
                 { header: "Location_ID", type: "dropdown", locked: false},
+                { header: "Item_Category", type: "dropdown", options: ["UNIQUE", "By_Location", "By_Topic"], hidden: false, locked: false },
                 { header: "Item_Description", type: "string", locked: false },
                 { 
                   header: "Category",
