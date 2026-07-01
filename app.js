@@ -1755,29 +1755,46 @@ async function handleUniversalLookup(scannedId) {
     const localRows = window.maeLedgerCache[table] || [];
     if (localRows.length === 0) continue;
 
-    // Search across local database record dictionary caches using name-based ORM lookups
+    sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
+    const tagColPosIndex = sheetConfigMatch.columns.findIndex(c => c.header === "Tag_ID");
+
+    // DUAL-LAYER SCANNER PIECE: Matches records by named dictionary OR flat index coordinates
     const internalMatches = localRows.filter(record => {
-      const tagValue = record.data["Tag_ID"];
-      return tagValue && String(tagValue).trim().toUpperCase() === cleanId;
+      // Track A: Check for named dictionary data object keys
+      const namedTagValue = record.data ? record.data["Tag_ID"] : null;
+      
+      // Track B: Check for flat, index-mapped data row matrix arrays
+      const indexTagValue = (record.values && Array.isArray(record.values[0])) ? record.values[0][tagColPosIndex] : 
+                            (record.values ? record.values[tagColPosIndex] : null);
+                            
+      const finalEvaluatedTag = namedTagValue || indexTagValue;
+      return finalEvaluatedTag && String(finalEvaluatedTag).trim().toUpperCase() === cleanId;
     });
 
     if (internalMatches.length > 0) {
       // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
-      sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
       matchedAssetRowsList = internalMatches.map(rec => {
-        const rawValuesArray = sheetConfigMatch.columns.map(col => rec.data[col.header] ?? null);
+        // Safe data unboxing path wrapper fallback
+        const rawValuesArray = rec.data ? sheetConfigMatch.columns.map(col => rec.data[col.header] ?? null) : 
+                              ((rec.values && Array.isArray(rec.values[0])) ? rec.values[0] : rec.values);
         return { index: rec.index, id: rec.id, values: rawValuesArray };
       });
       
       matchingTableName = table;
       
-      // 🌟 THE ARCHITECTURAL FIX: Add [0] to target the first row object in the matched array list!
-      foundTagType = String(internalMatches[0].data["Tag_Type"] || "UNIQUE").trim().toUpperCase();
+      // Dynamic unboxing extraction pass with fallback controls fully supported
+      const optimalFirstMatchRowObj = internalMatches[0];
       
-      // 🌟 THE ARCHITECTURAL FIX: Add [0] here as well to cleanly read your legacy cell data!
-      const rawCategory = internalMatches[0].data["Item_Category"];
-      if (rawCategory && String(rawCategory).trim() !== "") {
-        foundItemCategory = String(rawCategory).trim();
+      const metaTagType = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Tag_Type"] : 
+                           ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")]);
+                           
+      const metaCategory = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Item_Category"] : 
+                            ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")]);
+
+      foundTagType = String(metaTagType || "UNIQUE").trim().toUpperCase();
+      
+      if (metaCategory && String(metaCategory).trim() !== "") {
+        foundItemCategory = String(metaCategory).trim();
       } else {
         foundItemCategory = (foundTagType === "UNIQUE") ? "UNIQUE" : "By_Location";
         console.warn(`MAE Migration Matrix: Legacy blank cell detected for Tag [${cleanId}]. Auto-assigned default baseline track: [${foundItemCategory}].`);
@@ -1785,7 +1802,6 @@ async function handleUniversalLookup(scannedId) {
       break; // Match confirmed, escape loop early
     }
   }
-
   // Verify system state alignment before updating any DOM layout canvases
   if (window.activeScanTransactionId !== currentTransactionId) {
     console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
