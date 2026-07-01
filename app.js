@@ -83,21 +83,9 @@ async function startup() {
             const accounts = myMSALObj.getAllAccounts();
             if (accounts.length > 0) account = accounts[0];
         }
-
-
-
         if (window.account) {
             // SCENARIO 1: USER IS LOGGED IN
             updateUIForLoggedInUser(window.account);
-      
-            // --- 🌟 INDUSTRIAL SCANNER RESTORATION AXIS 🌟 ---
-            // Re-link the background window listener so physical swiping functions application-wide
-            if (window.Labels && typeof window.Labels.initializeGlobalScanner === "function") {
-                window.Labels.initializeGlobalScanner();
-            } else {
-                console.warn("MAE Boot Fault: Global scanner initializer could not be located inside Labels library registry.");
-            }
-      
             // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
             // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
             document.addEventListener('input', (event) => {

@@ -250,5 +250,5 @@ export const Labels = {
 };
 
 window.Labels = Labels;
-
+window.Labels.initializeGlobalScanner();
 
