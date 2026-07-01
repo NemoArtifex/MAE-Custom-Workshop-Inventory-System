@@ -16,6 +16,58 @@ window.currentTable = "";
 window.account = null;
 window.isEditing = false; // Initialize the global state
 
+// Global memory ledger cache container for sub-millisecond local routing
+window.maeLedgerCache = {
+  Resell_Inventory: [],
+  Shop_Machinery: [],
+  Shop_Power_Tools: [],
+  Shop_Hand_Tools: [],
+  Shop_Consumables: []
+};
+
+// ===== NEW WORKER: Background Parallel Inventory Cache Warming Engine =====
+async function warmInventoryCache() {
+  const inventoryTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+  const title = document.getElementById("current-view-title");
+  
+  console.log("MAE Engine Memory Matrix: Commencing background parallel ledger cache warming sequence...");
+  
+  try {
+    const token = await window.getGraphToken();
+    
+    // Execute all five fetch requests concurrently in a parallel network stream
+    const fetchPromises = inventoryTables.map(async (tableName) => {
+      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows?ts=${Date.now()}`;
+      const response = await fetch(url, { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        } 
+      });
+      
+      if (!response.ok) throw new Error(`Table pre-load execution fault: ${tableName}`);
+      const data = await response.json();
+      
+      // Target sheet blueprint configuration schemas
+      const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+      
+      // Unbox Excel rows into structural database object dictionaries using named ORM rules
+      const normalizedObjects = window.Dashboard.transformRowsToObjects(data.value, sheetConfig);
+      
+      // Commit directly to the global background memory array cache
+      window.maeLedgerCache[tableName] = normalizedObjects;
+      console.log(`MAE Cache: Partition [${tableName}] primed with ${normalizedObjects.length} memory object rows.`);
+    });
+    
+    // Pin block execution wait point until all concurrent promises settle securely
+    await Promise.all(fetchPromises);
+    console.log("MAE Engine System Notice: All inventory partitions are completely stabilized in local memory.");
+    
+  } catch (error) {
+    console.error("MAE Memory Matrix Critical Fault: Pre-load cache warming routine collapsed.", error);
+  }
+}
+
 async function startup() {
     try {
         // Initialize the PublicClientApplication
@@ -119,11 +171,15 @@ async function getGraphToken() {
 // the startup() function calls updateUIForLoggedInUser() if successful 'login'
 // changes text on button and triggers loadDynamicMenu() function  
 function updateUIForLoggedInUser(userAccount) {
-
-    UI.setConnected(userAccount.username, signOut);
-    loadDynamicMenu();
-
-    loadTableData("Master_Dashboard");
+  UI.setConnected(userAccount.username, signOut);
+  loadDynamicMenu();
+  
+  // Kick off cache warming instantly in background memory without blocking landing page paints
+  warmInventoryCache().then(() => {
+    console.log("MAE Startup Matrix: Memory structures synchronized with Cloud ledger state properties.");
+  });
+  
+  loadTableData("Master_Dashboard");
 }
 
 //=====END UPDATE UI BASED ON LOGIN STATUS ========
@@ -375,72 +431,73 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
-    window.currentTable = tableName;
-    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+  window.currentTable = tableName;
+  const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+  
+  UI.exitEditMode();
+  UI.showLoading(tableName);
+  
+  try {
+    let formattedRows = [];
+    const isInventorySheet = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"].includes(tableName);
     
-    // RUGGED: Reset UI state before fetching new data
-    UI.exitEditMode(); 
-    UI.showLoading(tableName);
-
-    try {
-        const token = await window.getGraphToken();
+    // TRACK A: INVENTORY MODULE REQUESTS -> ROUTE TO LOCAL MEMORY CACHE INSTANTLY
+    if (isInventorySheet && window.maeLedgerCache[tableName] && window.maeLedgerCache[tableName].length > 0) {
+      console.log(`MAE Routing Control: Serving [${tableName}] metrics grid directly from local memory cache...`);
+      
+      // Map memory objects back into standard UI array shape layout formatting rules dynamically
+      formattedRows = window.maeLedgerCache[tableName].map(record => {
+        const rawValuesArray = sheetConfig.columns.map(col => record.data[col.header] ?? null);
         
-        // RUGGED: Explicit path including /drive/ to ensure Ledger connectivity
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
-        const response = await fetch(url, {
-            headers: { 'Authorization' : `Bearer ${token}` }
+        // Format Excel date serials to localized text string variables inline
+        const cleanValues = rawValuesArray.map((cellValue, idx) => {
+          const colDef = sheetConfig.columns[idx];
+          if (colDef && colDef.type === 'date') {
+            return excelSerialToDate(cellValue);
+          }
+          return cellValue;
         });
-
-        if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
-        const data = await response.json();
-
-        let displayTitle = `View: ${sheetConfig.tabName}`;
-
-        // ==========================================
-        // 1. DASHBOARD BRIDGE
-        // ==========================================
-        if (tableName === "Master_Dashboard") {
-            const hasData = data.value && data.value.length > 0;
-            
-            // Extract values from the first row [0] and nested array [0]
-            const summaryValues = (hasData && data.value[0].values) 
-                ? data.value[0].values[0] 
-                : [0, 0, 0, 0, 0, 0, 0];
-
-            // Update sidebar visual state
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            const homeBtn = document.querySelector('.home-btn');
-            if (homeBtn) homeBtn.classList.add('active');
-
-            UI.renderDashboard(summaryValues, sheetConfig);
-            UI.renderCommandBar(tableName);
-            return; 
-        }
-
-        // ==========================================
-        // 2. DATA FLATTENING BRIDGE
-        // ==========================================
-        let formattedRows = data.value.map(rowObj => {
-            // Dig into Graph's nested array [[v1, v2]]
-            const rawCells = (rowObj.values && Array.isArray(rowObj.values)) 
-                ? rowObj.values[0] 
-                : rowObj.values;
-            
-            const cleanValues = rawCells.map((cellValue, index) => {
-                const colDef = sheetConfig.columns[index];
-                
-                // Convert Excel serial numbers to readable dates
-                if (colDef && colDef.type === 'date') {
-                    return excelSerialToDate(cellValue);
-                }
-                return cellValue;
-            });
-
-            return {
-                ...rowObj,
-                values: cleanValues 
-            };
+        
+        return { index: record.index, id: record.id, values: cleanValues };
+      });
+    } 
+    // TRACK B: ADMINISTRATIVE OR NON-INVENTORY SHEETS -> LIVE DIRECT CLOUD FETCH
+    else {
+      console.log(`MAE Routing Control: Pulling non-inventory ledger partition [${tableName}] straight from OneDrive Cloud...`);
+      const token = await window.getGraphToken();
+      const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows?ts=${Date.now()}`;
+      const response = await fetch(url, { headers: { 'Authorization' : `Bearer ${token}` } });
+      if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
+      const data = await response.json();
+      
+      // Check for hidden dashboard data calculation processing metrics unboxing path
+      if (tableName === "Master_Dashboard") {
+        const hasData = data.value && data.value.length > 0;
+        const summaryValues = (hasData && data.value[0].values) ? data.value[0].values[0] :;
+        
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        const homeBtn = document.querySelector('.home-btn');
+        if (homeBtn) homeBtn.classList.add('active');
+        
+        UI.renderDashboard(summaryValues, sheetConfig);
+        UI.renderCommandBar(tableName);
+        return;
+      }
+      
+      // Map standard network rows matrix arrays
+      formattedRows = data.value.map(rowObj => {
+        const rawCells = (rowObj.values && Array.isArray(rowObj.values)) ? rowObj.values[0] : rowObj.values;
+        const cleanValues = rawCells.map((cellValue, index) => {
+          const colDef = sheetConfig.columns[index];
+          if (colDef && colDef.type === 'date') {
+            return excelSerialToDate(cellValue);
+          }
+          return cellValue;
         });
+        return { ...rowObj, values: cleanValues };
+      });
+    }
+
 
         // ==========================================
         // 🌟 MAE ENGINE: CONTEXT-AWARE SORTING GATE  🌟
