@@ -1875,21 +1875,15 @@ async function handleUniversalLookup(scannedId) {
   window.UI.showLoading(`Sweeping Local Shop Records for: ${cleanId}...`);
   
   if (matchedAssetRowsList.length === 0) {
-    window.UI.showError(`
-      <div style="text-align:center; padding: 20px;">
-        <h3 style="color:var(--primary);">New Tag Detected</h3>
-        <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
-          ID: ${cleanId}
-        </div>
-        <p>This ID is not recognized in the active shop inventory lists.</p>
-        <button class="action-btn" onclick="window.handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
-          ➕ Register New Item
-        </button>
-        <button class="action-btn cancel-btn" onclick="window.loadTableData('Master_Dashboard')" style="width:100%;">
-          Discard Scan
-        </button>
-      </div>
-    `);
+    console.log(`MAE Scanner Routing: Unregistered tag [${cleanId}] intercepted outside form context. Auto-routing to Intake Portal.`);
+    
+    // 🌟 THE SYSTEM FIXED APPARATUS: REDIRECT FRESH SCAN TARGETS TO CENTRAL WIZARD PORTAL 🌟
+    // Temporarily park the scanned tag inside the global mailbox so the wizard 
+    // can auto-inject and lock the string inside Stage 1 text fields instantly.
+    window.pendingScanValue = cleanId;
+    
+    // Deploy the central batch intake portal system onto the screen layout canvas smoothly
+    window.UI.renderCentralRegistrationWizard();
     return;
   }
 
