@@ -1722,212 +1722,192 @@ async function handleQuickUpdate(tableName) {
 // ========END handleQuickUpdate ============
 
 // =========================================================================
-// =========== UNIFIED UNIVERSAL SCANNER LOOKUP (Item_Description AXIS) ===========
+// =========== UNIFIED IN-MEMORY POLYMORPHIC SCANNER ROUTER ============
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
-    // 🌟 TRANSACTION CIRCUIT BREAKER REGISTRATION 🌟
-    // Generate an authoritative token for this specific asynchronous network thread pass
-    const currentTransactionId = Date.now();
-    window.activeScanTransactionId = currentTransactionId;
+  const currentTransactionId = Date.now();
+  window.activeScanTransactionId = currentTransactionId;
+
+  // 1. Enforce strict token discipline by cleaning the hardware payload string
+  const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
+  if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
+    console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
+    return;
+  }
+  console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
+
+  // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE (WITH LEAKAGE SCRUBBER)
+  const frozenInput = document.querySelector('input[disabled], select[disabled]');
+  if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
+    console.warn(`MAE Focus Protection: Reclaiming frozen field [${frozenInput.id}] following scan intercept.`);
+    frozenInput.disabled = false;
+    const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
+    frozenInput.value = originalValue;
     
+    alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
+    setTimeout(() => { if (frozenInput) frozenInput.focus(); }, 50);
+    return;
+  }
+
+  // --- 🌟 NEW ARCHITECTURE: SUB-MILLISECOND LOCAL MEMORY CACHE SWEEP 🌟 ---
+  const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+  let matchedAssetRowsList = [];
+  let matchingTableName = "";
+  let sheetConfigMatch = null;
+  let foundTagType = "";
+  let foundItemCategory = "";
+
+  // Sweep the in-memory array cache partitions instantly instead of executing network fetch loops
+  for (const table of priorityTables) {
+    const localRows = window.maeLedgerCache[table] || [];
+    if (localRows.length === 0) continue;
+
+    // Search across local database record dictionary caches using name-based ORM lookups
+    const internalMatches = localRows.filter(record => {
+      const tagValue = record.data["Tag_ID"];
+      return tagValue && String(tagValue).trim().toUpperCase() === cleanId;
+    });
+
+    if (internalMatches.length > 0) {
+      // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
+      sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
+      matchedAssetRowsList = internalMatches.map(rec => {
+        const rawValuesArray = sheetConfigMatch.columns.map(col => rec.data[col.header] ?? null);
+        return { index: rec.index, id: rec.id, values: rawValuesArray };
+      });
+      
+      matchingTableName = table;
+      
+      // Extract structural tag metadata parameters using name property dictionaries
+      foundTagType = String(internalMatches[0].data["Tag_Type"] || "UNIQUE").trim().toUpperCase();
+      
+      // 🌟 DETERMINISTIC MIGRATION FALLBACK GATEWAY FOR LEGACY TEST DATA 🌟
+      const rawCategory = internalMatches[0].data["Item_Category"];
+      if (rawCategory && String(rawCategory).trim() !== "") {
+        foundItemCategory = String(rawCategory).trim(); // Perfect layout match
+      } else {
+        // Fallback execution rule: auto-heal missing elements based on structural tag footprints
+        foundItemCategory = (foundTagType === "UNIQUE") ? "UNIQUE" : "By_Location";
+        console.warn(`MAE Migration Matrix: Legacy blank cell detected for Tag [${cleanId}]. Auto-assigned default baseline track: [${foundItemCategory}].`);
+      }
+      break; // Match confirmed, escape loop early
+    }
+  }
+
+  // Verify system state alignment before updating any DOM layout canvases
+  if (window.activeScanTransactionId !== currentTransactionId) {
+    console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
+    return;
+  }
+
+  // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---
+  const formPanelActive = document.getElementById("entry-form") !== null;
+  const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
+  
+  if (isRegistrationMode) {
+    console.log("MAE Safety Guard: Form active. Forwarding to Intake Modal Handler.");
+    const tableSelect = document.getElementById("mae-central-table-selector");
+    const targetTable = tableSelect ? tableSelect.value : window.currentTable;
+    const tagInputFieldBox = document.getElementById("field-Tag_ID");
     
-    // 1. Enforce strict token discipline by cleaning the hardware payload string
-    const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
-    if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
-        console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
-        return;
+    if (tagInputFieldBox && window.currentTable === "inventory_registration") {
+      tagInputFieldBox.value = cleanId;
     }
+
+    // PATH 1: Completely Fresh, Unused Barcode Tag
+    if (matchedAssetRowsList.length === 0) {
+      if (tableSelect && tableSelect.value !== "") {
+        window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
+      } else {
+        alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
+        if (tagInputFieldBox) tagInputFieldBox.value = "";
+      }
+      return;
+    }
+
+    // PATH 2: Collision Circuit Breaker for Existing UNIQUE Assets
+    if (foundTagType === "UNIQUE") {
+      if (tagInputFieldBox) {
+        tagInputFieldBox.value = "";
+        tagInputFieldBox.style.borderColor = "#e74c3c";
+        tagInputFieldBox.style.backgroundColor = "#fadbd8";
+      }
+      const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
+      const targetColumnIndexPosition = sheetConfigMatch.columns.findIndex(c => c.header === nameKey);
+      
+      // Safely access values array based on corrected unboxing structure
+      const matchedItemLabelName = matchedAssetRowsList[0].values[targetColumnIndexPosition] || "Unknown Asset";
+      alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
+      return;
+    }
+
+    // PATH 3: Polymorphic Pass for Existing MULTIPLE Shared Tokens
+    if (foundTagType === "MULTIPLE") {
+      const feedback = document.getElementById("wizard-tag-feedback");
+      if (feedback) {
+        feedback.style.color = "#2980b9";
+        feedback.innerHTML = `✅ Shared Token Located: Appending new instance to [${foundItemCategory}] cluster group [${cleanId}].`;
+      }
+      if (tagInputFieldBox) tagInputFieldBox.disabled = true;
+      if (tableSelect) tableSelect.disabled = true;
+      
+      window.UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE", false);
+      return;
+    }
+  }
+
+  // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
+  window.UI.showLoading(`Sweeping Local Shop Records for: ${cleanId}...`);
+  
+  if (matchedAssetRowsList.length === 0) {
+    window.UI.showError(`
+      <div style="text-align:center; padding: 20px;">
+        <h3 style="color:var(--primary);">New Tag Detected</h3>
+        <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
+          ID: ${cleanId}
+        </div>
+        <p>This ID is not recognized in the active shop inventory lists.</p>
+        <button class="action-btn" onclick="window.handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
+          ➕ Register New Item
+        </button>
+        <button class="action-btn cancel-btn" onclick="window.loadTableData('Master_Dashboard')" style="width:100%;">
+          Discard Scan
+        </button>
+      </div>
+    `);
+    return;
+  }
+
+  // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO HARDWARE CARD VIEW
+  if (foundTagType === "UNIQUE") {
+    window.currentTable = matchingTableName;
+    // Unwrap the values parameters vector directly matching ui.js index extraction constraints
+    const cleanCellsArray = matchedAssetRowsList[0].values;
+    window.UI.renderScanResultCard(cleanCellsArray, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
+    return;
+  }
+
+  // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO INTEGRATED WORKSPACE
+  if (foundTagType === "MULTIPLE") {
+    window.currentTable = matchingTableName;
+    const nameIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Item_Description");
+    const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
     
-    console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
-
-    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE (WITH LEAKAGE SCRUBBER) 🌟
-    // Locate any input elements that were frozen by labels.js during the capture phase
-    const frozenInput = document.querySelector('input[disabled], select[disabled]');
-    if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
-        console.warn(`MAE Focus Protection: Reclaiming frozen field [${frozenInput.id}] following scan intercept.`);
-        
-        // 1. Re-enable the form field so it is fully interactive again
-        frozenInput.disabled = false;
-        
-        // 2. 🌟 THE CLEANSE: Restore the pristine human data snapshot, wiping out leaked "htt" characters
-        const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
-        frozenInput.value = originalValue;
-        
-        // 3. Alert the user of the focus layout conflict
-        alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
-        
-        // 4. Safely return focus so the worker can continue their data entry seamlessly
-        setTimeout(() => { if (frozenInput) frozenInput.focus(); }, 50);
-        return; // Terminate background lookup immediately to save ledger values from pollution
-    }
-
-    // --- STANDARD CROSS-TABLE SEARCH PIPELINE PROCEEDS (Cursor is safe or field is un-focused) ---
-    const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
-    let matchedAssetRowsList = [];
-    let matchingTableName = "";
-    let sheetConfigMatch = null;
-    let foundTagType = "";
-
-    try {
-        for (const table of priorityTables) {
-            // 🌟 CIRCUIT BREAKER CHECK (Inside Loop) 🌟
-            // If the user reset the form while fetching, kill this thread immediately
-            if (window.activeScanTransactionId !== currentTransactionId) {
-                console.warn("MAE Circuit Breaker: Form reset detected mid-fetch. Aborting loop.");
-                return;
-            }
-
-            const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
-            if (!sheetConfig) continue;
-
-            const rowsData = await window.Dashboard.getFullTableData(table);
-            if (!rowsData || rowsData.length === 0) continue;
-
-            // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: PARSE VIA NAME-BASED ORM OBJECT TRANSLATOR 🌟
-            const normalizedRecords = window.Dashboard.transformRowsToObjects(rowsData, sheetConfig);
-            
-            // Filter all database records matching our sanitized barcode identifier string
-            const internalMatches = normalizedRecords.filter(record => {
-                const tagValue = record.data["Tag_ID"];
-                return tagValue && String(tagValue).trim().toUpperCase() === cleanId;
-            });
-
-            if (internalMatches.length > 0) {
-                // Map the structured database objects back into Graph-style row format for downstream UI compliance
-                matchedAssetRowsList = internalMatches.map(rec => {
-                    const rawValuesArray = sheetConfig.columns.map(col => rec.data[col.header] ?? null);
-                    return { index: rec.index, id: rec.id, values: [rawValuesArray] };
-                });
-                
-                matchingTableName = table;
-                sheetConfigMatch = sheetConfig;
-                
-                // Read the tag type using the explicit name property key dictionary
-                foundTagType = String(internalMatches[0].data["Tag_Type"] || "UNIQUE").trim().toUpperCase();
-                break; // Escape search cycle loop early
-            }
-        }
-        // 🌟 CIRCUIT BREAKER CHECK (Post-Loop) 🌟
-        // Verify system state alignment before modifying any UI layouts or panels
-        if (window.activeScanTransactionId !== currentTransactionId) {
-            console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
-            return;
-        }
-
-        // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---    
-        const formPanelActive = document.getElementById("entry-form") !== null;
-        const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
-        if (isRegistrationMode) {
-            console.log("MAE Safety Guard: Form active. Forwarding to Intake Modal Handler.");
-            const tableSelect = document.getElementById("mae-central-table-selector");
-            const targetTable = tableSelect ? tableSelect.value : window.currentTable;
-            const tagInputFieldBox = document.getElementById("field-Tag_ID");
-
-        if (tagInputFieldBox && window.currentTable === "inventory_registration") {
-            tagInputFieldBox.value = cleanId;
-        }
-
-        // PATH 1: Completely Fresh, Unused Barcode Tag
-        if (matchedAssetRowsList.length === 0) {
-            if (tableSelect && tableSelect.value !== "") {
-            window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
-            } else {
-            alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
-            if (tagInputFieldBox) tagInputFieldBox.value = "";
-            }
-         return;
-        }
-
-        // PATH 2: Collision Circuit Breaker for Existing UNIQUE Assets
-        if (foundTagType === "UNIQUE") {
-            if (tagInputFieldBox) {
-            tagInputFieldBox.value = "";
-            tagInputFieldBox.style.borderColor = "#e74c3c";
-            tagInputFieldBox.style.backgroundColor = "#fadbd8";
-            }
-
-            // 🌟 FIXED STRUCTURE ANCHOR: Safely unwrap index 0 tracking objects 🌟
-            const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
-            const targetColumnIndexPosition = sheetConfigMatch.columns.findIndex(c => c.header === nameKey);
-            const matchedItemLabelName = matchedAssetRowsList[0].values[0][targetColumnIndexPosition] || "Unknown Asset";
-                    
-            alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
-            return;
-        }
-
-        // PATH 3: Polymorphic Pass for Existing MULTIPLE Shared Tokens
-        if (foundTagType === "MULTIPLE") {
-            console.log(`MAE Intake Engine: Existing MULTIPLE tag detected [${cleanId}]. Bypassing collision rules to append new structural row instance.`);
-        
-            // De-allocate standard wizard form elements if they are blocking the canvas stage
-            const feedback = document.getElementById("wizard-tag-feedback");
-            if (feedback) {
-            feedback.style.color = "#2980b9";
-            feedback.innerHTML = `✅ Shared Token Located: Appending new location instance to MULTIPLE tag group [${cleanId}].`;
-            }
-            if (tagInputFieldBox) tagInputFieldBox.disabled = true;
-            if (tableSelect) tableSelect.disabled = true;
-
-            // Force-route straight to Stage 2, skipping modal type questions completely
-            window.UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE", false);
-            return;
-        }
-        }
-
-        // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
-        window.UI.showLoading(`Sweeping Shop Records for: ${cleanId}...`);
-
-        if (matchedAssetRowsList.length === 0) {
-            window.UI.showError(`
-                <div style="text-align:center; padding: 20px;">
-                    <h3 style="color:var(--primary);">New Tag Detected</h3>
-                    <div style="font-size: 1.5rem; font-weight: 800; background: #fffde7; border: 2px dashed var(--accent); padding: 15px; margin: 10px 0;">
-                        ID: ${cleanId}
-                    </div>
-                    <p>This ID is not recognized in the active shop inventory lists.</p>
-                    <button class="action-btn" onclick="window.handleAddClickWithId('${cleanId}')" style="width:100%; margin-bottom:10px;">
-                        ➕ Register New Item
-                    </button>
-                    <button class="action-btn cancel-btn" onclick="window.loadTableData('Master_Dashboard')" style="width:100%;">
-                        Discard Scan
-                    </button>
-                </div>
-            `);
-            return;
-        }
-
-        // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO CARD VIEW
-        if (foundTagType === "UNIQUE") {
-            window.currentTable = matchingTableName;
-            const singleFlattenedCells = matchedAssetRowsList.values;
-            window.UI.renderScanResultCard(singleFlattenedCells, matchingTableName, sheetConfigMatch, matchedAssetRowsList.index);
-            return;
-        }
-
-        // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO SEARCH HUB GRID VIEW
-        if (foundTagType === "MULTIPLE") {
-            window.currentTable = matchingTableName;
-            const nameIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Item_Description");
-            const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
-            
-            const containerBundleResults = matchedAssetRowsList.map(rowObj => {
-                const cells = rowObj.values;
-                const physicalLocation = cells[locationColumnIdx] || "TBD";
-                return {
-                    category: `${sheetConfigMatch.tabName} [Storage: ${physicalLocation}]`,
-                    itemName: cells[nameIdx] || "N/A",
-                    tableName: matchingTableName,
-                    rowIndex: rowObj.index
-                };
-            });
-            window.UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName);
-            return;
-        }
-
-    } catch (error) {
-        console.error("MAE Security Module Ingest Failure:", error);
-        window.UI.showError("Verification routine failed. Check network connection.");
-    }
+    const containerBundleResults = matchedAssetRowsList.map(rowObj => {
+      const cells = rowObj.values;
+      const physicalLocation = cells[locationColumnIdx] || "TBD";
+      return {
+        category: `${sheetConfigMatch.tabName} [Storage: ${physicalLocation}]`,
+        itemName: cells[nameIdx] || "N/A",
+        tableName: matchingTableName,
+        rowIndex: rowObj.index
+      };
+    });
+    
+    // Pass the exact evaluated foundItemCategory parameter down to structure layout locks
+    window.UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName, foundItemCategory);
+    return;
+  }
 }
 // =========== END UNIVERSAL SCANNER LOOKUP ===========
 
