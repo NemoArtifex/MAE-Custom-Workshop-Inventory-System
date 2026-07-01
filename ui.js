@@ -1973,95 +1973,96 @@ async finalizeDecommission(locName) {
 },
 //====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
 
-//========Virtual Search Hub for Multiple ITems on a Single Tag 
-renderVirtualSearchHub(auditData, scannedTagId = null, activeTableName = null) {
+  // ====== UNIFIED WORKSPACE SEARCH HUB FOR MULTIPLE ITEMS ON A SINGLE TAG ======
+  renderVirtualSearchHub(auditData, scannedTagId = null, activeTableName = null, itemCategory = "By_Location") {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
-    
     title.innerText = "Search Results: Multiple Items on Scanned Tag";
 
     // Group the data by category for visual organization on the shop floor
     const grouped = auditData.reduce((acc, item) => {
-        if (!acc[item.category]) acc[item.category] = [];
-        acc[item.category].push(item);
-        return acc;
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
     }, {});
 
-    // 1. MAE ENGINE UPGRADE: Inject a prominent Rapid Action Add Button right above the table list if context matches
     let html = "";
     if (scannedTagId && activeTableName) {
-        // Find the user-facing tab name to keep the UI instructions friendly
-        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === activeTableName);
-        const classificationLabel = sheetConfig ? sheetConfig.tabName : "this classification";
+      const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === activeTableName);
+      const classificationLabel = sheetConfig ? sheetConfig.tabName : "this classification";
+      
+      // --- 🌟 NEW ARCHITECTURE: CONTEXT-AWARE INDUSTRIAL STATUS BANNERS 🌟 ---
+      let bannerTitleText = `CONTAINER ACTIVE: [Tag ID: ${scannedTagId}]`;
+      let bannerSubtitleText = `Quickly append a new tool or component record into this physical storage space.`;
+      
+      if (itemCategory === "By_Topic") {
+        bannerTitleText = `THEMATIC TOPIC ACTIVE: [Tag ID: ${scannedTagId}]`;
+        bannerSubtitleText = `Quickly append a new distributed part record into this virtual thematic list tracker.`;
+      }
 
-        html += `
-            <div class="form-card" style="border-left: 6px solid var(--accent); background: #fff; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-                <div>
-                    <h4 style="margin:0 0 5px 0; color:var(--primary);">CONTAINER ACTIVE: [Tag ID: ${scannedTagId}]</h4>
-                    <p style="margin:0; font-size:0.85rem; color:#666;">Quickly append a new tool or component record into this physical storage space.</p>
-                </div>
-                <button class="action-btn" 
-                        style="background: #e67e22; font-weight: bold; padding: 12px 25px; font-size: 1rem; flex-shrink: 0;" 
-                        onclick="window.pendingScanValue='${scannedTagId}'; window.handleAddClick('${activeTableName}')">
-                    ➕ Add Item to this Container
-                </button>
-            </div>
-        `;
+      // 🌟 THE METADATA BRIDGE PASS: Injects 'itemCategory' safely as an escaped string literal payload 🌟
+      html += `
+        <div class="form-card" style="border-left: 6px solid var(--accent); background: #fff; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+          <div>
+            <h4 style="margin:0 0 5px 0; color:var(--primary); text-transform:uppercase;">${bannerTitleText}</h4>
+            <p style="margin:0; font-size:0.85rem; color:#666;">${bannerSubtitleText}</p>
+          </div>
+          <button class="action-btn" style="background: #e67e22; font-weight: bold; padding: 12px 25px; font-size: 1rem; flex-shrink: 0;" 
+                  onclick="window.pendingScanValue='${scannedTagId}'; window.maeWizardActiveCategory='${itemCategory}'; window.handleAddClick('${activeTableName}')">
+            ➕ Add Item to this Container
+          </button>
+        </div>
+      `;
     }
 
     html += `<table class="inventory-table" id="main-data-table">`;
-    
     for (const [category, items] of Object.entries(grouped)) {
+      html += `
+        <thead>
+          <tr>
+            <th colspan="2" style="background:var(--primary); color:white; padding:12px;">
+              ${category.toUpperCase()} (${items.length} Items)
+            </th>
+          </tr>
+          <tr>
+            <th style="width:70%;">Item Description</th>
+            <th style="width:30%;">Action</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      items.forEach(item => {
         html += `
-            <thead>
-                <tr>
-                    <th colspan="2" style="background:var(--primary); color:white; padding:12px;">
-                        ${category.toUpperCase()} (${items.length} Items)
-                    </th>
-                </tr>
-                <tr>
-                    <th style="width:70%;">Item Description</th>
-                    <th style="width:30%;">Action</th>
-                </tr>
-            </thead>
-            <tbody>`;
-        
-        items.forEach(item => {
-            html += `
-            <tr>
-                <td class="locked-cell">${item.itemName}</td>
-                <td style="text-align:center;">
-                    <button class="action-btn" 
-                            style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" 
-                            onclick="loadTableData('${item.tableName}')">
-                        ✏️ View / Edit in Table
-                    </button>
-                </td>
-            </tr>`;
-        });
-        html += `</tbody>`;
+          <tr>
+            <td class="locked-cell">${item.itemName}</td>
+            <td style="text-align:center;">
+              <button class="action-btn" style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" onclick="loadTableData('${item.tableName}')">
+                ✏%EF%B8%8F View / Edit in Table
+              </button>
+            </td>
+          </tr>`;
+      });
+      html += `</tbody>`;
     }
-    
     html += `</table>`;
-    
     html += `
-        <div class="form-actions" style="margin-top: 20px; text-align: center;">
-            <button class="cancel-btn" style="width:50%;" onclick="loadTableData('Master_Dashboard')">
-                ← Back to Dashboard
-            </button>
-        </div>`;
-        
+      <div class="form-actions" style="margin-top: 20px; text-align: center;">
+        <button class="cancel-btn" style="width:50%;" onclick="loadTableData('Master_Dashboard')">
+          ← Back to Dashboard
+        </button>
+      </div>`;
+
     container.innerHTML = html;
 
     const actionZone = document.getElementById("action-bar-zone");
     if (actionZone) {
-        actionZone.innerHTML = `
-            <div class="command-bar" style="justify-content: center;">
-                <button class="action-btn" onclick="loadTableData('Master_Dashboard')">← Return to Dashboard</button>
-            </div>`;
+      actionZone.innerHTML = `
+        <div class="command-bar" style="justify-content: center;">
+          <button class="action-btn" onclick="loadTableData('Master_Dashboard')">← Return to Dashboard</button>
+        </div>`;
     }
-},
-//====== END Virtual Search Hub for Multiple ITems on a Single Tag 
+  },
+//====== END Virtual Search Hub Generator
 
 //========== Resell Status Pivot Viewport Modulator
 renderStatusPivotControls() {
