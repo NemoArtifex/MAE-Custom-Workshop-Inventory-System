@@ -507,19 +507,26 @@ async function loadTableData(tableName, filterType = null) {
 
     const isInventorySheet = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"].includes(tableName);
     
-    // TRACK A: INVENTORY MODULE REQUESTS -> ROUTE TO LOCAL MEMORY CACHE INSTANTLY
-    if (isInventorySheet && window.maeLedgerCache[tableName] && window.maeLedgerCache[tableName].length > 0) {
+    // TRACK A: INVENTORY MODULE REQUESTS -> ROUTE TO LOCAL MEMORY CACHE INSTANTLY (EVEN IF EMPTY!)
+    if (isInventorySheet && window.maeLedgerCache[tableName]) {
       console.log(`MAE Routing Control: Serving [${tableName}] metrics grid directly from local memory cache...`);
       
-      formattedRows = window.maeLedgerCache[tableName].map(record => {
-        // --- 🌟 THE UNBOXING PARITY SHIELD: Read from named dictionary OR fallback to flat arrays 🌟 ---
+      const cachedRowsList = window.maeLedgerCache[tableName] || [];
+      
+      if (cachedRowsList.length === 0) {
+        // 🌟 THE ARRAYS ALIGNMENT SHIELD: If the table is authoritatively empty, pass a clean [] 🌟
+        // directly down to your curated UI layout grid to render your empty data cells safely!
+        console.log(`MAE Cache Target: Table [${tableName}] is confirmed empty. Initializing clean grid templates.`);
+        window.UI.renderTable([], tableName, sheetConfig, titleText);
+        return;
+      }
+
+      // Map existing cached objects back into standard row format for display compliance
+      formattedRows = cachedRowsList.map(record => {
         let rawValuesArray = [];
-        
         if (record.data) {
-          rawValuesArray = sheetConfig.columns.map(col => record.data[col.header] ?? null);
+          rawValuesArray = sheetConfig.columns.map(col => record.data[col.header] ?? "");
         } else if (record.values && Array.isArray(record.values)) {
-          rawValuesArray = record.values;
-        } else if (record.values) {
           rawValuesArray = record.values;
         } else {
           rawValuesArray = new Array(sheetConfig.columns.length).fill("");
