@@ -211,7 +211,7 @@ renderMenu(activeWorksheets, onClickCallback) {
       // 🌟 THE SECURE HANDOFF OVERRIDE: Pass absolute 'rawMaeId' strings instead of volatile 'row.index' numbers 🌟
       html += `
         <td style="text-align:center; white-space:nowrap; vertical-align:middle; padding:8px;">
-          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.UI.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
+          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
           <button class="mini-btn" style="background:#c0392b; font-weight:bold; margin-left:5px;" onclick="window.requestDelete('${tableName}', '${rawMaeId}')">🗑️ Remove</button>
         </td></tr>`;
     });

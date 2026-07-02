@@ -511,11 +511,20 @@ async function loadTableData(tableName, filterType = null) {
     if (isInventorySheet && window.maeLedgerCache[tableName] && window.maeLedgerCache[tableName].length > 0) {
       console.log(`MAE Routing Control: Serving [${tableName}] metrics grid directly from local memory cache...`);
       
-      // Map memory objects back into standard UI array shape layout formatting rules dynamically
       formattedRows = window.maeLedgerCache[tableName].map(record => {
-        const rawValuesArray = sheetConfig.columns.map(col => record.data[col.header] ?? null);
+        // --- 🌟 THE UNBOXING PARITY SHIELD: Read from named dictionary OR fallback to flat arrays 🌟 ---
+        let rawValuesArray = [];
         
-        // Format Excel date serials to localized text string variables inline
+        if (record.data) {
+          rawValuesArray = sheetConfig.columns.map(col => record.data[col.header] ?? null);
+        } else if (record.values && Array.isArray(record.values)) {
+          rawValuesArray = record.values;
+        } else if (record.values) {
+          rawValuesArray = record.values;
+        } else {
+          rawValuesArray = new Array(sheetConfig.columns.length).fill("");
+        }
+        
         const cleanValues = rawValuesArray.map((cellValue, idx) => {
           const colDef = sheetConfig.columns[idx];
           if (colDef && colDef.type === 'date') {
@@ -526,7 +535,7 @@ async function loadTableData(tableName, filterType = null) {
         
         return { index: record.index, id: record.id, values: cleanValues };
       });
-    } 
+    }
     // TRACK B: ADMINISTRATIVE OR NON-INVENTORY SHEETS -> LIVE DIRECT CLOUD FETCH
     else {
       console.log(`MAE Routing Control: Pulling non-inventory ledger partition [${tableName}] straight from OneDrive Cloud...`);
