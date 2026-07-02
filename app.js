@@ -391,80 +391,8 @@ async function refreshLocationCache() {
 }
 //==== END WORKER FUNCTION ======
 
-
-
-
-//==== END WORKER FUNCTION======
-
-// ======= FUNCTION verifySpreadSheetExists =============
-// =========================================================================
 // ====== RESTORED PROVEN WORKBOOK AUTO-PROVISIONER DISCOVERY ENGINE =======
 // =========================================================================
-async function verifySpreadsheetExists() {
-  const token = await window.getGraphToken();
-  const checkUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
-
-  console.log("MAE Ledger Provisioner: Checking for master spreadsheet allocation paths on OneDrive...");
-
-  try {
-    const response = await fetch(checkUrl, {
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (response.ok) {
-      console.log("MAE Ledger Provisioner: Master spreadsheet located successfully. File path is verified active.");
-      return false; // File already exists -> returns false to skip startup settle timers!
-    }
-
-    if (response.status !== 404) {
-      throw new Error(`Graph API returned unexpected network status code: ${response.status}`);
-    }
-
-    // If file is explicitly missing, proceed to upload your curated master template asset
-    console.warn("MAE Ledger Provisioner: MASTER WORKBOOK NOT FOUND. Uploading your curated Excel template asset...");
-    
-    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}/:content`;
-    
-    // Fetch your curated master template file directly from your repository asset folder
-    const templateResponse = await fetch(`./${fileName}`);
-    if (!templateResponse.ok) {
-      throw new Error(`Failed to locate local repository template file asset: ./${fileName}`);
-    }
-    
-    // 🌟 THE ARRAYS ALIGNMENT FIX: Read the template file strictly as a clean binary array buffer stream! 🌟
-    const templateArrayBufferData = await templateResponse.arrayBuffer();
-
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      },
-      body: templateArrayBufferData // Transmits the pristine data packets cleanly without form serialization
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Graph API failed to upload master template file asset over the network: ${uploadResponse.status}`);
-    }
-
-    console.log("MAE Ledger Provisioner: Master Workbook successfully initialized and uploaded to OneDrive storage.");
-    return true; // Brand new file uploaded -> returns true to engage the 6-second table mapping settle timer!
-
-  } catch (error) {
-    // Re-throw any critical connection errors so the startup matrix can handle the rollback shield
-    throw error;
-  }
-}
-
-  
-//const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
-
-
-
-
-//=========FUNCTION createInitialWorkbook =============
-// Practical: Instead of building via API (brittle), we upload your Master Template.
 // ======= FUNCTION verifySpreadSheetExists =============
 async function verifySpreadsheetExists(){
     // Logic here to check if maeSystemConfig.spreadsheetName exists
@@ -490,6 +418,52 @@ async function verifySpreadsheetExists(){
         }
     } catch (error) {
         console.error("Verification Error:", error);
+    }
+}
+
+//const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
+
+//=========FUNCTION createInitialWorkbook =============
+// Practical: Instead of building via API (brittle), we upload your Master Template.
+async function createInitialWorkbook(accessToken) {
+    const statusTitle = document.getElementById("current-view-title");
+    statusTitle.innerText = "Initializing your custom workshop system... please wait.";
+
+    // 1. Path to your Master Template in your GitHub Repo
+    // Assumes the .xlsx is in the root of your project directory
+    const MASTER_TEMPLATE_URL = `./${maeSystemConfig.spreadsheetName}`;
+
+    try {
+        // 2. Fetch the physical file from your GitHub server
+        const response = await fetch(MASTER_TEMPLATE_URL);
+        if (!response.ok) throw new Error("Could not find the Master Template on the server.");
+        const fileBlob = await response.blob();
+
+        // 3. Upload to Customer's OneDrive Root
+        const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/content`;
+        
+        const uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            body: fileBlob
+        });
+
+        if (uploadResponse.ok) {
+            console.log("MAE System: Master Workbook uploaded successfully.");
+            statusTitle.innerText = "System Initialized! Selecting a module to begin.";
+            // Now that the file exists, we perform a quick verification check
+            await initializeSheetAndTable(accessToken);
+        } else {
+            const errorData = await uploadResponse.json();
+            throw new Error(`Upload failed: ${errorData.error.message}`);
+        }
+
+    } catch (error) {
+        console.error("Critical Error during initialization:", error);
+        statusTitle.innerText = "Setup Error: Please contact MAE Support.";
     }
 }
 
