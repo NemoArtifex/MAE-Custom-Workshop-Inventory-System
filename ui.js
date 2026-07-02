@@ -211,7 +211,7 @@ renderMenu(activeWorksheets, onClickCallback) {
       // 🌟 THE SECURE HANDOFF OVERRIDE: Pass absolute 'rawMaeId' strings instead of volatile 'row.index' numbers 🌟
       html += `
         <td style="text-align:center; white-space:nowrap; vertical-align:middle; padding:8px;">
-          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
+          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.UI.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
           <button class="mini-btn" style="background:#c0392b; font-weight:bold; margin-left:5px;" onclick="window.requestDelete('${tableName}', '${rawMaeId}')">🗑️ Remove</button>
         </td></tr>`;
     });
@@ -532,6 +532,55 @@ renderCommandBar(tableName) {
     },
 
 //========== END RENDER COMMAND BAR ================
+// =========================================================================
+  // =========== RESTORED ID-DRIVEN INLINE EDIT MOUNT GATEWAY ================
+  // =========================================================================
+  handleEditClick(tableName, maeId) {
+    const cleanMaeId = String(maeId).trim().toUpperCase();
+    console.log(`MAE Interface: Initializing edit form canvas for record ID [${cleanMaeId}] inside table [${tableName}]...`);
+    
+    // Locate the unique row node directly on your DOM canvas tree by its absolute ID data tag
+    const targetRowNode = document.querySelector(`#main-data-table tbody tr[data-mae-id="${cleanMaeId}"]`);
+    
+    if (!targetRowNode) {
+      console.error(`MAE UI Exception: Could not locate row node with data-mae-id="${cleanMaeId}" on the active screen canvas.`);
+      alert("INTERFACE DRIFT DETECTED:\n\nThe target row cell layout could not be matched. Refreshing table snapshot variables.");
+      return;
+    }
+
+    // Extract the spreadsheet configuration rules matching this table mapping row path
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // Toggle active interface variables into secure inline workspace editing frames
+    window.currentTable = tableName;
+    window.isEditing = true;
+    
+    // Extract row cell metrics directly out of the row's text boxes to populate the edit panel cards
+    const rawCellsList = Array.from(targetRowNode.querySelectorAll("td")).map(td => td.innerText.trim());
+    
+    // Find the hidden index position integer of this row line item node by checking your cache partitions list
+    const cachedRecord = window.maeLedgerCache[tableName]?.find(r => String(r.id || "").trim().toUpperCase() === cleanMaeId);
+    const resolvedExcelRowIndexNum = cachedRecord ? cachedRecord.index : parseInt(targetRowNode.getAttribute("data-row-index"), 10);
+
+    // Call your centralized entry form canvas generator panel mapping fields smoothly
+    this.renderEntryForm('edit', tableName, sheetConfig, async () => {
+      UI.showLoading(`Saving structural matrix cell updates for record: ${cleanMaeId}...`);
+      
+      // Execute your background update engine to transmit data cells up to OneDrive ledger partitions
+      const success = await window.updateSingleRowFromForm(tableName, resolvedExcelRowIndexNum, sheetConfig);
+      
+      if (success) {
+        console.log("MAE Sync System: In-line cell edits successfully committed to master database file.");
+        // Force-sync local RAM arrays and refresh visual grid views instantly
+        if (typeof window.warmInventoryCache === "function") {
+          await window.warmInventoryCache();
+        }
+        await window.loadTableData(tableName);
+      }
+    }, rawCellsList, resolvedExcelRowIndexNum);
+  },
+//=================END RESTORED ID-DRIVEN INLINE EDIT MOUNT GATEWAY ================
+
 
 // ================RENDER ENTRY FORM===============
    renderEntryForm(mode, tableName, sheetConfig, onSaveCallback, rowIndex = null, existingData = null, wizardIntakeData=null) {
