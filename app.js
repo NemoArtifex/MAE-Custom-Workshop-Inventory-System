@@ -432,7 +432,8 @@ async function verifySpreadsheetExists() {
       throw new Error(`Failed to locate local repository template file asset: ./${fileName}`);
     }
     
-    const templateBlob = await templateResponse.blob();
+    // 🌟 THE ARRAYS ALIGNMENT FIX: Read the template file strictly as a clean binary array buffer stream! 🌟
+    const templateArrayBufferData = await templateResponse.arrayBuffer();
 
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
@@ -440,7 +441,7 @@ async function verifySpreadsheetExists() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       },
-      body: templateBlob
+      body: templateArrayBufferData // Transmits the pristine data packets cleanly without form serialization
     });
 
     if (!uploadResponse.ok) {
