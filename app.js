@@ -1988,15 +1988,19 @@ async function handleUniversalLookup(scannedId) {
       const feedback = document.getElementById("wizard-tag-feedback");
       if (feedback) {
         feedback.style.color = "#2980b9";
-        feedback.innerHTML = `✅ Shared Token Located: Appending new instance to [${foundItemCategory}] cluster group [${cleanId}].`;
+        feedback.innerHTML = `✅ Shared Token Located: Appending new instance to existing [${foundItemCategory}] cluster group [${cleanId}].`;
       }
       if (tagInputFieldBox) tagInputFieldBox.disabled = true;
       if (tableSelect) tableSelect.disabled = true;
       
-      window.UI.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE", false);
+      // 🌟 THE ARCHITECTURE FIXED APPARATUS: LOCK THE SESSION MAILBOX AUTOMATICALLY 🌟
+      // Read the existing category string from the database and park it in memory
+      window.maeWizardActiveCategory = foundItemCategory;
+      
+      // Skip the choice modal entirely and pass control straight to the intake form
+      window.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE");
       return;
     }
-  }
 
   // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
   window.UI.showLoading(`Sweeping Local Shop Records for: ${cleanId}...`);

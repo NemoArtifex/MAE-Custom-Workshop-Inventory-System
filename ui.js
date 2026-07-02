@@ -2919,109 +2919,130 @@ printInspectedLocationTable() {
         // Changed 'this' to 'UI' to guarantee execution scope stability
         UI.renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId);
     },
-    // 🌟 STAGE TWO GENERATION: FORM COMPILATION & EXPLICIT ATTRIBUTE INJECTION PASS
-    renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType, isSubsequentEntry = false) {
-        const formZone = document.getElementById("central-form-render-zone");
-        const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+    // 🌟 MODIFIED INTAKE STAGE 2: DISCIPLINARY INTER-LOCKING ENTRY FIELDS FORM 🌟
+  renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType) {
+    const formZone = document.getElementById("central-form-render-zone");
+    if (!formZone) return;
 
-        // 1. INITIALIZE SESSION MEMORY LEDGER (Only on the very first entry pass)
-        if (!isSubsequentEntry) {
-            window.maeWizardSessionItems = [];
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
+    console.log(`MAE Wizard Stage 2: Initializing dynamic entry field canvas for sheet [${sheetConfig.tabName}] under track profile [${window.maeWizardActiveCategory}].`);
+
+    // 1. TRIGGER SCHEMATIC ENTRY FORM BUILDER PASS
+    window.UI.renderEntryForm('add', targetTable, sheetConfig, async () => {
+      // Re-enforce hardware identifiers inside DOM nodes right before harvesting values
+      const tagField = document.getElementById("field-Tag_ID");
+      const typeField = document.getElementById("field-Tag_Type");
+      const categoryField = document.getElementById("field-Item_Category");
+      const locationField = document.getElementById("field-Location_ID");
+      
+      if (tagField) tagField.value = validatedTagId;
+      if (typeField) typeField.value = tagType;
+      
+      // If the field was frozen by our By_Location disciplinary lock, un-freeze it momentarily
+      // so the standard browser DOM form harvesters can read its value cell over the wire!
+      if (categoryField && window.maeWizardActiveCategory) {
+        categoryField.disabled = false;
+        categoryField.value = window.maeWizardActiveCategory;
+      }
+      if (locationField && window.maeWizardActiveCategory === "By_Location") {
+        locationField.disabled = false;
+      }
+
+      // Harvest specifications locally for our clipboard list before submission clears the form cards
+      const descFieldId = `field-${sheetConfig.columns.find(c => c.header.includes("Description") || c.header.includes("Name")).header.replace(/\s+/g, '')}`;
+      const locFieldId = `field-Location_ID`;
+      const enteredDescription = document.getElementById(descFieldId)?.value || "N/A";
+      const enteredLocation = document.getElementById(locFieldId)?.value || "TBD";
+
+      // Execute authoritative append operation straight to Microsoft OneDrive database ledger
+      const success = await window.submitNewRow(targetTable, sheetConfig);
+      if (success) {
+        // Log transaction metrics into our local running batch clipboard list memory array
+        if (!window.maeWizardSessionItems) window.maeWizardSessionItems = [];
+        window.maeWizardSessionItems.push({
+          description: enteredDescription,
+          location: enteredLocation,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        // 🌟 AUTOMATED SYSTEM FLUSH PASS: Force background RAM caches to re-warm instantly 🌟
+        if (typeof window.warmInventoryCache === "function") {
+          await window.warmInventoryCache();
         }
 
-        // 2. COMPILE UNIFIED LAYOUT: Form Entry Input Grid on top, Visual Live List underneath
-        formZone.innerHTML = `
-            <div id="mae-wizard-form-mount"></div>
-            <!-- 🌟 THE RUNNING LIVE SESSION LIST LEDGER 🌟 -->
-            <div id="mae-wizard-live-list-panel" style="margin-top: 30px; background: #ffffff; border: 1px solid var(--border); border-top: 4px solid var(--primary); padding: 20px; border-radius: 4px; display: ${window.maeWizardSessionItems.length > 0 ? 'block' : 'none'};">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-                <h4 style="margin:0; color:var(--primary); text-transform:uppercase; font-weight:800; font-size:0.95rem;">📋 Items Registered in this Session</h4>
-                <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:0.8rem; font-weight:bold;" id="mae-session-badge-count">${window.maeWizardSessionItems.length}</span>
-      <     /div>
-            <div id="mae-wizard-session-grid-mount"></div>
-            <!-- TERMINATION ACTION CONTROL -->
-            <button class="action-btn" onclick="UI.finalizeWizardBatchSession()" style="width:100%; height:50px; background:var(--primary); font-weight:bold; font-size:1.1rem; margin-top:20px; text-transform:uppercase; letter-spacing:0.5px;">
-                🏁 Finished Adding Items (Close Session)
-            </button>
-            </div>
-        `;
+        if (tagType === "MULTIPLE") {
+          // Continuous batch loop active: re-trigger Stage 2 form layout cleanly, keeping elements structured
+          this.renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, "MULTIPLE");
+          if (typeof this.renderWizardSessionListGrid === "function") {
+            this.renderWizardSessionListGrid();
+          }
+        } else {
+          // Unique entry complete: flush session variables and clear view back to landing metrics cockpit
+          window.maeWizardActiveCategory = null;
+          window.maeWizardSessionItems = [];
+          formZone.innerHTML = "";
+          window.currentTable = "Master_Dashboard";
+          window.loadTableData("Master_Dashboard");
+        }
+      }
+    }, null, null, { tagId: validatedTagId, tagType: tagType });
 
-        // 3. TRIGGER DETERMINISTIC ENTRY FORM GENERATION (Race-free argument pass)
-        window.UI.renderEntryForm('add', targetTable, sheetConfig, async () => {
-            // Re-enforce Stage 1 metrics right before submission
-            const tagField = document.getElementById("field-Tag_ID");
-            const typeField = document.getElementById("field-Tag_Type");
-            if (tagField) tagField.value = validatedTagId;
-            if (typeField) typeField.value = tagType;
-
-            // Harvest values for our local visual list BEFORE submission clears them
-            const descFieldId = `field-${sheetConfig.columns.find(c => c.header.includes("Description") || c.header.includes("Name")).header.replace(/\s+/g, '')}`;
-            const locFieldId = `field-Location_ID`;
-            const enteredDescription = document.getElementById(descFieldId)?.value || "N/A";
-            const enteredLocation = document.getElementById(locFieldId)?.value || "TBD";
-
-            // Submit row data asynchronously straight up to OneDrive
-            const success = await window.submitNewRow(targetTable, sheetConfig);
-            if (success) {
-            // Append item specifications into our local session memory tracker array
-            window.maeWizardSessionItems.push({
-                description: enteredDescription,
-                location: enteredLocation,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-
-            // If managing a MULTIPLE tag session, clear descriptive cells and re-load form inline
-            if (tagType === "MULTIPLE") {
-                // 🌟 SYSTEM LAYOUT PARKING SHIELD   🌟
-                // If a global table load wiped our wizard canvas assembly, restore the container context smoothly
-                let formZoneCheck = document.getElementById("central-form-render-zone");
-                if (!formZoneCheck) {
-                console.log("MAE Wizard Engine: Restoring intake portal rendering canvas layout anchors...");
-                const tableContainer = document.getElementById("table-container");
-                tableContainer.innerHTML = `
-                    <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
-                    <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
-                    <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">CONTAINER BATCH MODE ACTIVE: Registering multiple entries to Tag ID [${validatedTagId}].</p>
-                    </div>
-                    <div id="central-form-render-zone"></div>`;
-                }
-
-                // Now safe to loop back inline, passing true to preserve the running array log rows
-                window.UI.renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, "MULTIPLE", true);
+    // 2. --- 🌟 DISCIPLINARY LAYER OVERRIDE: APPLY INPUT FREEZES AND HIGHLIGHT SHADES 🌟 ---
+    setTimeout(() => {
+      const tagInputNode = document.getElementById("field-Tag_ID");
+      const typeInputNode = document.getElementById("field-Tag_Type");
+      const categoryInputNode = document.getElementById("field-Item_Category");
+      const locationInputNode = document.getElementById("field-Location_ID");
+      
+      if (tagInputNode) {
+        tagInputNode.value = validatedTagId;
+        tagInputNode.disabled = true;
+      }
+      if (typeInputNode) {
+        typeInputNode.value = tagType;
+        typeInputNode.disabled = true;
+      }
+      
+      // If we are running a strict By_Location session, apply the physical bin lockdown controls!
+      if (window.maeWizardActiveCategory === "By_Location") {
+        if (categoryInputNode) {
+          categoryInputNode.value = "By_Location";
+          categoryInputNode.disabled = true;
+          categoryInputNode.style.backgroundColor = "#eeeeee";
+          categoryInputNode.style.color = "#888888";
+        }
         
-                if (typeof window.UI.renderWizardSessionListGrid === "function") {
-                window.UI.renderWizardSessionListGrid();
-                }
-            } else {
-                // Unique track item complete: clean up and return to dashboard cockpit
-                formZone.innerHTML = "";
-                window.currentTable = "Master_Dashboard";
-                window.loadTableData("Master_Dashboard");
-            }
-            }
-        }, null, null, { tagId: validatedTagId, tagType: tagType });
-
-        // 4. CLEAN AND FLUID ELEMENT ATTACHMENT MIGRATION
-        const formCard = document.getElementById("entry-form");
-        if (formCard) {
-            // Instantly append form layout directly inside our wizard mount panel view frame
-            document.getElementById("mae-wizard-form-mount").appendChild(formCard);
-            const closeBtn = formCard.querySelector(".close-x");
-            if (closeBtn) closeBtn.remove();
-
-            // Re-direct active focus instantly to the contextual Item Description tracking row box
-            const descriptiveInputField = formCard.querySelector("input[type='text']:not(#field-Tag_ID)");
-            if (descriptiveInputField) {
-            descriptiveInputField.focus();
-            descriptiveInputField.style.backgroundColor = "#fffde7"; // Focus Highlight Tint
-            }
+        if (locationInputNode) {
+          // Check if there are already items log in this running session batch array list
+          const hasPriorSessionEntries = window.maeWizardSessionItems && window.maeWizardSessionItems.length > 0;
+          
+          if (hasPriorSessionEntries) {
+            // Force-lock subsequent entries strictly to match the location coordinate of your first entry item!
+            const firstEntryTargetLocationStr = window.maeWizardSessionItems[0].location;
+            locationInputNode.value = firstEntryTargetLocationStr;
+            locationInputNode.disabled = true;
+            locationInputNode.style.backgroundColor = "#eeeeee";
+            locationInputNode.style.color = "#888888";
+            locationInputNode.style.cursor = "not-allowed";
+            
+            // Append a visual indicator badge text string below the selector dropdown menu box node
+            const alertTextBadge = document.createElement("span");
+            alertTextBadge.style.cssText = "color:#c0392b; font-weight:bold; font-size:0.8rem; display:block; margin-top:5px;";
+            alertTextBadge.innerText = "🔒 GEOGRAPHIC CONTAINER DISCIPLINE: Locked to Shared Storage Spot";
+            locationInputNode.parentNode.appendChild(alertTextBadge);
+          }
         }
-
-        // Draw current data lists if performing subsequent multi-entry passes
-        if (isSubsequentEntry && typeof window.UI.renderWizardSessionListGrid === "function") {
-            window.UI.renderWizardSessionListGrid();
+      } else if (window.maeWizardActiveCategory === "By_Topic") {
+        // If this is a By_Topic session, auto-select the type but leave the Location dropdown wide open!
+        if (categoryInputNode) {
+          categoryInputNode.value = "By_Topic";
+          categoryInputNode.disabled = true;
+          categoryInputNode.style.backgroundColor = "#eeeeee";
+          categoryInputNode.style.color = "#888888";
         }
-        },
+      }
+    }, 150);
+  },
             // 🌟 ADD NEW method to compile and render your live session list grid rows on the fly 🌟
             renderWizardSessionListGrid() {
         const gridMount = document.getElementById("mae-wizard-session-grid-mount");
