@@ -68,6 +68,68 @@ async function warmInventoryCache() {
   }
 }
 
+// =========================================================================
+// ======= AUTHORITATIVE SHIELD: ID-TO-INDEX REAL-TIME TRANSLATION CORE ====
+// =========================================================================
+async function getExcelRowIndexByMaeId(tableName, maeId) {
+  const cleanId = String(maeId).trim().toUpperCase();
+  let targetRowMatch = null;
+  
+  const isInventorySheet = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"].includes(tableName);
+
+  console.log(`MAE Shield Tracker: Translating absolute ID [${cleanId}] to Excel row integer in table [${tableName}]...`);
+
+  // TRACK A: Sift through your primed local RAM memory cache partitions instantly
+  if (isInventorySheet && window.maeLedgerCache[tableName] && window.maeLedgerCache[tableName].length > 0) {
+    targetRowMatch = window.maeLedgerCache[tableName].find(record => {
+      // Handle both named dictionary parsing formats and flat index coordinates arrays fallback
+      const namedIdValue = record.data ? record.data["mae_id"] : null;
+      const indexIdValue = (record.values && Array.isArray(record.values)) ? record.values[0] : null;
+      const finalEvaluatedId = namedIdValue || indexIdValue;
+      
+      return finalEvaluatedId && String(finalEvaluatedId).trim().toUpperCase() === cleanId;
+    });
+  } 
+  
+  // TRACK B: Force an on-demand direct snapshot look for non-inventory/administrative sheets
+  if (!targetRowMatch) {
+    try {
+      const token = await window.getGraphToken();
+      const url = `https://microsoft.com{encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows?ts=${Date.now()}`;
+      
+      const response = await fetch(url, { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        } 
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Because mae_id is strictly mandated as the hidden first column (index 0), unbox directly!
+        targetRowMatch = data.value.find(rowObj => {
+          const cells = (rowObj.values && Array.isArray(rowObj.values[0])) ? rowObj.values[0] : (Array.isArray(rowObj.values) ? rowObj.values : null);
+          return cells && String(cells[0]).trim().toUpperCase() === cleanId;
+        });
+      }
+    } catch (err) {
+      console.error(`MAE Shield Translation Failure: Direct cloud lookup failed for table ${tableName}`, err);
+    }
+  }
+
+  // CRITICAL INTEGRITY EXCEPTION GUARD
+  if (!targetRowMatch) {
+    throw new Error(`MAE Integrity Exception: The target record unique identifier [${cleanId}] does not exist in table [${tableName}]. Action aborted to prevent workbook corruption.`);
+  }
+
+  // Return the strict base-10 integer pointer for Microsoft Graph API updates
+  const finalCalculatedExcelRowIndex = parseInt(targetRowMatch.index, 10);
+  console.log(`MAE Shield Success: Absolute ID [${cleanId}] maps to real-time Excel row index: [${finalCalculatedExcelRowIndex}].`);
+  return finalCalculatedExcelRowIndex;
+}
+// =========================================================================
+
+
 async function startup() {
     try {
         // Initialize the PublicClientApplication
