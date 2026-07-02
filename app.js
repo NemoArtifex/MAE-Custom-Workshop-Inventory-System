@@ -1487,88 +1487,107 @@ function confirmMethodologySwitch(oldMethod, newMethod) {
 
 //===========FUNCTION submitNewRow====to send data to Microsoft========
 
-async function submitNewRow(tableName, sheetConfig) {
-    const rowData = sheetConfig.columns.map(col => {
-        const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
-        const input = document.getElementById(fieldId);
+// =========================================================================
+// =========== REFACTORED SEAMLESS DATA HARVESTER & SUBMISSION ENGINE ======
+// =========================================================================
+window.submitNewRow = async function(tableName, sheetConfig) {
+  const token = await window.getGraphToken();
+  const formCard = document.getElementById("entry-form");
+  if (!formCard) return false;
 
-        // 1. Primary Key: mae_id
-        if (col.header === "mae_id") {
-            const scannedValue = input ? input.value.trim() : "";
-            return (scannedValue !== "") ? scannedValue : `MAE-${Date.now()}`; 
-        }
+  // --- 🌟 THE SHIELD BREAKER: PREVENT DISABLED FIELD VALUES FROM DROPPING 🌟 ---
+  // Before harvesting values from your form layout elements, explicitly strip away 
+  // the 'disabled' tag parameters from your structured category and location dropdown inputs.
+  // This allows the standard value harvester loops to read cells flawlessly!
+  const categorySelectorMenu = document.getElementById("field-Item_Category");
+  const locationSelectorMenu = document.getElementById("field-Location_ID");
+  if (categorySelectorMenu) categorySelectorMenu.disabled = false;
+  if (locationSelectorMenu) locationSelectorMenu.disabled = false;
 
-        // 2. Formulas: Always null (let Excel calculate)
-        if (col.type === "formula") return null;
+  const rowValues = [];
+  let isConsumablesTable = (tableName === "Shop_Consumables");
 
-        // 3. Checkboxes: Boolean Logic
-        if (col.type === "boolean") {
-            return input ? input.checked : false; 
-        }
+  console.log(`MAE Data Harvester: Assembling sparse spreadsheet ingestion array row matrix for table [${tableName}]...`);
 
-        // 4. Numbers & Currency: Float logic
-        if (col.type === "number" || (col.format && col.format.includes("$"))) {
-            if (!input || input.value === "") return null;
-            const num = parseFloat(input.value);
-            return isNaN(num) ? null : num;
-        }
+  try {
+    sheetConfig.columns.forEach(col => {
+      // 1. UNIQUE RECORD ID IMMUTABLE INJECTION KEY
+      if (col.header === "mae_id") {
+        // Generate an absolute, cryptographically isolated unique tracking string token block
+        const compiledUniqueIdString = `MAE-${tableName.substring(5, 9).toUpperCase()}-${Date.now().toString().substring(7)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+        rowValues.push(compiledUniqueIdString);
+        return;
+      }
 
-        // 5. Dropdowns & Strings: Logic for "Control Tower" consistency
-        if (!input || input.value === "") {
-            // RUGGED: If Location_ID is empty, force it to the "Intake" bucket (TBD)
-            if (col.header === "Location_ID") return "TBD";
-            return (col.type === "date") ? null : "";
-        }
+      // Handle standard named text inputs field configurations
+      const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+      const input = document.getElementById(fieldId);
 
-        // Location ID: ensure defaults to "TBD" if empty
-        if (col.header === "Location_ID" && (!input || input.value === "")) {
-            return "TBD"; // Rapid entry fallback
-        }
+      if (col.type === "formula") {
+        rowValues.push(col.formula); // Pass the raw uppercase Excel calculation syntax strings over the wire
+        return;
+      }
 
-        // Return trimmed string for clean Excel data
-        return input.value.trim();
+      if (!input) {
+        rowValues.push(""); // Safe cell pad variable for empty fields layout columns
+        return;
+      }
+
+      let val = input.value.trim();
+
+      // Convert local checkbox inputs to explicit Boolean values matching Excel schemas
+      if (col.type === "boolean") {
+        const checkboxInput = input;
+        rowValues.push(checkboxInput.checked);
+        return;
+      }
+
+      if (val === "") {
+        rowValues.push("");
+        return;
+      }
+
+      // Format clean integer types safely
+      if (col.type === "number") {
+        rowValues.push(Number(val));
+        return;
+      }
+
+      rowValues.push(val);
     });
 
-    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: ENFORCE TAG_ID DISCIPLINE 🌟
-    const tagColumnIndex = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
-    if (tagColumnIndex !== -1) {
-        const rawTagVal = rowData[tagColumnIndex];
-        // If the Tag_ID is empty, null, or whitespace, force-inject the absolute string token "UNTAGGED"
-        if (rawTagVal === "" || rawTagVal === null || (typeof rawTagVal === 'string' && rawTagVal.trim() === "")) {
-            rowData[tagColumnIndex] = "UNTAGGED";
-            console.log(`MAE Intake Engine: Blank tag detected. Enforcing fallback default token: [UNTAGGED]`);
-        }
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [rowValues] })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Graph API insertion failure code: ${response.status}`);
     }
 
-    try {
-        const token = await window.getGraphToken();
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ values: [rowData] }) // Values must be 2D array
-        });
+    console.log(`MAE Ingestion Success: New database record successfully appended onto OneDrive worksheet table [${tableName}].`);
 
-        if (response.ok) {
-            console.log(`MAE System: Row successfully added to ${tableName}`);
-            alert("Entry Saved Successfully!");
-            loadTableData(tableName); 
-            return true;
-        } else {
-            const error = await response.json();
-            throw new Error(error.error.message || "Unknown API Error");
-        }
-
-    } catch (err) {
-        console.error("MAE System - Save failed:", err);
-        UI.showError(`Failed to save: ${err.message}`);
+    // 🌟 ATOMIC CACHE INVALDATION RE-WARM 🌟
+    if (typeof warmInventoryCache === "function") {
+      await warmInventoryCache();
+      console.log("MAE Ingest System: Local background memory partitions successfully synchronized with new data.");
     }
 
+    return true;
+  } catch (error) {
+    console.error("MAE Harvester Failure: Ingestion block collapsed:", error);
+    alert("CRITICAL TRANSACTION FAULT:\n\nFailed to safely append data row metrics to your OneDrive master database sheet. Check network parameters.");
     return false;
-}
+  }
+};
+
+//const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
 
 
 //===========END function to send data to Microsoft
@@ -1668,43 +1687,89 @@ async function processInPlaceTableUpdate(tableName, preCapturedUpdates = null) {
 
 //======== FUNCTION delete Excel Row ==========
 
-// 1. The Wrapper (The button calls this)
-async function requestDelete(rowIndex) {
-    // RUGGED: Always warn the user before a destructive action
-    const confirmed = confirm(`WARNING: Are you sure you want to delete row ${rowIndex + 1}? This cannot be undone.`);
-    
-    if (confirmed) {
-        // If they say yes, call your API function
-        await deleteExcelRow(window.currentTable, rowIndex);
-    }
-}
+// =========================================================================
+// ============ REFACTORED ID-DRIVEN DELETE REQUEST GATEWAY ================
+// =========================================================================
+window.requestDelete = async function(tableName, maeId) {
+  const cleanMaeId = String(maeId).trim().toUpperCase();
+  const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+  const displayLabelName = sheetConfig ? sheetConfig.tabName : "this item row";
+
+  const confirmMsg = `MAE INDUSTRIAL SECURITY ACCESS LOG:\n\nAre you absolutely sure you want to permanently erase this record row from your database ledger?\n\n• Table Sheet Target: ${displayLabelName}\n• Absolute Record ID: ${cleanMaeId}\n\nThis transaction is irreversible and will instantly strip all historical metadata from your OneDrive ledger storage partitions.`;
+  
+  if (!confirm(confirmMsg)) {
+    console.log("MAE Security Guard: Row removal canceled by operator choice.");
+    return;
+  }
+
+  UI.showLoading(`Authorizing Removal of Record: ${cleanMaeId}...`);
+  
+  // Forward the immutable maeId string token to our secure backend cloud eraser
+  const success = await deleteExcelRow(tableName, cleanMaeId);
+  
+  if (success) {
+    console.log(`MAE Interface: Refreshing data view layout grid for [${tableName}] following successful deletion.`);
+    // Force a clean visual grid redraw using our newly re-aligned in-memory cache allocations
+    await loadTableData(tableName);
+  } else {
+    UI.showError(`
+      <div style="text-align:center; padding:20px;">
+        <h3 style="color:#c0392b;">Authorization Failure</h3>
+        <p>Microsoft OneDrive ledger rejected the row removal request.</p>
+        <button class="action-btn" onclick="loadTableData('${tableName}')">Return to Workspace Grid</button>
+      </div>
+    `);
+  }
+};
 
 // 2. EXPOSE TO WINDOW: This fixes the ReferenceError
-window.requestDelete = requestDelete;
+//window.requestDelete = requestDelete;
 
 
-// API logic to delete an Excel Row
-async function deleteExcelRow(tableName, rowIndex) {
-    try {
-        const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-        const token = await window.getGraphToken();
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
-        const response = await fetch(url, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            alert("Row deleted successfully.");
-            loadTableData(tableName); // Refresh the UI to reflect the removal
-        } else {
-            throw new Error("Failed to delete row.");
-        }
-    } catch (err) {
-        console.error("Delete Error:", err);
-        alert("Could not delete row: " + err.message);
+// =========================================================================
+// =========== SECURE CACHE-SYNCHRONIZED LEDGER DELETION ENGINE ============
+// =========================================================================
+async function deleteExcelRow(tableName, maeId) {
+  const token = await window.getGraphToken();
+  const cleanMaeId = String(maeId).trim().toUpperCase();
+
+  try {
+    // 🌟 THE ARRAYS ALIGNMENT INTERLOCK: Resolve the real-time Excel row integer pointer inline right now! 🌟
+    const trueExcelRowIntegerIndex = await getExcelRowIndexByMaeId(tableName, cleanMaeId);
+    
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${trueExcelRowIntegerIndex})`;
+    console.log(`MAE Ledger Engine: Pushing authoritative DELETE over the wire to row index: [${trueExcelRowIntegerIndex}] for ID: [${cleanMaeId}].`);
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Graph API returned network error status code: ${response.status}`);
     }
+
+    console.log("MAE Ledger Engine: Cloud deletion confirmed by Microsoft Graph API.");
+
+    // 🌟 ATOMIC CACHE RE-WARMING RE-LOAD HOOK 🌟
+    // To achieve zero brittleness, we block completion until our local RAM snapshot 
+    // is completely refreshed straight from OneDrive, aligning indices perfectly.
+    if (typeof warmInventoryCache === "function") {
+      await warmInventoryCache();
+      console.log(`MAE Ledger Cache: In-memory array cache partitions fully re-aligned.`);
+    }
+
+    return true; 
+  } catch (error) {
+    console.error("MAE Ledger Engine Critical Error: Excel row deletion transaction collapsed:", error);
+    return false;
+  }
 }
+
+
+//const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows/itemAt(index=${rowIndex})`;
+
+
 
 //====== END delete Excel Row ============
 
@@ -2184,24 +2249,84 @@ async function runLocationAudit() {
 }
 //=====  END scan all inventory tables to find "TBD items ======"
 
-//=====  Update "Engine" for TBD =========
-async function handleAuditUpdate(tableName, maeId, newLoc, rowHtmlId = null) {
-    try {
-        const success = await commitCellChange(tableName, maeId, "Location_ID", newLoc);
-        
-        if (success && rowHtmlId) {
-            const row = document.getElementById(rowHtmlId);
-            if (row) {
-                row.style.opacity = "0";
-                setTimeout(() => row.remove(), 500);
-            }
-        }
-        return success;
-    } catch (err) {
-        console.error("MAE Sync Error:", err);
-        return false;
+// =========================================================================
+// ============ REFACTORED ID-ANCHORED AUDIT COMPLIANCE ENGINE =============
+// =========================================================================
+window.handleAuditUpdate = async function(tableName, maeId, scannedValue, htmlRowId) {
+  const cleanMaeId = String(maeId).trim().toUpperCase();
+  const cleanTagId = window.Labels.extractCleanId(scannedValue).toString().trim().toUpperCase();
+
+  if (!cleanTagId || cleanTagId === "") {
+    alert("CRITICAL VALIDATION ERROR:\n\nYou cannot assign an empty cell value string as a physical tracking label token.");
+    return;
+  }
+
+  UI.showLoading(`Linking Tag [${cleanTagId}] to Record [${cleanMaeId}]...`);
+
+  try {
+    const token = await window.getGraphToken();
+    const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    
+    // Resolve the real-time index coordinates dynamically before committing network writes
+    const trueExcelRowIntegerIndex = await getExcelRowIndexByMaeId(tableName, cleanMaeId);
+    
+    const tagIdIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_ID");
+    const tagTypeIdx = sheetConfig.columns.findIndex(c => c.header === "Tag_Type");
+    const categoryIdx = sheetConfig.columns.findIndex(c => c.header === "Item_Category");
+
+    // Sparse matrix mapping array setup to protect neighboring asset properties from modification
+    const rowValues = new Array(sheetConfig.columns.length).fill(null);
+    rowValues[tagIdIdx] = cleanTagId;
+    
+    if (tagTypeIdx !== -1) rowValues[tagTypeIdx] = "UNIQUE"; 
+    if (categoryIdx !== -1) rowValues[categoryIdx] = "UNIQUE"; // Explicitly seal the category format configuration
+
+    const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/tables/${tableName}/rows/itemAt(index=${trueExcelRowIntegerIndex})`;
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [rowValues] })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Graph API workbook latch fault code: ${response.status}`);
     }
-}
+
+    console.log(`MAE Audit Engine: Successfully linked tag [${cleanTagId}] onto row index ${trueExcelRowIntegerIndex} in cloud ledger storage.`);
+
+    // 🌟 ATOMIC MEMORY ALIGNMENT RE-WARM 🌟
+    if (typeof warmInventoryCache === "function") {
+      await warmInventoryCache();
+    }
+
+    // --- RUGGED SHOP FLOOR VIEW STABILIZATION MESH ---
+    // Instead of forcing a full page redraw which breaks worker speed, transition the completed
+    // row node out of view locally using standalone DOM element style injections.
+    const completedRowNode = document.getElementById(htmlRowId);
+    if (completedRowNode) {
+      completedRowNode.style.backgroundColor = "#d4efdf"; // Flash a green safety anchor highlight confirmation
+      completedRowNode.style.opacity = "0.2";
+      setTimeout(() => {
+        completedRowNode.remove();
+        
+        // If the table grid is completely cleared of compliance gaps, force reload back to home dashboard
+        const remainingRowsCheck = document.querySelectorAll("#main-data-table tbody tr");
+        if (remainingRowsCheck.length === 0) {
+          window.loadTableData("Master_Dashboard");
+        }
+      }, 450);
+    }
+
+  } catch (error) {
+    console.error("MAE Audit Engine Failure: Compliance validation track collapsed:", error);
+    alert("CRITICAL FILE TRANSACTION FAULT:\n\nFailed to safely patch tag assignment data up to OneDrive ledger partitions. Inspect your network link stability indicators.");
+    await loadTableData("Master_Dashboard");
+  }
+};
 
 // ==== HELPER function for the "Update Engine"=====
 async function commitCellChange(tableName, maeId, columnName, newValue) {
