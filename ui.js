@@ -152,16 +152,16 @@ renderMenu(activeWorksheets, onClickCallback) {
     const actionZone = document.getElementById("action-bar-zone");
     if (actionZone) actionZone.innerHTML = "";
 
-    if (!rows || rows.length === 0) {
-      container.innerHTML = `
-        <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
-          <h3 style="color:var(--primary); margin-top:0;">Empty Worksheet Partition</h3>
-          <p>No active records are currently registered under this category mapping path.</p>
-          <button class="action-btn" onclick="window.handleAddClick('${tableName}')">➕ Register First Item</button>
-        </div>`;
-      this.renderCommandBar(tableName);
-      return;
-    }
+    //if (!rows || rows.length === 0) {
+     // container.innerHTML = `
+     //   <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+      //    <h3 style="color:var(--primary); margin-top:0;">Empty Worksheet Partition</h3>
+      //    <p>No active records are currently registered under this category mapping path.</p>
+      //    <button class="action-btn" onclick="window.handleAddClick('${tableName}')">➕ Register First Item</button>
+      //  </div>`;
+     // this.renderCommandBar(tableName);
+     // return;
+   // }
 
     const maeIdColumnIndex = config.columns.findIndex(c => c.header === "mae_id");
 
