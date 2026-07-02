@@ -2848,7 +2848,8 @@ window.Dashboard = Dashboard;
 window.UI = UI;
 window.Labels = Labels;
 
-window.handleEditClick = handleEditClick;
+//window.handleEditClick = handleEditClick;
+window.handleEditClick = (tableName, rowIndex) => window.UI.handleEditClick(tableName, rowIndex);
 window.handleQuickUpdate = handleQuickUpdate;
 window.handleAddClick = handleAddClick;
 window.requestDelete = requestDelete;

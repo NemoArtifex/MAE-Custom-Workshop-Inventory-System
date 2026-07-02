@@ -143,12 +143,12 @@ renderMenu(activeWorksheets, onClickCallback) {
     // Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
     // Rugged: Handles empty states and Microsoft Graph's row structure.
     // ===== REFACTORED CORE DATA GRID RENDERER AXIS =====
+  // ===== RESTORED CURATED IN-PLACE DATA GRID RENDERER =====
   renderTable(rows, tableName, config, titleText = "") {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
-    title.innerText = titleText || `Inventory: ${config.tabName}`;
+    title.innerText = titleText || `View: ${config.tabName}`;
 
-    // Clean up active workspace layout boundaries before painting new grids
     const actionZone = document.getElementById("action-bar-zone");
     if (actionZone) actionZone.innerHTML = "";
 
@@ -156,62 +156,56 @@ renderMenu(activeWorksheets, onClickCallback) {
       container.innerHTML = `
         <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
           <h3 style="color:var(--primary); margin-top:0;">Empty Worksheet Partition</h3>
-          <p>No active records are currently registered under this category mapping row path.</p>
+          <p>No active records are currently registered under this category mapping path.</p>
           <button class="action-btn" onclick="window.handleAddClick('${tableName}')">➕ Register First Item</button>
         </div>`;
       this.renderCommandBar(tableName);
       return;
     }
 
-    // Identify hidden administrative index vectors for column layouts
     const maeIdColumnIndex = config.columns.findIndex(c => c.header === "mae_id");
-    const tagIdColumnIndex = config.columns.findIndex(c => c.header === "Tag_ID");
 
     let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
     
-    // Generate visible grid column tracking blocks
     config.columns.forEach(col => {
       if (!col.hidden) {
         html += `<th>${col.header.replace(/_/g, ' ')}</th>`;
       }
     });
-    html += `<th style="text-align:center; width:150px;">Operations Gateway</th></tr></thead><tbody>`;
+    html += `<th style="text-align:center; width:150px;" class="edit-only-cell">Operations Gateway</th></tr></thead><tbody>`;
 
-    // 🌟 THE ID-DRIVEN UNBOXING LAYER: Iterate over matching spreadsheet row lines 🌟
-    rows.forEach(row => {
+    rows.forEach((row, rowIndex) => {
       const cells = row.values;
-      
-      // Extract your absolute unshifting identifier using your config architecture constraints
-      // If cells unbox as a Graph nested matrix, catch index 0 safely
-      const rawCellsArray = (cells && Array.isArray(cells[0])) ? cells[0] : cells;
+      const rawCellsArray = (cells && Array.isArray(cells)) ? cells : cells;
       const rawMaeId = rawCellsArray[maeIdColumnIndex] || "";
       
-      // Inject the unique token directly onto the row wrapper tag data parameter
-      html += `<tr data-mae-id="${rawMaeId}" style="transition: opacity 0.4s ease;">`;
+      // 🌟 ID-DRIVEN ALIGNMENT: Anchor rows by both their Excel real-time index AND their immutable mae_id!
+      html += `<tr data-row-index="${rowIndex}" data-mae-id="${rawMaeId}" style="transition: opacity 0.4s ease;">`;
       
       config.columns.forEach((col, index) => {
         if (!col.hidden) {
           let val = rawCellsArray[index];
           if (val === null || val === undefined) val = "";
           
+          // Inject exact data attribute tokens so the local harvester knows which column header goes with which cell
           if (col.type === "number" && typeof val === "number") {
-            html += `<td class="locked-cell">${val.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>`;
+            html += `<td class="locked-cell" data-col-index="${index}">${val.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>`;
           } else if (col.type === "formula") {
-            html += `<td class="locked-cell" style="background:#f9f9f9; font-style:italic;">${val}</td>`;
+            html += `<td class="locked-cell" data-col-index="${index}" style="background:#f9f9f9; font-style:italic;">${val}</td>`;
           } else if (col.header === "Tag_ID" && val === "UNTAGGED") {
-            html += `<td class="locked-cell"><span style="color:#c0392b; font-weight:bold; background:#fadbd8; padding:2px 6px; border-radius:4px;">⚠️ UNTAGGED</span></td>`;
+            html += `<td class="locked-cell" data-col-index="${index}"><span style="color:#c0392b; font-weight:bold; background:#fadbd8; padding:2px 6px; border-radius:4px;">⚠️ UNTAGGED</span></td>`;
           } else if (col.header === "Tag_ID" && val !== "") {
-            html += `<td class="locked-cell" style="font-family:monospace; font-weight:bold; color:var(--primary);">${val}</td>`;
+            html += `<td class="locked-cell" data-col-index="${index}" style="font-family:monospace; font-weight:bold; color:var(--primary);">${val}</td>`;
           } else {
-            html += `<td class="locked-cell">${val}</td>`;
+            html += `<td class="locked-cell" data-col-index="${index}">${val}</td>`;
           }
         }
       });
 
-      // 🌟 THE SECURE HANDOFF OVERRIDE: Pass absolute 'rawMaeId' strings instead of volatile 'row.index' numbers 🌟
+      // 🌟 THE CURATED CORRECTION: Call your original window.handleEditClick to unlock the row in-place!
       html += `
-        <td style="text-align:center; white-space:nowrap; vertical-align:middle; padding:8px;">
-          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.UI.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
+        <td style="text-align:center; white-space:nowrap; vertical-align:middle; padding:8px;" class="edit-only-cell">
+          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.handleEditClick('${tableName}', ${rowIndex})">✏️ Edit</button>
           <button class="mini-btn" style="background:#c0392b; font-weight:bold; margin-left:5px;" onclick="window.requestDelete('${tableName}', '${rawMaeId}')">🗑️ Remove</button>
         </td></tr>`;
     });
@@ -219,7 +213,6 @@ renderMenu(activeWorksheets, onClickCallback) {
     html += `</tbody></table>`;
     container.innerHTML = html;
 
-    // Redraw table interaction action configurations
     this.renderCommandBar(tableName);
   },
     // ============ END RENDER TABLE ============
@@ -535,49 +528,83 @@ renderCommandBar(tableName) {
 // =========================================================================
   // =========== RESTORED ID-DRIVEN INLINE EDIT MOUNT GATEWAY ================
   // =========================================================================
-  handleEditClick(tableName, maeId) {
-    const cleanMaeId = String(maeId).trim().toUpperCase();
-    console.log(`MAE Interface: Initializing edit form canvas for record ID [${cleanMaeId}] inside table [${tableName}]...`);
+  // ===== RESTORED ORIGINAL IN-PLACE FIELD TRANSLATION ENGINE =====
+  handleEditClick(tableName, rowIndex) {
+    console.log(`MAE Interface: Activating in-place row editor context for row index [${rowIndex}] in table [${tableName}]...`);
     
-    // Locate the unique row node directly on your DOM canvas tree by its absolute ID data tag
-    const targetRowNode = document.querySelector(`#main-data-table tbody tr[data-mae-id="${cleanMaeId}"]`);
-    
-    if (!targetRowNode) {
-      console.error(`MAE UI Exception: Could not locate row node with data-mae-id="${cleanMaeId}" on the active screen canvas.`);
-      alert("INTERFACE DRIFT DETECTED:\n\nThe target row cell layout could not be matched. Refreshing table snapshot variables.");
-      return;
-    }
+    // Target the specific row on screen using your curated selector engine
+    const rowNode = document.querySelector(`#main-data-table tbody tr[data-row-index="${rowIndex}"]`);
+    if (!rowNode) return;
 
-    // Extract the spreadsheet configuration rules matching this table mapping row path
-    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
-    
-    // Toggle active interface variables into secure inline workspace editing frames
     window.currentTable = tableName;
     window.isEditing = true;
-    
-    // Extract row cell metrics directly out of the row's text boxes to populate the edit panel cards
-    const rawCellsList = Array.from(targetRowNode.querySelectorAll("td")).map(td => td.innerText.trim());
-    
-    // Find the hidden index position integer of this row line item node by checking your cache partitions list
-    const cachedRecord = window.maeLedgerCache[tableName]?.find(r => String(r.id || "").trim().toUpperCase() === cleanMaeId);
-    const resolvedExcelRowIndexNum = cachedRecord ? cachedRecord.index : parseInt(targetRowNode.getAttribute("data-row-index"), 10);
 
-    // Call your centralized entry form canvas generator panel mapping fields smoothly
-    this.renderEntryForm('edit', tableName, sheetConfig, async () => {
-      UI.showLoading(`Saving structural matrix cell updates for record: ${cleanMaeId}...`);
+    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === tableName);
+    const cells = rowNode.querySelectorAll("td");
+
+    cells.forEach(cell => {
+      if (cell.classList.contains("edit-only-cell")) return; // Skip operation buttons cell
       
-      // Execute your background update engine to transmit data cells up to OneDrive ledger partitions
-      const success = await window.updateSingleRowFromForm(tableName, resolvedExcelRowIndexNum, sheetConfig);
+      const colIdxAttr = cell.getAttribute('data-col-index');
+      if (colIdxAttr === null) return;
       
-      if (success) {
-        console.log("MAE Sync System: In-line cell edits successfully committed to master database file.");
-        // Force-sync local RAM arrays and refresh visual grid views instantly
-        if (typeof window.warmInventoryCache === "function") {
-          await window.warmInventoryCache();
-        }
-        await window.loadTableData(tableName);
+      const colIndex = parseInt(colIdxAttr, 10);
+      const colDef = sheetConfig.columns[colIndex];
+      
+      // Do not allow users to manually corrupt protected cells (formula calculations, hidden IDs, etc.)
+      if (colDef.hidden || colDef.type === "formula" || colDef.header === "mae_id") {
+        cell.style.backgroundColor = "#f4f4f4";
+        cell.style.color = "#888";
+        return;
       }
-    }, rawCellsList, resolvedExcelRowIndexNum);
+
+      let currentTextValue = cell.innerText.trim();
+
+      // Curated Field Option 1: Dropdown Foundation Lists (Location / Category / Type)
+      if (colDef.header === "Location_ID") {
+        cell.innerHTML = `
+          <select class="edit-dropdown" style="width:100%; height:34px; font-size:0.9rem;">
+            ${window.maeLocations.map(loc => `<option value="${loc}" ${loc === currentTextValue ? 'selected' : ''}>${loc}</option>`).join('')}
+          </select>`;
+      } else if (colDef.header === "Tag_Type") {
+        cell.innerHTML = `
+          <select class="edit-dropdown" style="width:100%; height:34px; font-size:0.9rem;">
+            <option value="UNIQUE" ${currentTextValue === "UNIQUE" ? 'selected' : ''}>UNIQUE</option>
+            <option value="MULTIPLE" ${currentTextValue === "MULTIPLE" ? 'selected' : ''}>MULTIPLE</option>
+          </select>`;
+      } else if (colDef.header === "Item_Category") {
+        cell.innerHTML = `
+          <select class="edit-dropdown" style="width:100%; height:34px; font-size:0.9rem;">
+            <option value="UNIQUE" ${currentTextValue === "UNIQUE" ? 'selected' : ''}>UNIQUE</option>
+            <option value="By_Location" ${currentTextValue === "By_Location" ? 'selected' : ''}>By_Location</option>
+            <option value="By_Topic" ${currentTextValue === "By_Topic" ? 'selected' : ''}>By_Topic</option>
+          </select>`;
+      }
+      // Curated Field Option 2: Boolean True/False Checkboxes
+      else if (colDef.type === "boolean") {
+        const isChecked = (currentTextValue.toLowerCase() === "true");
+        cell.innerHTML = `<input type="checkbox" class="edit-checkbox" ${isChecked ? 'checked' : ''} style="transform: scale(1.3); cursor:pointer;">`;
+      }
+      // Curated Field Option 3: Clean Integers or Currency Inputs
+      else if (colDef.type === "number") {
+        const structuralNumericCleanVal = parseFloat(currentTextValue.replace(/[^0-9.-]+/g, "")) || 0;
+        cell.innerHTML = `<input type="number" class="edit-number-input" value="${structuralNumericCleanVal}" style="width:100%; height:30px; box-sizing:border-box; font-size:0.9rem;">`;
+      }
+      // Curated Field Option 4: Plain Standard Text Input Strings
+      else {
+        // Strip away any temporary "⚠️ UNTAGGED" indicator wrapper text before loading input
+        if (currentTextValue.includes("UNTAGGED")) currentTextValue = "UNTAGGED";
+        cell.innerHTML = `<input type="text" class="edit-text-input" value="${currentTextValue}" style="width:100%; height:30px; box-sizing:border-box; font-size:0.9rem; padding:0 5px;">`;
+      }
+    });
+
+    // Automatically bind your global click-off listener to save data if the operator taps elsewhere
+    setTimeout(() => {
+      document.addEventListener('mousedown', window.globalClickOffHandler);
+    }, 150);
+
+    // Swap the command bar actions to show your carefully curated Save / Discard layout options!
+    this.renderCommandBar(tableName);
   },
 //=================END RESTORED ID-DRIVEN INLINE EDIT MOUNT GATEWAY ================
 
