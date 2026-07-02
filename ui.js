@@ -2713,83 +2713,147 @@ printInspectedLocationTable() {
         this.renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId);
     },
     // 🌟 ADD NEW custom layout popup model to clean up the intake handshake selection process 🌟
-    renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId) {
-        const existingModal = document.getElementById("mae-wizard-modal-overlay");
-        if (existingModal) existingModal.remove();
+    // 🌟 MODIFIED WIZARD OVERLAY: MULTI-TIER CHOICES WITH DISCIPLINARY FALLBACKS 🌟
+  renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId) {
+    const existingModal = document.getElementById("mae-wizard-modal-overlay");
+    if (existingModal) existingModal.remove();
 
-        const modalHtml = `
-            <div id="mae-wizard-modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
-                <div style="background: #ffffff; border-top: 8px solid var(--accent); border-radius: 8px; width: 100%; max-width: 550px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); box-sizing: border-box; text-align: center;">
-                    <h2 style="margin: 0 0 15px 0; color: var(--primary); text-transform: uppercase; font-weight: 800; font-size: 1.6rem; letter-spacing: 1px;">
-                        SELECT ITEM CATEGORY
-                    </h2>
-                    <p style="font-size: 0.95rem; color: #444; margin-bottom: 25px; line-height: 1.5;">
-                        Barcode <b style="background: #fffde7; padding: 2px 6px; border: 1px dashed var(--accent); font-family: monospace;">${cleanTag}</b> is verified UNIQUE and available.<br>
-                        Specify how this physical label will anchor inside your warehouse layout map.
-                    </p>
-                    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                        <button class="action-btn" id="modal-btn-unique" style="background: var(--primary); height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
-                            🎯 UNIQUE (One Tag for One Single Asset)
-                        </button>
-                        <button class="action-btn" id="modal-btn-multiple" style="background: #e67e22; height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
-                            📦 MULTIPLE (One Tag for a Bin / Drawer Group)
-                        </button>
-                        <button class="cancel-btn" id="modal-btn-return" style="background: #7f8c8d; height: 45px; font-size: 1rem; font-weight: bold; margin-left: 0; width: 100%;">
-                            ↩️ Return to Wizard
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+    const modalHtml = `
+      <div id="mae-wizard-modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+        <div id="mae-wizard-modal-card" style="background: #ffffff; border-top: 8px solid var(--accent); border-radius: 8px; width: 100%; max-width: 550px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); box-sizing: border-box; text-align: center; transition: all 0.3s ease;">
+          <h2 style="margin: 0 0 15px 0; color: var(--primary); text-transform: uppercase; font-weight: 800; font-size: 1.6rem; letter-spacing: 1px;">
+            SELECT ITEM CATEGORY
+          </h2>
+          <p style="font-size: 0.95rem; color: #444; margin-bottom: 25px; line-height: 1.5;" id="mae-modal-text-prompt">
+            Barcode <b style="background: #fffde7; padding: 2px 6px; border: 1px dashed var(--accent); font-family: monospace;">${cleanTag}</b> is verified UNIQUE and available.<br>
+            Specify how this physical label will anchor inside your warehouse layout map.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;" id="mae-modal-buttons-silo">
+            <button class="action-btn" id="modal-btn-unique" style="background: var(--primary); height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
+              🎯 UNIQUE (One Tag for One Single Asset)
+            </button>
+            <button class="action-btn" id="modal-btn-multiple" style="background: #e67e22; height: 55px; font-size: 1.1rem; font-weight: bold; width: 100%;">
+              📦 MULTIPLE (One Tag for a Bin / Drawer Group)
+            </button>
+            <button class="cancel-btn" id="modal-btn-return" style="background: #7f8c8d; height: 45px; font-size: 1rem; font-weight: bold; margin-left: 0; width: 100%;">
+              ↩️ Return to Wizard
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
 
-        document.body.insertAdjacentHTML("beforeend", modalHtml);
+    const modalOverlay = document.getElementById("mae-wizard-modal-overlay");
+    const modalCard = document.getElementById("mae-wizard-modal-card");
+    const tableSelect = document.getElementById("mae-central-table-selector");
+    const tagInput = document.getElementById("field-Tag_ID");
+    const feedback = document.getElementById("wizard-tag-feedback");
 
-        const modalOverlay = document.getElementById("mae-wizard-modal-overlay");
-        const tableSelect = document.getElementById("mae-central-table-selector");
-        const tagInput = document.getElementById("field-Tag_ID");
-        const feedback = document.getElementById("wizard-tag-feedback");
+    // --- TRACK A: UNIQUE SELECTION ENGINE ---
+    document.getElementById("modal-btn-unique").onclick = () => {
+      modalOverlay.remove();
+      window.maeWizardActiveCategory = "UNIQUE"; // Explicitly register Unique status
+      if (feedback) {
+        feedback.style.color = "#27ae60";
+        feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as UNIQUE.`;
+        tagInput.style.borderColor = "#27ae60";
+        tagInput.style.backgroundColor = "#e8f8f5";
+        tagInput.disabled = true;
+        tableSelect.disabled = true;
+      }
+      window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
+    };
 
-        document.getElementById("modal-btn-unique").onclick = () => {
-            modalOverlay.remove();
-            if (feedback) {
-                feedback.style.color = "#27ae60";
-                feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as UNIQUE.`;
-                tagInput.style.borderColor = "#27ae60";
-                tagInput.style.backgroundColor = "#e8f8f5";
-                tagInput.disabled = true;
-                tableSelect.disabled = true;
-            }
-            // 🌟 EXPLICIT OBJECT CALL
-            window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "UNIQUE");
-        };
+    // --- TRACK B: MULTIPLE CHOOSER GATE (WITH DEFENSIVE FALLBACK) ---
+    document.getElementById("modal-btn-multiple").onclick = () => {
+      // 🌟 INTERLOCK ENGAGED: Pre-load the stricter "By_Location" as your default background state!
+      window.maeWizardActiveCategory = "By_Location";
+      
+      modalCard.style.borderTopColor = "#e67e22"; // Shift aesthetic tint to warning orange
+      
+      document.getElementById("mae-modal-text-prompt").innerHTML = `
+        <span style="color:#e67e22; font-weight:bold; font-size:1.1rem; display:block; margin-bottom:10px;">⚠️ MANDATORY TRACK SPECIFICATION</span>
+        You selected a <b>MULTIPLE</b> shared grouping tag.<br>
+        Specify how this cluster is organized, or choose "Accept Default" to apply By_Location discipline.
+      `;
 
-        document.getElementById("modal-btn-multiple").onclick = () => {
-            modalOverlay.remove();
-            if (feedback) {
-                feedback.style.color = "#2980b9";
-                feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as MULTIPLE container.`;
-                tagInput.style.borderColor = "#2980b9";
-                tagInput.style.backgroundColor = "#fffde7";
-                tagInput.disabled = true;
-                tableSelect.disabled = true;
-            }
-            // 🌟 EXPLICIT OBJECT CALL
-            window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
-        };
+      document.getElementById("mae-modal-buttons-silo").innerHTML = `
+        <button class="action-btn" id="modal-btn-sub-location" style="background: #e67e22; height: 55px; font-size: 1.05rem; font-weight: bold; width: 100%; text-align:left; padding-left:20px;">
+          📦 BY LOCATION (Physical box/bin. All items stay together)
+        </button>
+        <button class="action-btn" id="modal-btn-sub-topic" style="background: #2980b9; height: 55px; font-size: 1.05rem; font-weight: bold; width: 100%; text-align:left; padding-left:20px;">
+          📋 BY TOPIC (Thematic cluster. Items live in different spots)
+        </button>
+        <button class="cancel-btn" id="modal-btn-sub-default-exit" style="background: var(--primary); color:white; height: 45px; font-size: 1rem; font-weight: bold; margin-left: 0; width: 100%;">
+          🏁 Accept Default & Start Intake Workspace
+        </button>
+      `;
 
-        document.getElementById("modal-btn-return").onclick = () => {
-            modalOverlay.remove();
-            window.activeScanTransactionId = null;
-            if (tagInput) {
-                tagInput.value = "";
-                tagInput.disabled = false;
-                tagInput.style.borderColor = "var(--border)";
-                tagInput.style.backgroundColor = "#fffde7";
-                tagInput.focus();
-            }
-            if (feedback) feedback.innerHTML = "";
-        };
-    },
+      // Option B1: Explicitly confirming BY LOCATION
+      document.getElementById("modal-btn-sub-location").onclick = () => {
+        modalOverlay.remove();
+        window.maeWizardActiveCategory = "By_Location";
+        if (feedback) {
+          feedback.style.color = "#e67e22";
+          feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as MULTIPLE (By_Location).`;
+          tagInput.style.borderColor = "#e67e22";
+          tagInput.style.backgroundColor = "#fffde7";
+          tagInput.disabled = true;
+          tableSelect.disabled = true;
+        }
+        window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
+      };
+
+      // Option B2: Explicitly changing profile to BY TOPIC
+      document.getElementById("modal-btn-sub-topic").onclick = () => {
+        modalOverlay.remove();
+        window.maeWizardActiveCategory = "By_Topic";
+        if (feedback) {
+          feedback.style.color = "#2980b9";
+          feedback.innerHTML = `✅ Structure Verified: Tag [${cleanTag}] locked as MULTIPLE (By_Topic).`;
+          tagInput.style.borderColor = "#2980b9";
+          tagInput.style.backgroundColor = "#e8f4f8";
+          tagInput.disabled = true;
+          tableSelect.disabled = true;
+        }
+        window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
+      };
+
+      // Option B3: The Disciplinary Fallback Tracker Route
+      // If they click to bypass, the pre-loaded default "By_Location" remains locked inside the session variable.
+      document.getElementById("modal-btn-sub-default-exit").onclick = () => {
+        modalOverlay.remove();
+        console.log(`MAE Defensive Guard: Operator bypassed category specification. Auto-healing to stricter option: [${window.maeWizardActiveCategory}].`);
+        if (feedback) {
+          feedback.style.color = "#e67e22";
+          feedback.innerHTML = `🔒 Auto-Assigned Fallback: Tag [${cleanTag}] locked as MULTIPLE (By_Location).`;
+          tagInput.style.borderColor = "#e67e22";
+          tagInput.style.backgroundColor = "#fffde7";
+          tagInput.disabled = true;
+          tableSelect.disabled = true;
+        }
+        window.renderCentralRegistrationWizardStageTwo(targetTable, cleanTag, "MULTIPLE");
+      };
+    };
+
+    // --- TRACK C: ABORT CANCEL HANDLER ---
+    document.getElementById("modal-btn-return").onclick = () => {
+      modalOverlay.remove();
+      window.activeScanTransactionId = null;
+      window.maeWizardActiveCategory = null; // Clear the temporary mailbox entirely
+      if (tagInput) {
+        tagInput.value = "";
+        tagInput.disabled = false;
+        tagInput.style.borderColor = "var(--border)";
+        tagInput.style.backgroundColor = "#fffde7";
+        tagInput.focus();
+      }
+      if (feedback) feedback.innerHTML = "";
+    };
+  },
+
     // 3. ADD NEW function to process an untagged item path in Stage 1
     processWizardStageOneUntagged() {
         const tableSelect = document.getElementById("mae-central-table-selector");
