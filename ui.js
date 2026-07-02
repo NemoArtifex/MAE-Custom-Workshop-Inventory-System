@@ -142,138 +142,86 @@ renderMenu(activeWorksheets, onClickCallback) {
     // 3. TABLE RENDERING (The "Worker" logic refactored from app.js)
     // Practical: Uses the Config "Blueprint" to filter out hidden technical columns.
     // Rugged: Handles empty states and Microsoft Graph's row structure.
-    renderTable(rows, tableName, sheetConfig, customTitle = null) {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
+    // ===== REFACTORED CORE DATA GRID RENDERER AXIS =====
+  renderTable(rows, tableName, config, titleText = "") {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = titleText || `Inventory: ${config.tabName}`;
 
-        if (!sheetConfig) {
-            container.innerHTML = "Error: Worksheet configuration not found.";
-            return;
-        }
+    // Clean up active workspace layout boundaries before painting new grids
+    const actionZone = document.getElementById("action-bar-zone");
+    if (actionZone) actionZone.innerHTML = "";
 
-        title.innerHTML = customTitle || `View: ${sheetConfig.tabName}`;
+    if (!rows || rows.length === 0) {
+      container.innerHTML = `
+        <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+          <h3 style="color:var(--primary); margin-top:0;">Empty Worksheet Partition</h3>
+          <p>No active records are currently registered under this category mapping row path.</p>
+          <button class="action-btn" onclick="window.handleAddClick('${tableName}')">➕ Register First Item</button>
+        </div>`;
+      this.renderCommandBar(tableName);
+      return;
+    }
 
-        const isRepairsView = customTitle && customTitle.includes("Operational Issues");
-        if (isRepairsView) {
-            this.renderSubdividedRepairs(rows, tableName, sheetConfig);
-           return; 
-        }
+    // Identify hidden administrative index vectors for column layouts
+    const maeIdColumnIndex = config.columns.findIndex(c => c.header === "mae_id");
+    const tagIdColumnIndex = config.columns.findIndex(c => c.header === "Tag_ID");
 
-        const idIndex = sheetConfig.columns.findIndex(c => c.header === "mae_id");
-        const visibleIndices = [];
-        let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
-        html += `<th class="edit-only-cell">Action</th>`;
+    let html = `<table class="inventory-table" id="main-data-table"><thead><tr>`;
     
-        sheetConfig.columns.forEach((col, index) => {
-            if (col.hidden !== true) { 
-                html += `<th>${col.header}</th>`;
-                visibleIndices.push(index);
-            }
-        });
-        html += `</tr></thead><tbody>`;
+    // Generate visible grid column tracking blocks
+    config.columns.forEach(col => {
+      if (!col.hidden) {
+        html += `<th>${col.header.replace(/_/g, ' ')}</th>`;
+      }
+    });
+    html += `<th style="text-align:center; width:150px;">Operations Gateway</th></tr></thead><tbody>`;
 
-        if (rows && rows.length > 0) {
-            rows.forEach((row) => {
-                const persistentIndex = row.index; 
-                const allCells = row.values; 
-
-                if (!allCells || allCells.length === 0) return;
-
-                const rawMaeId = (idIndex !== -1) ? allCells[idIndex] : '';
-
-                html += `<tr data-row-index="${persistentIndex}" data-mae-id="${rawMaeId}">`;
-                html += `<td class="edit-only-cell">
-                            <button class="delete-row-btn" onclick="requestDelete(${persistentIndex})">🗑️</button>
-                        </td>`;
-
-                visibleIndices.forEach(idx => {
-                    const colDef = sheetConfig.columns[idx];
-                    //  Allow Tag_Type to toggle, but explicitly freeze Tag_ID columns during inline edits
-                    const isEditable = (!colDef.locked || colDef.header === "Tag_Type") && colDef.header !== "Tag_ID" && colDef.type !== 'formula';
-                    let displayValue = allCells[idx] ?? '';
-
-                    // --- 🌟 NEW: VALUATION GOVERNANCE SILO GUARD ---
-                    // Prevents "Methodology Bleed" by hiding abandoned data
-                    if (tableName === "Shop_Consumables") {
-                        const levelIdx = sheetConfig.columns.findIndex(c => c.header === "Stock_Level");
-                        const currentMethod = (allCells[levelIdx] || "").toString().trim();
-                    
-                        const isBulkMode = ["None", "Few", "Adequate", "Many"].includes(currentMethod);
-                        const isCountedMode = currentMethod === "Counted";
-
-                        const unitSiloHeaders = ["Unit Cost", "Stock_Count","Reorder Point"];
-                        const bulkSiloHeaders = ["Bulk_Value"];
-
-                        // Wipe data for the inactive silo to avoid $0.00 confusion
-                        if (isBulkMode && unitSiloHeaders.includes(colDef.header)) {
-                            displayValue = ""; 
-                        } else if (isCountedMode && bulkSiloHeaders.includes(colDef.header)) {
-                            displayValue = "";
-                        }
-                    }
-
-                    const isCurrency = colDef.format && colDef.format.includes("$");
-                    const isLowStockText = (displayValue === "Few" || displayValue === "None");
-                    const isSubjective = ["Few", "Adequate", "Many"].includes(displayValue);
-
-                    let sellPriceAlert = "";
-                    if (tableName === "Resell_Inventory" && colDef.header === "Actual Sale Price") {
-                        const statusIdx = sheetConfig.columns.findIndex(c => c.header === "Current Status");
-                        const itemStatus = allCells[statusIdx];
-                        const itemPrice = parseFloat(displayValue.toString().replace(/[^0-9.-]+/g, "")) || 0;
-
-                        if (itemStatus === "Sold" && itemPrice <= 0) {
-                            sellPriceAlert = "col-resell-price-missing";
-                        }
-                    }
-
-                    let overdueClass = "";
-                    if (colDef.type === 'date' && displayValue && displayValue !== "") {
-                        const dueDate = new Date(displayValue);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const isDeadlineCol = colDef.header.includes("Due") || colDef.header.includes("Service");
-
-                        if (isDeadlineCol && !isNaN(dueDate) && dueDate < today) {
-                            overdueClass = "col-date-overdue";
-                        }
-                    }
-
-                    // Only format currency if the silo hasn't been wiped to blank
-                    if (isCurrency && displayValue !== "") {
-                        displayValue = formatCurrency(displayValue);
-                    }
-
-                    if (colDef.type === 'boolean') {
-                        const isChecked = displayValue.toString().toUpperCase() === "TRUE";
-                        displayValue = `<input type="checkbox" disabled ${isChecked ? 'checked' : ''} class="mae-checkbox">`;
-                    }
-
-                    let stockAlertClasses = "";
-                    if (tableName === "Shop_Consumables") {
-                        if (colDef.header === "Stock_Count") stockAlertClasses = "col-type-stock-alert";
-                        if (colDef.header === "Reorder Point") stockAlertClasses = "col-type-reorder-point";
-                    }
-
-                    html += `<td class="${isEditable ? 'editable-cell' : 'locked-cell'} 
-                                    ${overdueClass}
-                                    ${sellPriceAlert}
-                                    ${stockAlertClasses}
-                                    ${isLowStockText ? 'col-stock-alert-red' : ''}
-                                    ${isSubjective ? 'col-subjective-level' : ''}
-                                    ${isCurrency ? 'col-type-currency' : ''}" 
-                                data-col-index="${idx}">${displayValue}</td>`;
-                });
-                html += `</tr>`;
-            });
-        } else {
-            const colSpan = visibleIndices.length + 1;
-            html += `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px;">No records found.</td></tr>`;
+    // 🌟 THE ID-DRIVEN UNBOXING LAYER: Iterate over matching spreadsheet row lines 🌟
+    rows.forEach(row => {
+      const cells = row.values;
+      
+      // Extract your absolute unshifting identifier using your config architecture constraints
+      // If cells unbox as a Graph nested matrix, catch index 0 safely
+      const rawCellsArray = (cells && Array.isArray(cells[0])) ? cells[0] : cells;
+      const rawMaeId = rawCellsArray[maeIdColumnIndex] || "";
+      
+      // Inject the unique token directly onto the row wrapper tag data parameter
+      html += `<tr data-mae-id="${rawMaeId}" style="transition: opacity 0.4s ease;">`;
+      
+      config.columns.forEach((col, index) => {
+        if (!col.hidden) {
+          let val = rawCellsArray[index];
+          if (val === null || val === undefined) val = "";
+          
+          if (col.type === "number" && typeof val === "number") {
+            html += `<td class="locked-cell">${val.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>`;
+          } else if (col.type === "formula") {
+            html += `<td class="locked-cell" style="background:#f9f9f9; font-style:italic;">${val}</td>`;
+          } else if (col.header === "Tag_ID" && val === "UNTAGGED") {
+            html += `<td class="locked-cell"><span style="color:#c0392b; font-weight:bold; background:#fadbd8; padding:2px 6px; border-radius:4px;">⚠️ UNTAGGED</span></td>`;
+          } else if (col.header === "Tag_ID" && val !== "") {
+            html += `<td class="locked-cell" style="font-family:monospace; font-weight:bold; color:var(--primary);">${val}</td>`;
+          } else {
+            html += `<td class="locked-cell">${val}</td>`;
+          }
         }
+      });
 
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-    },
+      // 🌟 THE SECURE HANDOFF OVERRIDE: Pass absolute 'rawMaeId' strings instead of volatile 'row.index' numbers 🌟
+      html += `
+        <td style="text-align:center; white-space:nowrap; vertical-align:middle; padding:8px;">
+          <button class="mini-btn" style="background:var(--primary); font-weight:bold;" onclick="window.UI.handleEditClick('${tableName}', '${rawMaeId}')">✏️ Edit</button>
+          <button class="mini-btn" style="background:#c0392b; font-weight:bold; margin-left:5px;" onclick="window.requestDelete('${tableName}', '${rawMaeId}')">🗑️ Remove</button>
+        </td></tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+
+    // Redraw table interaction action configurations
+    this.renderCommandBar(tableName);
+  },
     // ============ END RENDER TABLE ============
     //=======  refreshSiloLocks ===========
     refreshSiloLocks(row, tableName, sheetConfig) {
@@ -1974,12 +1922,12 @@ async finalizeDecommission(locName) {
 //====== END   Finalize Decommission: ensures location_id default to TBD if not selected ====
 
   // ====== UNIFIED WORKSPACE SEARCH HUB FOR MULTIPLE ITEMS ON A SINGLE TAG ======
+  // ===== REFACTORED SEARCH HUB WORKSPACE GENERATOR =====
   renderVirtualSearchHub(auditData, scannedTagId = null, activeTableName = null, itemCategory = "By_Location") {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     title.innerText = "Search Results: Multiple Items on Scanned Tag";
 
-    // Group the data by category for visual organization on the shop floor
     const grouped = auditData.reduce((acc, item) => {
       if (!acc[item.category]) acc[item.category] = [];
       acc[item.category].push(item);
@@ -1989,9 +1937,7 @@ async finalizeDecommission(locName) {
     let html = "";
     if (scannedTagId && activeTableName) {
       const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === activeTableName);
-      const classificationLabel = sheetConfig ? sheetConfig.tabName : "this classification";
       
-      // --- 🌟 NEW ARCHITECTURE: CONTEXT-AWARE INDUSTRIAL STATUS BANNERS 🌟 ---
       let bannerTitleText = `CONTAINER ACTIVE: [Tag ID: ${scannedTagId}]`;
       let bannerSubtitleText = `Quickly append a new tool or component record into this physical storage space.`;
       
@@ -2000,7 +1946,6 @@ async finalizeDecommission(locName) {
         bannerSubtitleText = `Quickly append a new distributed part record into this virtual thematic list tracker.`;
       }
 
-      // 🌟 THE METADATA BRIDGE PASS: Injects 'itemCategory' safely as an escaped string literal payload 🌟
       html += `
         <div class="form-card" style="border-left: 6px solid var(--accent); background: #fff; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
           <div>
@@ -2026,18 +1971,19 @@ async finalizeDecommission(locName) {
           </tr>
           <tr>
             <th style="width:70%;">Item Description</th>
-            <th style="width:30%;">Action</th>
+            <th style="width:30%; text-align:center;">Action Gateway</th>
           </tr>
         </thead>
         <tbody>`;
 
       items.forEach(item => {
+        // 🌟 THE ARRAYS REALIGNMENT FIX: Use the unique 'item.mae_id' token anchor directly inside your click bindings 🌟
         html += `
-          <tr>
-            <td class="locked-cell">${item.itemName}</td>
+          <tr data-mae-id="${item.mae_id}">
+            <td class="locked-cell"><b>${item.itemName}</b></td>
             <td style="text-align:center;">
-              <button class="action-btn" style="padding: 5px 12px; font-size: 0.85rem; background: var(--accent);" onclick="loadTableData('${item.tableName}')">
-                ✏%EF%B8%8F View / Edit in Table
+              <button class="action-btn" style="padding: 5px 12px; font-size: 0.85rem; background: var(--primary);" onclick="window.UI.handleEditClick('${item.tableName}', '${item.mae_id}')">
+                ✏️ Edit Record Cell
               </button>
             </td>
           </tr>`;
@@ -2061,6 +2007,12 @@ async finalizeDecommission(locName) {
           <button class="action-btn" onclick="loadTableData('Master_Dashboard')">← Return to Dashboard</button>
         </div>`;
     }
+
+    // Reclaim total window focus control for smooth continuous hardware HID scans
+    setTimeout(() => {
+      if (document.activeElement) document.activeElement.blur();
+      console.log("MAE Workspace Control: Interface focus reclaimed for background hardware scanning.");
+    }, 150);
   },
 //====== END Virtual Search Hub Generator
 
@@ -3204,113 +3156,93 @@ printInspectedLocationTable() {
 
     
 //====== Virtual Table View Renderer for UNTAGGED Audit with Inline Structural Layout CSS ======
-renderUntaggedAuditGrid(auditData) {
+// ===== REFACTORED COMPLIANCE AUDIT MATRIX VIEW =====
+  renderUntaggedAuditGrid(auditData) {
     const container = document.getElementById("table-container");
     const title = document.getElementById("current-view-title");
     title.innerText = "Audit: Items Awaiting Physical Tag Assignment";
 
     if (!auditData || auditData.length === 0) {
-        container.innerHTML = `
-            <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
-                <h3 style="color:#27ae60; margin-top:0;">✅ Tag Compliance Verified</h3>
-                <p>Excellent discipline! Every single asset inside the workshop database ledger has a registered Tag_ID.</p>
-                <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">Return to Dashboard</button>
-            </div>`;
-        
-        const actionZone = document.getElementById("action-bar-zone");
-        if (actionZone) actionZone.innerHTML = "";
-        return;
+      container.innerHTML = `
+        <div class="form-card" style="text-align:center; padding:40px; margin:20px;">
+          <h3 style="color:#27ae60; margin-top:0;">✅ Tag Compliance Verified</h3>
+          <p>Excellent discipline! Every single asset inside the workshop database ledger has a registered Tag_ID.</p>
+          <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">Return to Dashboard</button>
+        </div>`;
+      const actionZone = document.getElementById("action-bar-zone");
+      if (actionZone) actionZone.innerHTML = "";
+      return;
     }
 
-    // --- MAE ENHANCED MATRIX CONTAINER ---
-    // This parent layout wrapper strictly partitions the stationary header from the scrolling data table underneath
     let html = `
-        <div id="mae-audit-view-wrapper" style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;">
-            
-            <!-- STATIONARY CONTAINER ASSY BAR BLOCK -->
-            <div id="mae-bulk-tagging-control-bar" style="display:none; flex-shrink: 0; margin-bottom:15px; width:100%; background:#f4f4f4; padding-bottom:5px; box-sizing:border-box;">
-                <div class="form-card" style="border-left: 6px solid var(--accent); background: #ffffde; padding: 15px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 0;">
-                    <div>
-                        <h4 style="margin:0 0 5px 0; color:var(--accent); font-weight:800; text-transform:uppercase; font-size:0.95rem;">⚡ Bulk Container Assembly Active</h4>
-                        <p style="margin:0; font-size:0.85rem; color:#444;">Scan or type a single barcode to group all <span id="mae-bulk-checked-count" style="font-weight:bold; color:var(--primary);">0</span> checked items into a shared space.</p>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="text" id="mae-bulk-container-input" placeholder="Scan shared label sticker here..." 
-                               style="height:40px; width:280px; padding:0 12px; border:2px solid var(--accent); border-radius:4px; font-weight:bold; font-size:0.9rem; background:#ffffff;"
-                               onchange="window.executeBulkContainerGroupingTransition(this.value)">
-                        <button class="cancel-btn" style="height:40px; margin-left:5px; padding: 0 15px;" onclick="UI.clearBulkAuditSelection()">Clear Selection</button>
-                    </div>
-                </div>
+      <div id="mae-audit-view-wrapper" style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;">
+        <div id="mae-bulk-tagging-control-bar" style="display:none; flex-shrink: 0; margin-bottom:15px; width:100%; background:#f4f4f4; padding-bottom:5px; box-sizing:border-box;">
+          <div class="form-card" style="border-left: 6px solid var(--accent); background: #ffffde; padding: 15px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 0;">
+            <div>
+              <h4 style="margin:0 0 5px 0; color:var(--accent); font-weight:800; text-transform:uppercase; font-size:0.95rem;">⚡ Bulk Container Assembly Active</h4>
+              <p style="margin:0; font-size:0.85rem; color:#444;">Scan or type a single barcode to group all <span id="mae-bulk-checked-count" style="font-weight:bold; color:var(--primary);">0</span> checked items into a shared space.</p>
             </div>
-
-            <!-- INDEPENDENT SCROLLING VIEWPANEL MATRIX -->
-            <div id="mae-audit-table-scroll-zone" style="flex: 1; overflow-y: auto; min-height: 0; background: #ffffff; border-radius: 4px;">
-    `;
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" id="mae-bulk-container-input" placeholder="Scan shared label sticker here..." style="height:40px; width:280px; padding:0 12px; border:2px solid var(--accent); border-radius:4px; font-weight:bold; font-size:0.9rem; background:#ffffff;" onchange="window.executeBulkContainerGroupingTransition(this.value)">
+              <button class="cancel-btn" style="height:40px; margin-left:5px; padding: 0 15px;" onclick="UI.clearBulkAuditSelection()">Clear Selection</button>
+            </div>
+          </div>
+        </div>
+        <div id="mae-audit-table-scroll-zone" style="flex: 1; overflow-y: auto; min-height: 0; background: #ffffff; border-radius: 4px;">`;
 
     const grouped = auditData.reduce((acc, item) => {
-        if (!acc[item.category]) acc[item.category] = [];
-        acc[item.category].push(item);
-        return acc;
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
     }, {});
 
     html += `<table class="inventory-table" id="main-data-table" style="width:100%; border-collapse:collapse; min-width:100%; margin-top:0;">`;
+    
     for (const [category, items] of Object.entries(grouped)) {
+      html += `
+        <thead>
+          <tr>
+            <th colspan="3" style="background:#c0392b !important; color:white !important; padding:12px; position: sticky; top: 0; z-index: 99;">
+              ${category.toUpperCase()} (${items.length} Gaps)
+            </th>
+          </tr>
+          <tr>
+            <th style="width:8%; text-align:center; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Select</th>
+            <th style="width:52%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Item Description Name</th>
+            <th style="width:40%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Scan / Type Individual Tag_ID (UNIQUE)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      items.forEach(item => {
+        // 🌟 THE COMPLIANCE ANCHOR UPDATE: Map identifiers strictly to absolute 'item.mae_id' string tokens 🌟
+        const htmlRowId = `untagged-row-${item.mae_id}`;
         html += `
-            <thead>
-                <tr>
-                    <th colspan="3" style="background:#c0392b !important; color:white !important; padding:12px; position: sticky; top: 0; z-index: 99;">
-                        ${category.toUpperCase()} (${items.length} Gaps)
-                    </th>
-                </tr>
-                <tr>
-                    <th style="width:8%; text-align:center; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Select</th>
-                    <th style="width:52%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Item Description Name</th>
-                    <th style="width:40%; background: var(--primary) !important; color: white !important; position: sticky; top: 41px; z-index: 99;">Scan / Type Individual Tag_ID (UNIQUE)</th>
-                </tr>
-            </thead>
-            <tbody>`;
-        
-        items.forEach(item => {
-            const htmlRowId = `untagged-row-${item.rowIndex}`;
-            html += `
-                <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.3s ease;">
-                    <td style="text-align:center; vertical-align:middle; padding:10px;">
-                        <input type="checkbox" class="mae-audit-bulk-checkbox" 
-                               style="transform: scale(1.4); cursor:pointer; width:22px; height:22px;"
-                               data-table="${item.tableName}" 
-                               data-id="${item.mae_id}" 
-                               data-row="${item.rowIndex}"
-                               onchange="UI.evaluateAuditCheckboxStateChanges()">
-                    </td>
-                    <td class="locked-cell" style="padding: 12px 15px; vertical-align:middle;"><b>${item.itemName}</b></td>
-                    <td style="padding: 8px 15px; vertical-align:middle;">
-                        <input type="text" placeholder="Scan standalone label sticker..." class="mae-individual-scan-box"
-                               style="width:100%; height:38px; background:#fffde7; border:2px solid var(--accent); padding:0 8px; font-weight:bold; box-sizing: border-box;"
-                               onchange="window.handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
-                    </td>
-                </tr>`;
-        });
-        html += `</tbody>`;
+          <tr id="${htmlRowId}" style="transition: opacity 0.4s ease, background-color 0.3s ease;">
+            <td style="text-align:center; vertical-align:middle; padding:10px;">
+              <input type="checkbox" class="mae-audit-bulk-checkbox" style="transform: scale(1.4); cursor:pointer; width:22px; height:22px;" data-table="${item.tableName}" data-mae-id="${item.mae_id}" onchange="UI.evaluateAuditCheckboxStateChanges()">
+            </td>
+            <td class="locked-cell" style="padding: 12px 15px; vertical-align:middle;"><b>${item.itemName}</b></td>
+            <td style="padding: 8px 15px; vertical-align:middle;">
+              <input type="text" placeholder="Scan standalone label sticker..." class="mae-individual-scan-box" style="width:100%; height:38px; background:#fffde7; border:2px solid var(--accent); padding:0 8px; font-weight:bold; box-sizing: border-box;" onchange="window.handleAuditUpdate('${item.tableName}', '${item.mae_id}', this.value, '${htmlRowId}')">
+            </td>
+          </tr>`;
+      });
+      html += `</tbody>`;
     }
-    html += `</table>`;
     
-    // Close scroll zone and parent wrapper divisions cleanly
-    html += `
-            </div> 
-        </div>`;
-    
+    html += `</table></div></div>`;
     container.innerHTML = html;
 
     const actionZone = document.getElementById("action-bar-zone");
     if (actionZone) {
-        actionZone.innerHTML = `
-            <div class="command-bar" style="justify-content: center;">
-                <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
-            </div>`;
+      actionZone.innerHTML = `
+        <div class="command-bar" style="justify-content: center;">
+          <button class="action-btn" onclick="window.loadTableData('Master_Dashboard')">← Return to Master Dashboard</button>
+        </div>`;
     }
-    
     window.currentTable = "untagged_audit_grid_view";
-},
+  },
 
 // ==========================================
 // STATE OBSERVERS FOR THE BULK AUDIT GRID
