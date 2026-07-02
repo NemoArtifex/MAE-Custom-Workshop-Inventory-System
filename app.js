@@ -1587,6 +1587,7 @@ window.submitNewRow = async function(tableName, sheetConfig) {
   }
 };
 
+
 //const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/workbook/worksheets/${encodeURIComponent(sheetConfig.tabName)}/tables/${tableName}/rows`;
 
 
@@ -2048,6 +2049,7 @@ async function handleUniversalLookup(scannedId) {
     window.UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName, foundItemCategory);
     return;
   }
+}
 }
 // =========== END UNIVERSAL SCANNER LOOKUP ===========
 
