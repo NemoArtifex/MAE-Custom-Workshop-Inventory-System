@@ -556,7 +556,7 @@ async function loadTableData(tableName, filterType = null) {
         // 🌟 THE ARRAYS ALIGNMENT SHIELD: If the table is authoritatively empty, pass a clean [] 🌟
         // directly down to your curated UI layout grid to render your empty data cells safely!
         console.log(`MAE Cache Target: Table [${tableName}] is confirmed empty. Initializing clean grid templates.`);
-        window.UI.renderTable([], tableName, sheetConfig, titleText);
+        window.UI.renderTable([], tableName, sheetConfig, displayTitle);
         return;
       }
 
