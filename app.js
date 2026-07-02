@@ -465,47 +465,34 @@ async function verifySpreadsheetExists() {
 
 //=========FUNCTION createInitialWorkbook =============
 // Practical: Instead of building via API (brittle), we upload your Master Template.
-async function createInitialWorkbook(accessToken) {
-    const statusTitle = document.getElementById("current-view-title");
-    statusTitle.innerText = "Initializing your custom workshop system... please wait.";
-
-    // 1. Path to your Master Template in your GitHub Repo
-    // Assumes the .xlsx is in the root of your project directory
-    const MASTER_TEMPLATE_URL = `./${maeSystemConfig.spreadsheetName}`;
-
+// ======= FUNCTION verifySpreadSheetExists =============
+async function verifySpreadsheetExists(){
+    // Logic here to check if maeSystemConfig.spreadsheetName exists
+    // If 404: Call a function to CREATE the workbook using the config
+    // If 200: All good, ready to work.
     try {
-        // 2. Fetch the physical file from your GitHub server
-        const response = await fetch(MASTER_TEMPLATE_URL);
-        if (!response.ok) throw new Error("Could not find the Master Template on the server.");
-        const fileBlob = await response.blob();
-
-        // 3. Upload to Customer's OneDrive Root
-        const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(maeSystemConfig.spreadsheetName)}:/content`;
-        
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            },
-            body: fileBlob
+        // 🌟 NEW CLEAN CALL
+        const token = await window.getGraphToken();
+        // Check if file exists in the root of OneDrive
+        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (uploadResponse.ok) {
-            console.log("MAE System: Master Workbook uploaded successfully.");
-            statusTitle.innerText = "System Initialized! Selecting a module to begin.";
-            // Now that the file exists, we perform a quick verification check
-            await initializeSheetAndTable(accessToken);
+         if (response.status === 404) {
+            console.warn("File not found. MAE System: Initializing new workbook...");
+            // Pass the clean token directly to the next function
+            await createInitialWorkbook(token);
         } else {
-            const errorData = await uploadResponse.json();
-            throw new Error(`Upload failed: ${errorData.error.message}`);
+            console.log("MAE System: Workbook verified and ready.");
+            // Pass the clean token directly to the next function
+            await initializeSheetAndTable(token);
         }
-
     } catch (error) {
-        console.error("Critical Error during initialization:", error);
-        statusTitle.innerText = "Setup Error: Please contact MAE Support.";
+        console.error("Verification Error:", error);
     }
 }
+
 
 //=======END FUNCTION createInitialWorkbook ==============
 
