@@ -2640,24 +2640,39 @@ printInspectedLocationTable() {
     // Set real-time focus redirection controls onto the box
     setTimeout(() => {
       const input = document.getElementById("field-Tag_ID");
+      const tableSelect = document.getElementById("mae-central-table-selector");
       const feedback = document.getElementById("wizard-tag-feedback");
       
       if (input) {
         input.focus();
         
-        // Visual indicator Pass: If text was successfully auto-injected, provide high-awareness highlights!
+        // If text was successfully auto-injected by our router mailbox, provide high-awareness highlights!
         if (input.value !== "") {
           input.style.borderColor = "var(--accent)";
           input.style.backgroundColor = "#e8f8f5"; // Operational mint shade highlight tint
           if (feedback) {
             feedback.style.color = "var(--primary)";
-            feedback.innerText = "⚡ Hardware Token Auto-Populated. Please select your Target Table to verify link uniqueness.";
+            feedback.innerText = "⚡ Hardware Token Auto-Populated. Please select your Target Table dropdown to verify link uniqueness.";
           }
         }
 
         input.onkeydown = (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
+            UI.processWizardStageOneScan();
+          }
+        };
+      }
+
+      // --- 🌟 NEW ARCHITECTURE: THE AUTOMATED DROPDOWN VERIFICATION HOOK 🌟 ---
+      if (tableSelect && input) {
+        tableSelect.onchange = () => {
+          const selectedTableValueStr = tableSelect.value;
+          
+          if (selectedTableValueStr && input.value.trim() !== "") {
+            console.log(`MAE Intake System: Table destination choice [${selectedTableValueStr}] confirmed with active barcode [${input.value}]. Auto-triggering validation gate...`);
+            
+            // Instantly execute the uniqueness sweep and popup your choice modal without deleting text cells!
             UI.processWizardStageOneScan();
           }
         };
