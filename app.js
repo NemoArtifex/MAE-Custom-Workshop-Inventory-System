@@ -398,11 +398,10 @@ async function refreshLocationCache() {
 
 // ======= FUNCTION verifySpreadSheetExists =============
 // =========================================================================
-// ====== RUGGED AUTO-PROVISIONER: MASTER DATABASE LEDGER DISCOVERY ENGINE ==
+// ====== RESTORED PROVEN WORKBOOK AUTO-PROVISIONER DISCOVERY ENGINE =======
 // =========================================================================
 async function verifySpreadsheetExists() {
   const token = await window.getGraphToken();
-  // authoritative query pointing directly to your fixed master file footprint
   const checkUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
   console.log("MAE Ledger Provisioner: Checking for master spreadsheet allocation paths on OneDrive...");
@@ -422,38 +421,37 @@ async function verifySpreadsheetExists() {
       throw new Error(`Graph API returned unexpected network status code: ${response.status}`);
     }
 
-    // If the server explicitly returns a 404, we catch it below in the catch block to create the workbook.
-    throw new Error("404");
+    // If file is explicitly missing, proceed to upload your curated master template asset
+    console.warn("MAE Ledger Provisioner: MASTER WORKBOOK NOT FOUND. Uploading your curated Excel template asset...");
+    
+    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}/:content`;
+    
+    // Fetch your curated master template file directly from your repository asset folder
+    const templateResponse = await fetch(`./${fileName}`);
+    if (!templateResponse.ok) {
+      throw new Error(`Failed to locate local repository template file asset: ./${fileName}`);
+    }
+    
+    const templateBlob = await templateResponse.blob();
 
-  } catch (error) {
-    if (error.message === "404" || (error.message && error.message.includes("404"))) {
-      console.warn("MAE Ledger Provisioner: MASTER WORKBOOK NOT FOUND. Initializing automatic platform provisioning pass...");
-      
-      // Target your central template upload port allocation endpoints
-      const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content`;
-      
-      // Pull your pristine master workbook binary schema snapshot out of your asset templates library
-      // (Binds onto your standard system template initialization blob payload structures)
-      const binaryTemplateBlobPayload = await window.Dashboard.generateMasterWorkbookTemplateBlob();
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      },
+      body: templateBlob
+    });
 
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        },
-        body: binaryTemplateBlobPayload
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Graph API failed to upload master binary workbook payload: ${uploadResponse.status}`);
-      }
-
-      console.log("MAE Ledger Provisioner: Master Workbook successfully initialized and uploaded to OneDrive storage.");
-      return true; // Brand new file created -> returns true to engage the 6-second table mapping settle timer!
+    if (!uploadResponse.ok) {
+      throw new Error(`Graph API failed to upload master template file asset over the network: ${uploadResponse.status}`);
     }
 
-    // Re-throw any other critical connection errors so the startup matrix can handle the rollback shield
+    console.log("MAE Ledger Provisioner: Master Workbook successfully initialized and uploaded to OneDrive storage.");
+    return true; // Brand new file uploaded -> returns true to engage the 6-second table mapping settle timer!
+
+  } catch (error) {
+    // Re-throw any critical connection errors so the startup matrix can handle the rollback shield
     throw error;
   }
 }
