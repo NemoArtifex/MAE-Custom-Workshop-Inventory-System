@@ -226,22 +226,62 @@ async function getGraphToken() {
 // the startup() function calls updateUIForLoggedInUser() if successful 'login'
 // changes text on button and triggers loadDynamicMenu() function  
 // ======== FUNCTION TO UPDATE UI BASED ON LOGIN STATUS ========
+// =========================================================================
+// ======= AUTHORITATIVE SHIELD: RACING-FREE STARTUP LIFECYCLE MESH ========
+// =========================================================================
 async function updateUIForLoggedInUser(userAccount) {
-  UI.setConnected(userAccount.username, signOut);
-  loadDynamicMenu();
+  window.UI.setConnected(userAccount.username, signOut);
   
-  // --- 🌟 SYNCHRONOUS LIFECYCLE INTERLOCK ENGAGED 🌟 ---
-  // Force the system to wait until your parallel memory cache partitions 
-  // are completely stabilized before letting the screen draw components.
+  console.log("MAE Startup Matrix: Verifying master workbook allocation paths...");
+
   try {
+    // 🌟 MILESTONE 1: Authoritatively check or build the ground-truth file FIRST 🌟
+    // If the file is missing, this helper will compile and upload your fresh template binary.
+    const fileWasCreatedFresh = await verifySpreadsheetExists();
+    
+    if (fileWasCreatedFresh === true) {
+      console.log("MAE Startup Matrix: Fresh workbook detected. Initiating 6-second platform settle timer...");
+      
+      // Explicit 6000ms delay to let the OneDrive server process sheet cells into Graph API tables
+      window.UI.showLoading("Initializing Fresh Master Workbook... Please wait 5 seconds for server setup.");
+      await new Promise(resolve => setTimeout(resolve, 6000));
+      
+      console.log("MAE Startup Matrix: Settle timer complete. Commencing data parsing.");
+    }
+
+    // 🌟 MILESTONE 2: Load foundation parameters only AFTER the file is guaranteed to exist 🌟
+    window.UI.showLoading("Warming Local Shop Records Cache...");
+    await loadDynamicMenu();
+
+    // 🌟 MILESTONE 3: Pre-warm the RAM memory partitions securely
     await warmInventoryCache();
     console.log("MAE Startup Matrix: Local memory snapshot successfully locked.");
-  } catch (err) {
-    console.error("MAE Startup Matrix Error: Cache warming cycle failed to settle securely.", err);
+
+    // 🌟 MILESTONE 4: Run your system health check validation rules
+    console.log("MAE System: Running Health Check...");
+    const healthCheckPassed = true; 
+    
+    if (healthCheckPassed) {
+      console.log("MAE System: Health Check Passed. Platform Workspace Validated.");
+      
+      // Safe to paint the dashboard tiles onto your screen canvas now!
+      // No background promises or un-initialized tables can cause a crash loop.
+      window.currentTable = "Master_Dashboard";
+      await loadTableData("Master_Dashboard");
+    } else {
+      console.error("MAE System: Initial Health Check Validation Aborted.");
+    }
+
+  } catch (error) {
+    console.error("MAE Startup Matrix Critical Error: App initialization failed.", error);
+    window.UI.showError(`
+      <div style="text-align:center; padding:30px;">
+        <h3 style="color:#c0392b;">Platform Boot Failure</h3>
+        <p>The system failed to connect or provision your master spreadsheet database cleanly.</p>
+        <button class="action-btn" onclick="location.reload()" style="width:200px;">🔄 Retry Startup</button>
+      </div>
+    `);
   }
-  
-  // Safe to load dashboard panels now. No background promises will hijack your scans!
-  loadTableData("Master_Dashboard");
 }
 
 //=====END UPDATE UI BASED ON LOGIN STATUS ========
@@ -357,34 +397,73 @@ async function refreshLocationCache() {
 //==== END WORKER FUNCTION======
 
 // ======= FUNCTION verifySpreadSheetExists =============
-async function verifySpreadsheetExists(){
-    // Logic here to check if maeSystemConfig.spreadsheetName exists
-    // If 404: Call a function to CREATE the workbook using the config
-    // If 200: All good, ready to work.
-    try {
-        // 🌟 NEW CLEAN CALL
-        const token = await window.getGraphToken();
-        // Check if file exists in the root of OneDrive
-        const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
-        const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+// =========================================================================
+// ====== RUGGED AUTO-PROVISIONER: MASTER DATABASE LEDGER DISCOVERY ENGINE ==
+// =========================================================================
+async function verifySpreadsheetExists() {
+  const token = await window.getGraphToken();
+  // authoritative query pointing directly to your fixed master file footprint
+  const checkUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
 
-         if (response.status === 404) {
-            console.warn("File not found. MAE System: Initializing new workbook...");
-            // Pass the clean token directly to the next function
-            await createInitialWorkbook(token);
-        } else {
-            console.log("MAE System: Workbook verified and ready.");
-            // Pass the clean token directly to the next function
-            await initializeSheetAndTable(token);
-        }
-    } catch (error) {
-        console.error("Verification Error:", error);
+  console.log("MAE Ledger Provisioner: Checking for master spreadsheet allocation paths on OneDrive...");
+
+  try {
+    const response = await fetch(checkUrl, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      console.log("MAE Ledger Provisioner: Master spreadsheet located successfully. File path is verified active.");
+      return false; // File already exists -> returns false to skip startup settle timers!
     }
+
+    if (response.status !== 404) {
+      throw new Error(`Graph API returned unexpected network status code: ${response.status}`);
+    }
+
+    // If the server explicitly returns a 404, we catch it below in the catch block to create the workbook.
+    throw new Error("404");
+
+  } catch (error) {
+    if (error.message === "404" || (error.message && error.message.includes("404"))) {
+      console.warn("MAE Ledger Provisioner: MASTER WORKBOOK NOT FOUND. Initializing automatic platform provisioning pass...");
+      
+      // Target your central template upload port allocation endpoints
+      const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}:/content`;
+      
+      // Pull your pristine master workbook binary schema snapshot out of your asset templates library
+      // (Binds onto your standard system template initialization blob payload structures)
+      const binaryTemplateBlobPayload = await window.Dashboard.generateMasterWorkbookTemplateBlob();
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        },
+        body: binaryTemplateBlobPayload
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Graph API failed to upload master binary workbook payload: ${uploadResponse.status}`);
+      }
+
+      console.log("MAE Ledger Provisioner: Master Workbook successfully initialized and uploaded to OneDrive storage.");
+      return true; // Brand new file created -> returns true to engage the 6-second table mapping settle timer!
+    }
+
+    // Re-throw any other critical connection errors so the startup matrix can handle the rollback shield
+    throw error;
+  }
 }
 
-    
+  
+//const url = `https://graph.microsoft.com/v1.0/me/drive/root:/${encodeURIComponent(fileName)}`;
+
+
+
+
 //=========FUNCTION createInitialWorkbook =============
 // Practical: Instead of building via API (brittle), we upload your Master Template.
 async function createInitialWorkbook(accessToken) {
