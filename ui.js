@@ -2590,68 +2590,80 @@ printInspectedLocationTable() {
     // THE CENTRAL INTAKE REGISTRATION PORTAL 
     //   CENTRAL ASSET WIZARD 
     // =========================================================================
-    renderCentralRegistrationWizard() {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
-        title.innerText = "Administrative: Centralized Item Intake Portal";
+    // 🌟 MODIFIED WIZARD STAGE 1: AUTOMATED MAILBOX TOKEN INJECTION GATING 🌟
+  renderCentralRegistrationWizard() {
+    const container = document.getElementById("table-container");
+    const title = document.getElementById("current-view-title");
+    title.innerText = "Administrative: Centralized Item Intake Portal";
+    
+    // Lock the router configuration table state flag parameters securely
+    window.currentTable = "inventory_registration";
+    
+    // 🌟 THE ARRAYS DETECTOR PASS: Capture your parked mailbox token variable if present 🌟
+    const activeParkedToken = window.pendingScanValue || "";
+
+    let html = `
+      <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
+        <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
+        <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
+        <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
+          <div style="display: flex; flex-direction: column;">
+            <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
+            <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
+              <option value="">-- Choose Target Table --</option>
+              <option value="Shop_Machinery">Shop Machinery</option>
+              <option value="Shop_Power_Tools">Shop Power Tools</option>
+              <option value="Shop_Hand_Tools">Shop Hand Tools</option>
+              <option value="Shop_Consumables">Shop Consumables</option>
+              <option value="Resell_Inventory">Resell Inventory</option>
+            </select>
+          </div>
+          <div style="display: flex; flex-direction: column; position: relative;">
+            <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
+            <!-- 🌟 INJECT THE ACTIVE PARKED TOKEN DIRECTLY INTO THE VALUE VALUE LITERAL VALUE 🌟 -->
+            <input type="text" id="field-Tag_ID" value="${activeParkedToken}" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
+            <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 15px;">
+          <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
+          <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
+          <button class="action-btn" onclick="UI.resetCentralRegistrationWizard()" style="background:#c0392b; height:45px; font-weight:bold; flex: 1;">🔄 Clear / Reset Form</button>
+        </div>
+      </div>
+      <div id="central-form-render-zone"></div>
+    `;
+    
+    container.innerHTML = html;
+    this.renderCommandBar("");
+
+    // Set real-time focus redirection controls onto the box
+    setTimeout(() => {
+      const input = document.getElementById("field-Tag_ID");
+      const feedback = document.getElementById("wizard-tag-feedback");
+      
+      if (input) {
+        input.focus();
         
-        // Lock the router configuration state flag
-        window.currentTable = "inventory_registration";
+        // Visual indicator Pass: If text was successfully auto-injected, provide high-awareness highlights!
+        if (input.value !== "") {
+          input.style.borderColor = "var(--accent)";
+          input.style.backgroundColor = "#e8f8f5"; // Operational mint shade highlight tint
+          if (feedback) {
+            feedback.style.color = "var(--primary)";
+            feedback.innerText = "⚡ Hardware Token Auto-Populated. Please select your Target Table to verify link uniqueness.";
+          }
+        }
 
-        let html = `
-            <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
-                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
-                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
-                
-                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
-                    <div style="display: flex; flex-direction: column;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
-                        <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
-                            <option value="">-- Choose Target Table --</option>
-                            <option value="Shop_Machinery">Shop Machinery</option>
-                            <option value="Shop_Power_Tools">Shop Power Tools</option>
-                            <option value="Shop_Hand_Tools">Shop Hand Tools</option>
-                            <option value="Shop_Consumables">Shop Consumables</option>
-                            <option value="Resell_Inventory">Resell Inventory</option>
-                        </select>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; position: relative;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
-                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;">
-                        <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 15px;">
-                    <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
-                    <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
-                    <button class="action-btn" onclick="UI.resetCentralRegistrationWizard()" style="background:#c0392b; height:45px; font-weight:bold; flex: 1;">🔄 Clear / Reset Form</button>
-                </div>
-            </div>
-            <div id="central-form-render-zone"></div>
-        `;
-        container.innerHTML = html;
-        this.renderCommandBar("");
-
-        // Focus management pass without any browser-native change listeners attached
-        setTimeout(() => {
-            const input = document.getElementById("field-Tag_ID");
-            if (input) {
-                input.focus();
-                
-                // 🌟 THE SAFE INTERCEPT GATE 🌟
-                // If a user manual types or if an enter event hits this box, block native browser form 
-                // submission completely, and route it through our unified verification instead.
-                input.onkeydown = (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); // Abort browser form triggers
-                        UI.processWizardStageOneScan(); // Run our controlled lookup pass instead
-                    }
-                };
-            }
-        }, 100);
-    },
+        input.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            UI.processWizardStageOneScan();
+          }
+        };
+      }
+    }, 100);
+  },
     // 2. ADD NEW function to process an actual scanned barcode in Stage 1
     async processWizardStageOneScan() {
         // REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS
