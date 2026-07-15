@@ -1574,8 +1574,20 @@ window.submitNewRow = async function(tableName, sheetConfig) {
       }
 
       // Handle standard named text inputs field configurations
-      const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
-      const input = document.getElementById(fieldId);
+
+      //const fieldId = `field-${col.header.replace(/\s+/g, '')}`;
+      const cleanHeaderName = col.header.toString().trim();
+      let fieldId = `field-${cleanHeaderName.replace(/\s+/g, '')}`;
+      let input = document.getElementById(fieldId);
+
+      // Fallback Guard: If the space-stripped ID is missing, try matching the exact structural header name
+      if (!input) {
+          fieldId = `field-${cleanHeaderName}`;
+          input = document.getElementById(fieldId);
+      }
+
+
+      //const input = document.getElementById(fieldId);
 
       if (col.type === "formula") {
         rowValues.push(col.formula); // Pass the raw uppercase Excel calculation syntax strings over the wire
