@@ -26,9 +26,22 @@ export const myMSALObj = new window.msal.PublicClientApplication(msalConfig);
 window.addEventListener("DOMContentLoaded", () => {
     const authButton = document.getElementById("auth-btn");
     if (authButton) {
-        // Tie the physical click directly to your authentic, internal signIn function
-        authButton.onclick = signIn;
-        console.log("MAE Auth Engine: Click event listener successfully anchored to your authentic sign-in pipeline.");
+        // 🔒 THE GLOBAL ROUTING BRIDGE: Hooks your physical click to your authentic signIn macro in app.js
+        authButton.onclick = () => {
+            if (typeof window.signIn === "function") {
+                window.signIn();
+            } else {
+                alert("MAE Authentication Engine: Connecting with Microsoft Graph. Please standby.");
+                // Fallback direct redirection handler if window mapping is still warming up
+                if (window.myMSALObj) {
+                    window.myMSALObj.loginRedirect({
+                        scopes: ["User.Read", "Files.ReadWrite"],
+                        prompt: "select_account"
+                    });
+                }
+            }
+        };
+        console.log("MAE Auth Engine: Universal click shortcut successfully anchored to your master login macro.");
     } else {
         console.warn("MAE Auth Engine: Sidebar button target missing during DOM load check.");
     }
