@@ -132,8 +132,7 @@ async function getExcelRowIndexByMaeId(tableName, maeId) {
 async function startup() {
     console.log("MAE Engine Matrix: Launching core life-cycle boot processes...");
     
-    // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
-    // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
+    // GLOBAL HUMAN SNAPSHOT OBSERVER AXIS
     document.addEventListener('input', (event) => {
         const target = event.target;
         if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
@@ -142,21 +141,19 @@ async function startup() {
     });
 
     try {
-        // Initialize MSAL v2 client application stack parameters securely
-        window.myMSALObj = new msal.PublicClientApplication(msalConfig);
-        await myMSALObj.initialize();
-
-        // Handle the incoming network landing redirect state token parameters completely
-        const redirectResponse = await myMSALObj.handleRedirectPromise();
-        if (redirectResponse !== null) {
-            window.account = redirectResponse.account;
-            sessionStorage.setItem("username", window.account.username);
-            console.log("MAE Auth Pipeline: Secure landing token captured via redirect handler.");
-        } else {
-            // Fallback: Recover existing system active accounts from local storage state caches
-            const currentAccounts = myMSALObj.getAllAccounts();
-            if (currentAccounts.length > 0) {
-                window.account = currentAccounts[0]; // Restored original tracking bracket reference array mapping index 0 safely
+        // 🔒 AUTH PIPELINE BRIDGE: Use your existing, pre-stabilized global instance
+        // We do NOT attempt to re-initialize or look for msalConfig here.
+        if (typeof window.myMSALObj !== "undefined") {
+            const redirectResponse = await window.myMSALObj.handleRedirectPromise();
+            if (redirectResponse !== null) {
+                window.account = redirectResponse.account;
+                sessionStorage.setItem("username", window.account.username);
+                console.log("MAE Auth Pipeline: Secure landing token captured via redirect handler.");
+            } else {
+                const currentAccounts = window.myMSALObj.getAllAccounts();
+                if (currentAccounts.length > 0) {
+                    window.account = currentAccounts[0];
+                }
             }
         }
 
@@ -165,17 +162,10 @@ async function startup() {
         // ==========================================
         if (window.account) {
             console.log(`MAE Bootloader: Identity confirmed for user account.`);
-            
-            // 1. Establish visual dashboards and pre-warm memory caches sequentially
             await updateUIForLoggedInUser(window.account);
         } else {
-            // SCENARIO 2: USER IS NOT LOGGED IN
             console.log("MAE Auth Pipeline: No active user token found. Awaiting user interaction.");
-            const authButton = document.getElementById("auth-btn");
-            if (authButton) {
-                authButton.innerText = "Connect Microsoft Office 365";
-                // Your original fallback relied on the window level mapping to connect the signIn macro
-            }
+            // Let auth.js default bindings manage the landing screen elements natively
         }
     } catch (error) {
         console.error("Critical Error during MSAL startup sequence:", error);
