@@ -2878,6 +2878,15 @@ window.UI.renderWizardSessionListGrid = UI.renderWizardSessionListGrid;
 window.UI.finalizeWizardBatchSession = UI.finalizeWizardBatchSession;
 
 //startup();
+// 🔑 THE AUTHORITATIVE IGNITION & HARDWARE ACCESS HOOK
 window.addEventListener("DOMContentLoaded", () => {
+    // 1. Ignite your core life-cycle boot processes natively
     startup();
+
+    // 2. Locate and wire up the green connection button safely outside your core auth logic
+    const authButton = document.getElementById("auth-btn");
+    if (authButton) {
+        authButton.onclick = signIn;
+        console.log("MAE Bootloader: Click event listener successfully anchored to your authentic signIn macro.");
+    }
 });
