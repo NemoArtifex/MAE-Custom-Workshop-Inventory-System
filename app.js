@@ -142,21 +142,19 @@ async function startup() {
     });
 
     try {
-        // Initialize MSAL v2 client application stack parameters securely
-        window.myMSALObj = new msal.PublicClientApplication(msalConfig);
-        await myMSALObj.initialize();
-
-        // Handle the incoming network landing redirect state token parameters completely
-        const redirectResponse = await myMSALObj.handleRedirectPromise();
-        if (redirectResponse !== null) {
-            window.account = redirectResponse.account;
-            sessionStorage.setItem("username", window.account.username);
-            console.log("MAE Auth Pipeline: Secure landing token captured via redirect handler.");
-        } else {
-            // Fallback: Recover existing system active accounts from local storage state caches
-            const currentAccounts = myMSALObj.getAllAccounts();
-            if (currentAccounts.length > 0) {
-                window.account = currentAccounts[0];
+        // 🔒 INDUSTRIAL AUTHENTICATION ROUTING BRIDGE
+        // Hooks directly onto your existing, pre-stabilized global myMSALObj instance
+        if (typeof window.myMSALObj !== "undefined") {
+            const redirectResponse = await window.myMSALObj.handleRedirectPromise();
+            if (redirectResponse !== null) {
+                window.account = redirectResponse.account;
+                sessionStorage.setItem("username", window.account.username);
+                console.log("MAE Auth Pipeline: Secure landing token captured via redirect handler.");
+            } else {
+                const currentAccounts = window.myMSALObj.getAllAccounts();
+                if (currentAccounts.length > 0) {
+                    window.account = currentAccounts[0];
+                }
             }
         }
 
@@ -164,7 +162,7 @@ async function startup() {
         // LIFE-CYCLE SECURITY STATE DISPATCH ROUTER
         // ==========================================
         if (window.account) {
-            console.log(`MAE Bootloader: Identity confirmed for user account [${window.account.username}].`);
+            console.log(`MAE Bootloader: Identity confirmed for user account.`);
             
             // 1. Establish visual dashboards and pre-warm memory caches sequentially
             await updateUIForLoggedInUser(window.account);
@@ -173,21 +171,14 @@ async function startup() {
             if (window.HidScanner && typeof window.HidScanner.initializeGlobalScanner === "function") {
                 window.HidScanner.initializeGlobalScanner();
                 console.log("MAE Bootloader: Advanced hardware scanning tier successfully activated for this session.");
-            } else {
-                console.warn("MAE Bootloader Warning: HidScanner module script was not detected in window scope layers.");
             }
         } else {
             // SCENARIO 2: USER IS NOT LOGGED IN
-            console.log("MAE Auth Pipeline: No active user token found. Halting application canvas layout screens.");
-            const authButton = document.getElementById("auth-btn");
-            if (authButton) {
-                authButton.addEventListener("click", signIn);
-                authButton.innerText = "Connect Microsoft Office 365";
-                console.log("MAE System: Auth redirection trigger buttons successfully mounted.");
-            }
+            console.log("MAE Auth Pipeline: No active user token found. Awaiting user interaction.");
+            // Your original safe default fallback handles the login buttons via external bindings
         }
     } catch (error) {
-        console.error("Critical Error during MSAL startup:", error);
+        console.error("Critical Error during MSAL startup sequence:", error);
     }
 }
 
