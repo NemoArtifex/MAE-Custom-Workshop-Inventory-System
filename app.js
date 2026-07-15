@@ -1919,198 +1919,126 @@ async function handleQuickUpdate(tableName) {
 // =========== UNIFIED IN-MEMORY POLYMORPHIC SCANNER ROUTER ============
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
-  const currentTransactionId = Date.now();
-  window.activeScanTransactionId = currentTransactionId;
+    const currentTransactionId = Date.now();
+    window.activeScanTransactionId = currentTransactionId;
 
-  // 1. Enforce strict token discipline by cleaning the hardware payload string
-  const cleanId = window.HidScanner.extractCleanId(scannedId).toString().trim().toUpperCase();
-  if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
-    console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
-    return;
-  }
-  console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
+    // 🔒 THE SHIELD LOCK: Kill active click-off observers instantly during a hardware laser scan burst
+    document.removeEventListener('mousedown', window.globalClickOffHandler);
 
-  // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE (WITH LEAKAGE SCRUBBER)
-  const frozenInput = document.querySelector('input[disabled], select[disabled]');
-  if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
-    console.warn(`MAE Focus Protection: Reclaiming frozen field [${frozenInput.id}] following scan intercept.`);
-    frozenInput.disabled = false;
-    const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
-    frozenInput.value = originalValue;
-    
-    alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
-    setTimeout(() => { if (frozenInput) frozenInput.focus(); }, 50);
-    return;
-  }
-
-  // --- 🌟 NEW ARCHITECTURE: SUB-MILLISECOND LOCAL MEMORY CACHE SWEEP 🌟 ---
-  const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
-  let matchedAssetRowsList = [];
-  let matchingTableName = "";
-  let sheetConfigMatch = null;
-  let foundTagType = "";
-  let foundItemCategory = "";
-
-  // Sweep the in-memory array cache partitions instantly instead of executing network fetch loops
-  for (const table of priorityTables) {
-    const localRows = window.maeLedgerCache[table] || [];
-    if (localRows.length === 0) continue;
-
-    sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
-    const tagColPosIndex = sheetConfigMatch.columns.findIndex(c => c.header === "Tag_ID");
-
-    // DUAL-LAYER SCANNER PIECE: Matches records by named dictionary OR flat index coordinates
-    const internalMatches = localRows.filter(record => {
-      // Track A: Check for named dictionary data object keys
-      const namedTagValue = record.data ? record.data["Tag_ID"] : null;
-      
-      // Track B: Check for flat, index-mapped data row matrix arrays
-      const indexTagValue = (record.values && Array.isArray(record.values[0])) ? record.values[0][tagColPosIndex] : 
-                            (record.values ? record.values[tagColPosIndex] : null);
-                            
-      const finalEvaluatedTag = namedTagValue || indexTagValue;
-      return finalEvaluatedTag && String(finalEvaluatedTag).trim().toUpperCase() === cleanId;
-    });
-
-    if (internalMatches.length > 0) {
-      // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
-      matchedAssetRowsList = internalMatches.map(rec => {
-        // Safe data unboxing path wrapper fallback
-        const rawValuesArray = rec.data ? sheetConfigMatch.columns.map(col => rec.data[col.header] ?? null) : 
-                              ((rec.values && Array.isArray(rec.values[0])) ? rec.values[0] : rec.values);
-        return { index: rec.index, id: rec.id, values: rawValuesArray };
-      });
-      
-      matchingTableName = table;
-      
-      // Dynamic unboxing extraction pass with fallback controls fully supported
-      const optimalFirstMatchRowObj = internalMatches[0];
-      
-      const metaTagType = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Tag_Type"] : 
-                           ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")]);
-                           
-      const metaCategory = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Item_Category"] : 
-                            ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")]);
-
-      foundTagType = String(metaTagType || "UNIQUE").trim().toUpperCase();
-      
-      if (metaCategory && String(metaCategory).trim() !== "") {
-        foundItemCategory = String(metaCategory).trim();
-      } else {
-        foundItemCategory = (foundTagType === "UNIQUE") ? "UNIQUE" : "By_Location";
-        console.warn(`MAE Migration Matrix: Legacy blank cell detected for Tag [${cleanId}]. Auto-assigned default baseline track: [${foundItemCategory}].`);
-      }
-      break; // Match confirmed, escape loop early
+    // 1. Enforce strict token discipline by cleaning the hardware payload string
+    const cleanId = window.HidScanner.extractCleanId(scannedId).toString().trim().toUpperCase();
+    if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
+        console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
+        return;
     }
-  }
-  // Verify system state alignment before updating any DOM layout canvases
-  if (window.activeScanTransactionId !== currentTransactionId) {
-    console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
-    return;
-  }
+    console.log("MAE Scanner System: Intercepted hardware string payload:", cleanId);
 
-  // --- SUB-ROUTINE A: THE INTAKE GUARDRAIL (Form Panel Mode Active) ---
-  const formPanelActive = document.getElementById("entry-form") !== null;
-  const isRegistrationMode = window.currentTable === "inventory_registration" || window.currentTable === "inventory_search" || formPanelActive;
-  
-  if (isRegistrationMode) {
-    console.log("MAE Safety Guard: Form active. Forwarding to Intake Modal Handler.");
-    const tableSelect = document.getElementById("mae-central-table-selector");
-    const targetTable = tableSelect ? tableSelect.value : window.currentTable;
-    const tagInputFieldBox = document.getElementById("field-Tag_ID");
-    
-    if (tagInputFieldBox && window.currentTable === "inventory_registration") {
-      tagInputFieldBox.value = cleanId;
+    // 🌟 MAE ENGINE RUGGED FIXED APPARATUS: SHIELD RESTORATION GATE (WITH LEAKAGE SCRUBBER)
+    const frozenInput = document.querySelector('input[disabled], select[disabled]');
+    if (frozenInput && frozenInput.id !== "field-Tag_ID" && frozenInput.id !== "mae-bulk-container-input") {
+        console.warn(`MAE Focus Protection: Reclaiming frozen field [${frozenInput.id}] following scan intercept.`);
+        frozenInput.disabled = false;
+        const originalValue = frozenInput.getAttribute("data-pre-scan-value") || "";
+        frozenInput.value = originalValue;
+        alert(`MAE INPUT FIELD PROTECTION:\n\nYour cursor is sitting in the wrong field line item box.\n\nTo prevent data corruption, this scan has been aborted. Please click directly into the "Tag_ID" field to scan hardware labels.`);
+        setTimeout(() => { if (frozenInput) frozenInput.focus(); }, 50);
+        return;
     }
 
-    // PATH 1: Completely Fresh, Unused Barcode Tag
+    // --- 🌟 NEW ARCHITECTURE: SUB-MILLISECOND LOCAL MEMORY CACHE SWEEP 🌟 ---
+    const priorityTables = ["Resell_Inventory", "Shop_Machinery", "Shop_Power_Tools", "Shop_Hand_Tools", "Shop_Consumables"];
+    let matchedAssetRowsList = [];
+    let matchingTableName = "";
+    let sheetConfigMatch = null;
+    let foundTagType = "";
+    let foundItemCategory = "";
+
+    // Sweep the in-memory array cache partitions instantly instead of executing network fetch loops
+    for (const table of priorityTables) {
+        const localRows = window.maeLedgerCache[table] || [];
+        if (localRows.length === 0) continue;
+        
+        sheetConfigMatch = window.maeSystemConfig.worksheets.find(s => s.tableName === table);
+        const tagColPosIndex = sheetConfigMatch.columns.findIndex(c => c.header === "Tag_ID");
+
+        // DUAL-LAYER SCANNER PIECE: Matches records by named dictionary OR flat index coordinates
+        const internalMatches = localRows.filter(record => {
+            const namedTagValue = record.data ? record.data["Tag_ID"] : null;
+            const indexTagValue = (record.values && Array.isArray(record.values[0])) ? record.values[0][tagColPosIndex] : (record.values ? record.values[tagColPosIndex] : null);
+            const finalEvaluatedTag = namedTagValue || indexTagValue;
+            return finalEvaluatedTag && String(finalEvaluatedTag).trim().toUpperCase() === cleanId;
+        });
+
+        if (internalMatches.length > 0) {
+            // Map memory objects back into standard UI Graph-style row format for downstream rendering compliance
+            matchedAssetRowsList = internalMatches.map(rec => {
+                const rawValuesArray = rec.data ? sheetConfigMatch.columns.map(col => rec.data[col.header] ?? null) : ((rec.values && Array.isArray(rec.values[0])) ? rec.values[0] : rec.values);
+                return { index: rec.index, id: rec.id, values: rawValuesArray };
+            });
+            
+            matchingTableName = table;
+
+            const optimalFirstMatchRowObj = internalMatches[0];
+            const metaTagType = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Tag_Type"] : ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Tag_Type")]);
+            const metaCategory = optimalFirstMatchRowObj.data ? optimalFirstMatchRowObj.data["Item_Category"] : ((optimalFirstMatchRowObj.values && Array.isArray(optimalFirstMatchRowObj.values[0])) ? optimalFirstMatchRowObj.values[0][sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")] : optimalFirstMatchRowObj.values[sheetConfigMatch.columns.findIndex(c => c.header === "Item_Category")]);
+            
+            foundTagType = String(metaTagType || "UNIQUE").trim().toUpperCase();
+            
+            if (metaCategory && String(metaCategory).trim() !== "") {
+                foundItemCategory = String(metaCategory).trim();
+            } else {
+                foundItemCategory = (foundTagType === "UNIQUE") ? "UNIQUE" : "By_Location";
+                console.warn(`MAE Migration Matrix: Legacy blank cell detected for Tag [${cleanId}]. Auto-assigned default baseline track: [${foundItemCategory}].`);
+            }
+            break; // Match confirmed, escape loop early
+        }
+    }
+
+    // Verify system state alignment before updating any DOM layout canvases
+    if (window.activeScanTransactionId !== currentTransactionId) {
+        console.warn("MAE Circuit Breaker: Scan aborted by user reset. Blocking UI redirection.");
+        return;
+    }
+
+    // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
+    window.UI.showLoading(`Sweeping Local Shop Records for: ${cleanId}...`);
+
     if (matchedAssetRowsList.length === 0) {
-      if (tableSelect && tableSelect.value !== "") {
-        window.UI.renderTagTypeWizardModal(targetTable, cleanId, currentTransactionId);
-      } else {
-        alert(`Fresh Tag Intercepted: ${cleanId}\n\nPlease select a Target Table category dropdown row first.`);
-        if (tagInputFieldBox) tagInputFieldBox.value = "";
-      }
-      return;
+        console.log(`MAE Scanner Routing: Unregistered tag [${cleanId}] auto-routing to Intake Portal.`);
+        window.pendingScanValue = cleanId;
+        
+        const container = document.getElementById("table-container");
+        if (container) container.innerHTML = "";
+        
+        window.IntakeWizard.renderStageOne();
+        return;
     }
 
-    // PATH 2: Collision Circuit Breaker for Existing UNIQUE Assets
+    // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO HARDWARE CARD VIEW
     if (foundTagType === "UNIQUE") {
-      if (tagInputFieldBox) {
-        tagInputFieldBox.value = "";
-        tagInputFieldBox.style.borderColor = "#e74c3c";
-        tagInputFieldBox.style.backgroundColor = "#fadbd8";
-      }
-      const nameKey = sheetConfigMatch.columns.some(c => c.header === "Item_Description") ? "Item_Description" : "Item Name";
-      const targetColumnIndexPosition = sheetConfigMatch.columns.findIndex(c => c.header === nameKey);
-      
-      // Safely access values array based on corrected unboxing structure
-      const matchedItemLabelName = matchedAssetRowsList[0].values[targetColumnIndexPosition] || "Unknown Asset";
-      alert(`CRITICAL CONFLICT ERROR:\n\nThis barcode is ALREADY permanently mapped to an individual unique asset:\n\n• Table Category: ${sheetConfigMatch.tabName}\n• Existing Item: "${matchedItemLabelName}"\n\nTo preserve database ledger integrity, you CANNOT reuse this tag here.`);
-      return;
+        window.currentTable = matchingTableName;
+        const cleanCellsArray = matchedAssetRowsList[0].values;
+        window.UI.renderScanResultCard(cleanCellsArray, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
+        return;
     }
 
-    // PATH 3: Polymorphic Pass for Existing MULTIPLE Shared Tokens
+    // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO INTEGRATED WORKSPACE
     if (foundTagType === "MULTIPLE") {
-      const feedback = document.getElementById("wizard-tag-feedback");
-      if (feedback) {
-        feedback.style.color = "#2980b9";
-        feedback.innerHTML = `✅ Shared Token Located: Appending new instance to existing [${foundItemCategory}] cluster group [${cleanId}].`;
-      }
-      if (tagInputFieldBox) tagInputFieldBox.disabled = true;
-      if (tableSelect) tableSelect.disabled = true;
-      
-      // 🌟 THE ARCHITECTURE FIXED APPARATUS: LOCK THE SESSION MAILBOX AUTOMATICALLY 🌟
-      // Read the existing category string from the database and park it in memory
-      window.maeWizardActiveCategory = foundItemCategory;
-      
-      // Skip the choice modal entirely and pass control straight to the intake form
-      window.renderCentralRegistrationWizardStageTwo(targetTable, cleanId, "MULTIPLE");
-      return;
+        window.currentTable = matchingTableName;
+        const nameIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Item_Description");
+        const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
+        
+        const containerBundleResults = matchedAssetRowsList.map(rowObj => {
+            const cells = rowObj.values;
+            const physicalLocation = cells[locationColumnIdx] || "TBD";
+            return { category: `${sheetConfigMatch.tabName} [Storage: ${physicalLocation}]`, itemName: cells[nameIdx] || "N/A", tableName: matchingTableName, mae_id: rowObj.id || rowObj.index };
+        });
+        
+        window.UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName, foundItemCategory);
+        return;
     }
-
-  // --- SUB-ROUTINE B: STANDARD NAVIGATION LOOKUP (No active panels on screen) ---
-  window.UI.showLoading(`Sweeping Local Shop Records for: ${cleanId}...`);
-  
-  if (matchedAssetRowsList.length === 0) {
-    console.log(`MAE Scanner Routing: Unregistered tag [${cleanId}] intercepted outside form context. Auto-routing to Intake Portal.`);
-    window.pendingScanValue = cleanId;
-    window.IntakeWizard.renderStageOne(); // 🔒 Securely routed to your new file source!
-    return;
 }
-
-  // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO HARDWARE CARD VIEW
-  if (foundTagType === "UNIQUE") {
-    window.currentTable = matchingTableName;
-    // Unwrap the values parameters vector directly matching ui.js index extraction constraints
-    const cleanCellsArray = matchedAssetRowsList[0].values;
-    window.UI.renderScanResultCard(cleanCellsArray, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
-    return;
-  }
-
-  // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO INTEGRATED WORKSPACE
-  if (foundTagType === "MULTIPLE") {
-    window.currentTable = matchingTableName;
-    const nameIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Item_Description");
-    const locationColumnIdx = sheetConfigMatch.columns.findIndex(c => c.header === "Location_ID");
-    
-    const containerBundleResults = matchedAssetRowsList.map(rowObj => {
-      const cells = rowObj.values;
-      const physicalLocation = cells[locationColumnIdx] || "TBD";
-      return {
-        category: `${sheetConfigMatch.tabName} [Storage: ${physicalLocation}]`,
-        itemName: cells[nameIdx] || "N/A",
-        tableName: matchingTableName,
-        rowIndex: rowObj.index
-      };
-    });
-    
-    // Pass the exact evaluated foundItemCategory parameter down to structure layout locks
-    window.UI.renderVirtualSearchHub(containerBundleResults, cleanId, matchingTableName, foundItemCategory);
-    return;
-  }
-}
-}
+// ====== END handleUniversalLookup function ==========}
 // =========== END UNIVERSAL SCANNER LOOKUP ===========
 
 // ============ FUNCTION TO HANDLE SINGLE-ROW UPDATES===========
