@@ -1919,6 +1919,8 @@ async function handleQuickUpdate(tableName) {
 // =========== UNIFIED IN-MEMORY POLYMORPHIC SCANNER ROUTER ============
 // =========================================================================
 async function handleUniversalLookup(scannedId) {
+    window.isEditing = true; 
+    window.currentTable = "scan_result_active"; // 🔒 Changes context instantly so lagging table loads drop their redraw event
     const currentTransactionId = Date.now();
     window.activeScanTransactionId = currentTransactionId;
 
@@ -2017,11 +2019,14 @@ async function handleUniversalLookup(scannedId) {
     // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO HARDWARE CARD VIEW
     if (foundTagType === "UNIQUE") {
         window.currentTable = matchingTableName;
-        const cleanCellsArray = matchedAssetRowsList[0].values;
-        window.UI.renderScanResultCard(cleanCellsArray, matchingTableName, sheetConfigMatch, matchedAssetRowsList[0].index);
+    
+        // Extract the precise first index item object dictionary out of your mapped results collection cleanly
+        const targetAssetDataObj = matchedAssetRowsList[0];
+        const cleanCellsArray = targetAssetDataObj.values;
+    
+     window.UI.renderScanResultCard(cleanCellsArray, matchingTableName, sheetConfigMatch, targetAssetDataObj.index);
         return;
     }
-
     // ROUTE B2: REDIRECT MULTIPLE CONTAINER ENTRIES TO INTEGRATED WORKSPACE
     if (foundTagType === "MULTIPLE") {
         window.currentTable = matchingTableName;

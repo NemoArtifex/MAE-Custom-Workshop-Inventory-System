@@ -101,5 +101,3 @@ export const HidScanner = {
 window.HidScanner = HidScanner;
 window.Labels = { extractCleanId: HidScanner.extractCleanId };
 
-// Ignite the hardware background thread
-HidScanner.initializeGlobalScanner();
