@@ -165,7 +165,13 @@ async function startup() {
             await updateUIForLoggedInUser(window.account);
         } else {
             console.log("MAE Auth Pipeline: No active user token found. Awaiting user interaction.");
-            // Let auth.js default bindings manage the landing screen elements natively
+            // ???? Let auth.js default bindings manage the landing screen elements natively
+            const authButton = document.getElementById("auth-btn");
+                if (authButton) {
+                    // Link the click directly to your authentic signIn function sitting below in app.js
+                    authButton.onclick = signIn; 
+                    console.log("MAE Bootloader: Click event handler successfully attached to green authentication button.");
+                    }
         }
     } catch (error) {
         console.error("Critical Error during MSAL startup sequence:", error);
