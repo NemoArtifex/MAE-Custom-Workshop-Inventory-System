@@ -2074,16 +2074,10 @@ async function handleUniversalLookup(scannedId) {
   
   if (matchedAssetRowsList.length === 0) {
     console.log(`MAE Scanner Routing: Unregistered tag [${cleanId}] intercepted outside form context. Auto-routing to Intake Portal.`);
-    
-    // 🌟 THE SYSTEM FIXED APPARATUS: REDIRECT FRESH SCAN TARGETS TO CENTRAL WIZARD PORTAL 🌟
-    // Temporarily park the scanned tag inside the global mailbox so the wizard 
-    // can auto-inject and lock the string inside Stage 1 text fields instantly.
     window.pendingScanValue = cleanId;
-    
-    // Deploy the central batch intake portal system onto the screen layout canvas smoothly
-    window.UI.renderCentralRegistrationWizard();
+    window.IntakeWizard.renderStageOne(); // 🔒 Securely routed to your new file source!
     return;
-  }
+}
 
   // ROUTE B1: REDIRECT SINGLE UNIQUE ASSETS TO HARDWARE CARD VIEW
   if (foundTagType === "UNIQUE") {
