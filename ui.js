@@ -2594,7 +2594,8 @@ printInspectedLocationTable() {
             return;
         }
 
-        const cleanTag = window.Labels.extractCleanId(rawTag).toUpperCase();
+        //const cleanTag = window.Labels.extractCleanId(rawTag).toUpperCase();
+        const cleanTag = window.HidScanner.extractCleanId(rawTag).toUpperCase();
         if (tagInput) tagInput.value = cleanTag;
 
         if (feedback) {
