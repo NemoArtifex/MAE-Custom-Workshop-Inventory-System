@@ -2879,14 +2879,25 @@ window.UI.finalizeWizardBatchSession = UI.finalizeWizardBatchSession;
 
 //startup();
 // 🔑 THE AUTHORITATIVE IGNITION & HARDWARE ACCESS HOOK
-window.addEventListener("DOMContentLoaded", () => {
-    // 1. Ignite your core life-cycle boot processes natively
-    startup();
-
-    // 2. Locate and wire up the green connection button safely outside your core auth logic
+window.addEventListener("DOMContentLoaded", async () => {
+    // 1. Locate and wire up the green connection button safely outside your core auth logic
     const authButton = document.getElementById("auth-btn");
     if (authButton) {
         authButton.onclick = signIn;
         console.log("MAE Bootloader: Click event listener successfully anchored to your authentic signIn macro.");
     }
+
+    // 2. 🌟 THE REDIRECT PROTECTION LOCK 🌟
+    // If MSAL is currently processing a login return token from Microsoft in the URL bar,
+    // freeze the boot loader for a split second to let the token clear, preventing duplicate loop triggers!
+    if (window.myMSALObj) {
+        const inProgressState = window.myMSALObj.getController ? window.myMSALObj.getController().isInteractionInProgress() : false;
+        if (inProgressState) {
+            console.log("MAE Auth Protection: Microsoft redirect token resolution in progress. Deferring startup engine initialization.");
+            return;
+        }
+    }
+
+    // 3. Ignite your core life-cycle boot processes naturally once the URL settles
+    await startup();
 });
