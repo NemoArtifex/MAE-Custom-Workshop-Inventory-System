@@ -1,7 +1,6 @@
 window.maeLocations =["TBD"]; // Global cache default for intake workflow
 import { maeSystemConfig } from './config.js'
 import { UI} from './ui.js';
-import { Labels } from './labels.js';
 import { Dashboard } from './dashboard.js';
 import { myMSALObj } from './auth.js';
 const fileName = maeSystemConfig.spreadsheetName;
@@ -1912,7 +1911,7 @@ async function handleUniversalLookup(scannedId) {
   window.activeScanTransactionId = currentTransactionId;
 
   // 1. Enforce strict token discipline by cleaning the hardware payload string
-  const cleanId = window.Labels.extractCleanId(scannedId).toString().trim().toUpperCase();
+  const cleanId = window.HidScanner.extractCleanId(scannedId).toString().trim().toUpperCase();
   if (!cleanId || cleanId === "" || cleanId === "UNTAGGED") {
     console.warn("MAE Security Guard: Aborting universal evaluation loop for null or unassigned tokens.");
     return;
@@ -2892,7 +2891,6 @@ async function verifyTagUniquenessCrossTable(tagIdToCheck) {
 
 window.Dashboard = Dashboard;
 window.UI = UI;
-window.Labels = Labels;
 
 //window.handleEditClick = handleEditClick;
 window.handleEditClick = (tableName, rowIndex) => window.UI.handleEditClick(tableName, rowIndex);
@@ -2933,11 +2931,7 @@ window.evaluateAuditCheckboxStateChanges = UI.evaluateAuditCheckboxStateChanges;
 window.clearBulkAuditSelection = UI.clearBulkAuditSelection;
 window.executeBulkContainerGroupingTransition = executeBulkContainerGroupingTransition;
 window.verifyTagUniquenessCrossTable = verifyTagUniquenessCrossTable;
-window.processWizardStageOneScan = UI.processWizardStageOneScan;
-window.processWizardStageOneUntagged = UI.processWizardStageOneUntagged;
-window.resetCentralRegistrationWizard = UI.resetCentralRegistrationWizard;
 window.renderTagTypeWizardModal = UI.renderTagTypeWizardModal;
-window.renderCentralRegistrationWizardStageTwo = UI.renderCentralRegistrationWizardStageTwo;
 window.UI.renderWizardSessionListGrid = UI.renderWizardSessionListGrid;
 window.UI.finalizeWizardBatchSession = UI.finalizeWizardBatchSession;
 

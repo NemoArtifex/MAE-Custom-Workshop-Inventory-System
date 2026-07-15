@@ -461,7 +461,7 @@ renderCommandBar(tableName) {
             `;
         } else {
             buttons = `
-                <button class="action-btn" onclick="UI.renderCentralRegistrationWizard()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
+                <button class="action-btn" onclick="window.IntakeWizard.renderStageOne()" style="background:#e67e22; font-weight:bold;">⚡ Central Item Registration</button>
                 <button class="action-btn" onclick="UI.renderTagMaintenanceWizard()" style="background:#8e44ad; font-weight:bold;">🔧 Manage Lost/Damaged Tags</button>
                 <button class="action-btn" onclick="runUntaggedAudit()" style="background:#c0392b; font-weight:bold;">⚠️ Audit Untagged Items</button>
                 <button class="action-btn" id="btn-print">Print Dashboard</button>
@@ -471,58 +471,7 @@ renderCommandBar(tableName) {
     },
 
     // 2. STAGE ONE WIZARD: TOKEN IDENTIFICATION GATE
-    renderCentralRegistrationWizard() {
-        const container = document.getElementById("table-container");
-        const title = document.getElementById("current-view-title");
-        title.innerText = "Administrative: Centralized Item Intake Portal";
-        
-        // Lock the router configuration state flag
-        window.currentTable = "inventory_registration";
 
-        let html = `
-            <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
-                <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
-                <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
-                
-                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
-                    <div style="display: flex; flex-direction: column;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
-                        <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
-                            <option value="">-- Choose Target Table --</option>
-                            <option value="Shop_Machinery">Shop Machinery</option>
-                            <option value="Shop_Power_Tools">Shop Power Tools</option>
-                            <option value="Shop_Hand_Tools">Shop Hand Tools</option>
-                            <option value="Shop_Consumables">Shop Consumables</option>
-                            <option value="Resell_Inventory">Resell Inventory</option>
-                        </select>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; position: relative;">
-                        <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
-                        <input type="text" id="field-Tag_ID" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
-                        <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 15px;">
-                    <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
-                    <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
-                </div>
-            </div>
-            <div id="central-form-render-zone"></div>
-        `;
-        container.innerHTML = html;
-        this.renderCommandBar("");
-
-        // Set real-time listener to handle direct input swipes into the box
-        setTimeout(() => {
-            const input = document.getElementById("field-Tag_ID");
-            if (input) {
-                input.focus();
-                input.addEventListener("change", () => UI.processWizardStageOneScan());
-            }
-        }, 100);
-    },
 
 //========== END RENDER COMMAND BAR ================
 // =========================================================================
@@ -2619,94 +2568,7 @@ printInspectedLocationTable() {
     //   CENTRAL ASSET WIZARD 
     // =========================================================================
     // 🌟 MODIFIED WIZARD STAGE 1: AUTOMATED MAILBOX TOKEN INJECTION GATING 🌟
-  renderCentralRegistrationWizard() {
-    const container = document.getElementById("table-container");
-    const title = document.getElementById("current-view-title");
-    title.innerText = "Administrative: Centralized Item Intake Portal";
-    
-    // Lock the router configuration table state flag parameters securely
-    window.currentTable = "inventory_registration";
-    
-    // 🌟 THE ARRAYS DETECTOR PASS: Capture your parked mailbox token variable if present 🌟
-    const activeParkedToken = window.pendingScanValue || "";
 
-    let html = `
-      <div class="form-card" style="border-left: 6px solid var(--accent); background:#fff; padding: 25px; margin-bottom: 25px;">
-        <h4 style="margin:0 0 10px 0; color:var(--primary); text-transform:uppercase;">⚡ Central Asset Registration Wizard</h4>
-        <p style="font-size:0.85rem; color:#666; margin:0 0 15px 0;">STAGE 1: Token Identification Gate. Select your target table, then choose to register an UNTAGGED bulk item or scan a fresh sticker token.</p>
-        <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 20px;">
-          <div style="display: flex; flex-direction: column;">
-            <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Target Inventory Classification Sheet</label>
-            <select id="mae-central-table-selector" class="edit-dropdown" style="height:45px; font-size:0.95rem;">
-              <option value="">-- Choose Target Table --</option>
-              <option value="Shop_Machinery">Shop Machinery</option>
-              <option value="Shop_Power_Tools">Shop Power Tools</option>
-              <option value="Shop_Hand_Tools">Shop Hand Tools</option>
-              <option value="Shop_Consumables">Shop Consumables</option>
-              <option value="Resell_Inventory">Resell Inventory</option>
-            </select>
-          </div>
-          <div style="display: flex; flex-direction: column; position: relative;">
-            <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">Scan Fresh Sticker Token (Advanced Tier Focus)</label>
-            <!-- 🌟 INJECT THE ACTIVE PARKED TOKEN DIRECTLY INTO THE VALUE VALUE LITERAL VALUE 🌟 -->
-            <input type="text" id="field-Tag_ID" value="${activeParkedToken}" placeholder="Click here and scan physical label roll..." style="height:45px; border:2px solid var(--border); padding:0 12px; font-weight:bold; font-size:1rem; background: #fffde7;" autofocus>
-            <div id="wizard-tag-feedback" style="margin-top: 5px; font-size: 0.8rem; font-weight: bold;"></div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 15px;">
-          <button class="action-btn" onclick="UI.processWizardStageOneScan()" style="background:var(--primary); height:45px; font-weight:bold; flex: 1;">⚡ Verify Scanned Tag</button>
-          <button class="action-btn" onclick="UI.processWizardStageOneUntagged()" style="background:#7f8c8d; height:45px; font-weight:bold; flex: 1;">📦 Proceed as UNTAGGED</button>
-          <button class="action-btn" onclick="UI.resetCentralRegistrationWizard()" style="background:#c0392b; height:45px; font-weight:bold; flex: 1;">🔄 Clear / Reset Form</button>
-        </div>
-      </div>
-      <div id="central-form-render-zone"></div>
-    `;
-    
-    container.innerHTML = html;
-    this.renderCommandBar("");
-
-    // Set real-time focus redirection controls onto the box
-    setTimeout(() => {
-      const input = document.getElementById("field-Tag_ID");
-      const tableSelect = document.getElementById("mae-central-table-selector");
-      const feedback = document.getElementById("wizard-tag-feedback");
-      
-      if (input) {
-        input.focus();
-        
-        // If text was successfully auto-injected by our router mailbox, provide high-awareness highlights!
-        if (input.value !== "") {
-          input.style.borderColor = "var(--accent)";
-          input.style.backgroundColor = "#e8f8f5"; // Operational mint shade highlight tint
-          if (feedback) {
-            feedback.style.color = "var(--primary)";
-            feedback.innerText = "⚡ Hardware Token Auto-Populated. Please select your Target Table dropdown to verify link uniqueness.";
-          }
-        }
-
-        input.onkeydown = (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            UI.processWizardStageOneScan();
-          }
-        };
-      }
-
-      // --- 🌟 NEW ARCHITECTURE: THE AUTOMATED DROPDOWN VERIFICATION HOOK 🌟 ---
-      if (tableSelect && input) {
-        tableSelect.onchange = () => {
-          const selectedTableValueStr = tableSelect.value;
-          
-          if (selectedTableValueStr && input.value.trim() !== "") {
-            console.log(`MAE Intake System: Table destination choice [${selectedTableValueStr}] confirmed with active barcode [${input.value}]. Auto-triggering validation gate...`);
-            
-            // Instantly execute the uniqueness sweep and popup your choice modal without deleting text cells!
-            UI.processWizardStageOneScan();
-          }
-        };
-      }
-    }, 100);
-  },
     // 2. ADD NEW function to process an actual scanned barcode in Stage 1
     async processWizardStageOneScan() {
         // REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS
@@ -2934,7 +2796,7 @@ printInspectedLocationTable() {
         }
 
         // Deploy fields with the default untagged parameters hardcoded
-        this.renderCentralRegistrationWizardStageTwo(targetTable, "UNTAGGED", "UNIQUE");
+        window.IntakeWizard.renderStageTwo(targetTable, "UNTAGGED", "UNIQUE");
     },
     async processWizardStageOneScan() {
         // REGISTER TRANSACTION FOR MANUAL ENTRIES / CLICK ACTIONS
@@ -2996,129 +2858,7 @@ printInspectedLocationTable() {
         UI.renderTagTypeWizardModal(targetTable, cleanTag, currentTransactionId);
     },
     // 🌟 MODIFIED INTAKE STAGE 2: DISCIPLINARY INTER-LOCKING ENTRY FIELDS FORM 🌟
-  renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, tagType) {
-    const formZone = document.getElementById("central-form-render-zone");
-    if (!formZone) return;
 
-    const sheetConfig = window.maeSystemConfig.worksheets.find(s => s.tableName === targetTable);
-    console.log(`MAE Wizard Stage 2: Initializing dynamic entry field canvas for sheet [${sheetConfig.tabName}] under track profile [${window.maeWizardActiveCategory}].`);
-
-    // 1. TRIGGER SCHEMATIC ENTRY FORM BUILDER PASS
-    window.UI.renderEntryForm('add', targetTable, sheetConfig, async () => {
-      // Re-enforce hardware identifiers inside DOM nodes right before harvesting values
-      const tagField = document.getElementById("field-Tag_ID");
-      const typeField = document.getElementById("field-Tag_Type");
-      const categoryField = document.getElementById("field-Item_Category");
-      const locationField = document.getElementById("field-Location_ID");
-      
-      if (tagField) tagField.value = validatedTagId;
-      if (typeField) typeField.value = tagType;
-      
-      // If the field was frozen by our By_Location disciplinary lock, un-freeze it momentarily
-      // so the standard browser DOM form harvesters can read its value cell over the wire!
-      if (categoryField && window.maeWizardActiveCategory) {
-        categoryField.disabled = false;
-        categoryField.value = window.maeWizardActiveCategory;
-      }
-      if (locationField && window.maeWizardActiveCategory === "By_Location") {
-        locationField.disabled = false;
-      }
-
-      // Harvest specifications locally for our clipboard list before submission clears the form cards
-      const descFieldId = `field-${sheetConfig.columns.find(c => c.header.includes("Description") || c.header.includes("Name")).header.replace(/\s+/g, '')}`;
-      const locFieldId = `field-Location_ID`;
-      const enteredDescription = document.getElementById(descFieldId)?.value || "N/A";
-      const enteredLocation = document.getElementById(locFieldId)?.value || "TBD";
-
-      // Execute authoritative append operation straight to Microsoft OneDrive database ledger
-      const success = await window.submitNewRow(targetTable, sheetConfig);
-      if (success) {
-        // Log transaction metrics into our local running batch clipboard list memory array
-        if (!window.maeWizardSessionItems) window.maeWizardSessionItems = [];
-        window.maeWizardSessionItems.push({
-          description: enteredDescription,
-          location: enteredLocation,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        });
-
-        // 🌟 AUTOMATED SYSTEM FLUSH PASS: Force background RAM caches to re-warm instantly 🌟
-        if (typeof window.warmInventoryCache === "function") {
-          await window.warmInventoryCache();
-        }
-
-        if (tagType === "MULTIPLE") {
-          // Continuous batch loop active: re-trigger Stage 2 form layout cleanly, keeping elements structured
-          this.renderCentralRegistrationWizardStageTwo(targetTable, validatedTagId, "MULTIPLE");
-          if (typeof this.renderWizardSessionListGrid === "function") {
-            this.renderWizardSessionListGrid();
-          }
-        } else {
-          // Unique entry complete: flush session variables and clear view back to landing metrics cockpit
-          window.maeWizardActiveCategory = null;
-          window.maeWizardSessionItems = [];
-          formZone.innerHTML = "";
-          window.currentTable = "Master_Dashboard";
-          window.loadTableData("Master_Dashboard");
-        }
-      }
-    }, null, null, { tagId: validatedTagId, tagType: tagType });
-
-    // 2. --- 🌟 DISCIPLINARY LAYER OVERRIDE: APPLY INPUT FREEZES AND HIGHLIGHT SHADES 🌟 ---
-    setTimeout(() => {
-      const tagInputNode = document.getElementById("field-Tag_ID");
-      const typeInputNode = document.getElementById("field-Tag_Type");
-      const categoryInputNode = document.getElementById("field-Item_Category");
-      const locationInputNode = document.getElementById("field-Location_ID");
-      
-      if (tagInputNode) {
-        tagInputNode.value = validatedTagId;
-        tagInputNode.disabled = true;
-      }
-      if (typeInputNode) {
-        typeInputNode.value = tagType;
-        typeInputNode.disabled = true;
-      }
-      
-      // If we are running a strict By_Location session, apply the physical bin lockdown controls!
-      if (window.maeWizardActiveCategory === "By_Location") {
-        if (categoryInputNode) {
-          categoryInputNode.value = "By_Location";
-          categoryInputNode.disabled = true;
-          categoryInputNode.style.backgroundColor = "#eeeeee";
-          categoryInputNode.style.color = "#888888";
-        }
-        
-        if (locationInputNode) {
-          // Check if there are already items log in this running session batch array list
-          const hasPriorSessionEntries = window.maeWizardSessionItems && window.maeWizardSessionItems.length > 0;
-          
-          if (hasPriorSessionEntries) {
-            // Force-lock subsequent entries strictly to match the location coordinate of your first entry item!
-            const firstEntryTargetLocationStr = window.maeWizardSessionItems[0].location;
-            locationInputNode.value = firstEntryTargetLocationStr;
-            locationInputNode.disabled = true;
-            locationInputNode.style.backgroundColor = "#eeeeee";
-            locationInputNode.style.color = "#888888";
-            locationInputNode.style.cursor = "not-allowed";
-            
-            // Append a visual indicator badge text string below the selector dropdown menu box node
-            const alertTextBadge = document.createElement("span");
-            alertTextBadge.style.cssText = "color:#c0392b; font-weight:bold; font-size:0.8rem; display:block; margin-top:5px;";
-            alertTextBadge.innerText = "🔒 GEOGRAPHIC CONTAINER DISCIPLINE: Locked to Shared Storage Spot";
-            locationInputNode.parentNode.appendChild(alertTextBadge);
-          }
-        }
-      } else if (window.maeWizardActiveCategory === "By_Topic") {
-        // If this is a By_Topic session, auto-select the type but leave the Location dropdown wide open!
-        if (categoryInputNode) {
-          categoryInputNode.value = "By_Topic";
-          categoryInputNode.disabled = true;
-          categoryInputNode.style.backgroundColor = "#eeeeee";
-          categoryInputNode.style.color = "#888888";
-        }
-      }
-    }, 150);
-  },
             // 🌟 ADD NEW method to compile and render your live session list grid rows on the fly 🌟
             renderWizardSessionListGrid() {
         const gridMount = document.getElementById("mae-wizard-session-grid-mount");
