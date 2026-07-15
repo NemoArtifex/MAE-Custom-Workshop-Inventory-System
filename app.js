@@ -163,6 +163,13 @@ async function startup() {
         if (window.account) {
             console.log(`MAE Bootloader: Identity confirmed for user account.`);
             await updateUIForLoggedInUser(window.account);
+
+            // 🔌 HARDWARE BOOT GATEWAY: Ignite your clean scanner listener safely once the session is secure
+            if (window.HidScanner && typeof window.HidScanner.initializeGlobalScanner === "function") {
+             window.HidScanner.initializeGlobalScanner();
+                console.log("MAE Bootloader: Advanced hardware scanning tier successfully activated for this session.");
+            }
+
         } else {
             console.log("MAE Auth Pipeline: No active user token found. Awaiting user interaction.");
             // ???? Let auth.js default bindings manage the landing screen elements natively
