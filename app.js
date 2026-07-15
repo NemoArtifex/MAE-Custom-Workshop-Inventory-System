@@ -130,42 +130,64 @@ async function getExcelRowIndexByMaeId(tableName, maeId) {
 
 
 async function startup() {
-    try {
-        // Initialize the PublicClientApplication
-        //  MSAL V2 uses 'msal.PublicClientApplication'
-        //myMSALObj = new window.msal.PublicClientApplication(msalConfig);
-
-        const response = await myMSALObj.handleRedirectPromise();
+    console.log("MAE Engine Matrix: Launching core life-cycle boot processes...");
     
-        if (response) {
-            window.account = response.account;
-            console.log("Login successful via redirect. Account:", window.account.username);
-        } else {
-            const accounts = myMSALObj.getAllAccounts();
-            if (accounts.length > 0) account = accounts[0];
+    // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
+    // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
+    document.addEventListener('input', (event) => {
+        const target = event.target;
+        if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
+            target.setAttribute("data-pre-scan-value", target.value || "");
         }
-        if (window.account) {
-            // SCENARIO 1: USER IS LOGGED IN
-            updateUIForLoggedInUser(window.account);
-            // 🌟 GLOBAL HUMAN SNAPSHOT OBSERVER AXIS 🌟
-            // Tracks manual typing entries so the Shield can restore original strings during accidental bursts
-            document.addEventListener('input', (event) => {
-                const target = event.target;
-                if (target && target.tagName === 'INPUT' && target.id !== 'field-Tag_ID') {
-                target.setAttribute("data-pre-scan-value", target.value || "");
-                }
-            });
+    });
 
+    try {
+        // Initialize MSAL v2 client application stack parameters securely
+        window.myMSALObj = new msal.PublicClientApplication(msalConfig);
+        await myMSALObj.initialize();
+
+        // Handle the incoming network landing redirect state token parameters completely
+        const redirectResponse = await myMSALObj.handleRedirectPromise();
+        if (redirectResponse !== null) {
+            window.account = redirectResponse.account;
+            sessionStorage.setItem("username", window.account.username);
+            console.log("MAE Auth Pipeline: Secure landing token captured via redirect handler.");
+        } else {
+            // Fallback: Recover existing system active accounts from local storage state caches
+            const currentAccounts = myMSALObj.getAllAccounts();
+            if (currentAccounts.length > 0) {
+                window.account = currentAccounts[0];
+            }
+        }
+
+        // ==========================================
+        // LIFE-CYCLE SECURITY STATE DISPATCH ROUTER
+        // ==========================================
+        if (window.account) {
+            console.log(`MAE Bootloader: Identity confirmed for user account [${window.account.username}].`);
+            
+            // 1. Establish visual dashboards and pre-warm memory caches sequentially
+            await updateUIForLoggedInUser(window.account);
+            
+            // 🔌 2. HARDWARE BOOT GATEWAY: Ignite your clean scanner listener safely
+            if (window.HidScanner && typeof window.HidScanner.initializeGlobalScanner === "function") {
+                window.HidScanner.initializeGlobalScanner();
+                console.log("MAE Bootloader: Advanced hardware scanning tier successfully activated for this session.");
+            } else {
+                console.warn("MAE Bootloader Warning: HidScanner module script was not detected in window scope layers.");
+            }
         } else {
             // SCENARIO 2: USER IS NOT LOGGED IN
+            console.log("MAE Auth Pipeline: No active user token found. Halting application canvas layout screens.");
             const authButton = document.getElementById("auth-btn");
             if (authButton) {
                 authButton.addEventListener("click", signIn);
-                console.log("MAE System: Auth button ready.");
+                authButton.innerText = "Connect Microsoft Office 365";
+                console.log("MAE System: Auth redirection trigger buttons successfully mounted.");
             }
         }
     } catch (error) {
-        console.error("Error during MSAL startup:", error);
+        console.error("Critical Error during MSAL startup:", error);
     }
 }
 
