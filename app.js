@@ -2877,4 +2877,7 @@ window.renderTagTypeWizardModal = UI.renderTagTypeWizardModal;
 window.UI.renderWizardSessionListGrid = UI.renderWizardSessionListGrid;
 window.UI.finalizeWizardBatchSession = UI.finalizeWizardBatchSession;
 
-startup();
+//startup();
+window.addEventListener("DOMContentLoaded", () => {
+    startup();
+});
