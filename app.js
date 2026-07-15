@@ -547,6 +547,17 @@ function excelSerialToDate(serial) {
  * UI: Hand off to UI.renderTable
  */
 async function loadTableData(tableName, filterType = null) {
+
+    // 🛡️ THE INDUSTRIAL SCAN SHIELD CIRCUIT BREAKER
+    // Blocks lagging cloud network threads from overwriting a live scanner card workspace
+    if (window.currentTable === "scan_result_active" || window.isEditing && document.getElementById("entry-form")) {
+        console.log(`MAE Safety Guard: Active scan card workspace detected. Dropping incoming table load request for [${tableName}] to prevent data eviction.`);
+        return;
+    }
+
+    console.log(`MAE Routing Control: Initializing data stream layer context for: ${tableName}`);
+
+
   window.currentTable = tableName;
   const sheetConfig = maeSystemConfig.worksheets.find(s => s.tableName === tableName);
   
