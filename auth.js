@@ -19,6 +19,7 @@ const msalConfig = {
 };
 
 export const myMSALObj = new window.msal.PublicClientApplication(msalConfig);
+window.myMSALObj = myMSALObj; // Expose the MSAL object globally for debugging and access in other modules
 
 
 
