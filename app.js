@@ -667,6 +667,13 @@ async function loadTableData(tableName, filterType = null) {
             console.log(`MAE Sorting Engine: [${tableName}] memory rows sorted by Location_ID axis.`);
         } 
         
+        // 🛡️ THE INDUSTRIAL SCAN SHIELD CIRCUIT BREAKER
+        // Blocks late-returning cloud data streams from overwriting an active hardware scan card
+        if (window.currentTable === "scan_result_active" || (window.isEditing && document.getElementById("entry-form"))) {
+            console.log(`MAE Safety Guard: Active hardware scanner card detected on display. Terminating late rendering thread for [${tableName}] to defend workspace.`);
+            return; // 🔒 Drops execution instantly!
+        }
+
         // PATH B: Maintenance Log (Sort Chronologically by Next Service Date)
         else if (tableName === "Maintenance_Log") {
             const targetDateHeader = "Next Service Date";
