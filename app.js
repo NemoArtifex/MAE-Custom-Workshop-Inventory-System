@@ -616,6 +616,13 @@ async function loadTableData(tableName, filterType = null) {
       const response = await fetch(url, { headers: { 'Authorization' : `Bearer ${token}` } });
       if (!response.ok) throw new Error(`Graph API error: ${response.status}`);
       const data = await response.json();
+
+      // 🛡️ THE BULLETPROOF INGESTION CIRCUIT BREAKER
+        // Stops late-returning cloud ledger data from executing if a hardware scan card is open
+        if (window.currentTable === "scan_result_active" || (window.isEditing && document.getElementById("entry-form"))) {
+            console.log(`MAE Safety Guard: Active scan workspace detected. Safely abandoning late cloud payload processing for table: [${tableName}].`);
+            return; // 🔒 Drops the execution thread instantly before it can touch sorting or UI rendering!
+        }
       
       // Check for hidden dashboard data calculation processing metrics unboxing path
       if (tableName === "Master_Dashboard") {
@@ -667,12 +674,6 @@ async function loadTableData(tableName, filterType = null) {
             console.log(`MAE Sorting Engine: [${tableName}] memory rows sorted by Location_ID axis.`);
         } 
         
-        // 🛡️ THE INDUSTRIAL SCAN SHIELD CIRCUIT BREAKER
-        // Blocks late-returning cloud data streams from overwriting an active hardware scan card
-        if (window.currentTable === "scan_result_active" || (window.isEditing && document.getElementById("entry-form"))) {
-            console.log(`MAE Safety Guard: Active hardware scanner card detected on display. Terminating late rendering thread for [${tableName}] to defend workspace.`);
-            return; // 🔒 Drops execution instantly!
-        }
 
         // PATH B: Maintenance Log (Sort Chronologically by Next Service Date)
         else if (tableName === "Maintenance_Log") {
